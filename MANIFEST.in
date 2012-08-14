@@ -1,0 +1,10 @@
+include ez_setup.py
+include metainfo.py
+include setup.py
+include MANIFEST.in
+include LICENSE.txt
+include README.txt, README.html
+include src/test/*.py
+include src/test/*.txt
+include src/test/samples/wikipedia/README.txt
+include src/test/samples/misc/*.svg

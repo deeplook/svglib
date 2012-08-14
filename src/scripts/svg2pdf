@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+# _*_ coding: UTF-8 _*_
+
+"""A simple converter from SVG to PDF.
+
+For further information please look into the file README.txt!
+"""
+
+import re
+import sys
+import getopt
+import os.path
+
+from reportlab.graphics import renderPDF
+
+from svglib import svglib
+
+
+__version__ = "0.6.3"
+__license__ = "LGPL 3"
+__author__ = "Dinu Gherman"
+__date__ = "2010-03-01"
+
+
+def svg2pdf(path, outputPat=None):
+    "Convert an SVG file to a PDF one."
+ 
+    # generate a drawing from the SVG file
+    try:
+        drawing = svglib.svg2rlg(path)
+    except:
+        print "Rendering failed."
+        raise
+
+    # derive output filename from output pattern
+    if not outputPat:
+        outputPat = "%(dirname)s/%(base)s.pdf"
+    dirname = os.path.dirname(path) or "."
+    basename = os.path.basename(path)
+    base = os.path.basename(os.path.splitext(path)[0])
+    ext = os.path.splitext(path)[1]
+    
+    aDict = {
+        "dirname":dirname, "basename":basename, 
+        "base":base, "ext":ext
+    }
+    outPath = outputPat % aDict
+
+    # save as PDF file
+    if drawing:
+        renderPDF.drawToFile(drawing, outPath, showBoundary=0)
+
+
+# command-line usage stuff
+
+def _showVersion():
+    "Print version message and terminate."
+
+    prog = os.path.basename(sys.argv[0])
+    print "%s %s" % (prog, __version__)
+    sys.exit()
+
+
+def _showUsage():
+    "Print usage message and terminate."
+
+    prog = os.path.basename(sys.argv[0])
+    copyrightYear = __date__[:__date__.find("-")]
+    args = (prog, __version__, __author__, copyrightYear, __license__)
+    print "%s v. %s, Copyleft by %s, %s (%s)" % args 
+    print "An experimental SVG to PDF converter (via ReportLab Graphics)"
+    print "USAGE: %s [options] file1.svg(z) [file2.svg(z)...]" % prog
+    print """\
+OPTIONS:
+  -h --help          Print this usage message and exits.
+  -v --version       Print version number and exits.
+  -o --output FILE   Set output path (incl. some patterns).
+
+EXAMPLES:
+  %(prog)s file1.svg file2.svgz # produce file1.pdf and file2.pdf
+  %(prog)s path/file.svg        # produce path/file.pdf
+  %(prog)s -o out.pdf file.svg  # produce out.pdf
+  %(prog)s -o "%%(basename)s.pdf" path/file*.svg  
+                               # creates all output in local dir.
+
+COPYLEFT:
+  see http://www.gnu.org/copyleft/gpl.html
+""" % {"prog": prog}
+
+    sys.exit()
+
+
+def _main():
+    "Main for command-line usage."
+
+    try:
+        longOpts = "help version output=".split()
+        opts, args = getopt.getopt(sys.argv[1:], "hvo:", longOpts)
+    except getopt.GetoptError:
+        print "ERROR"
+        _showUsage()
+    
+    stopOptions = "-v --version -h --help"
+    stopOptions = [key for (key, val) in opts if key in stopOptions]
+    if len(args) == 0 and len(stopOptions) == 0:
+        _showUsage()
+
+    outputPat = None
+    for key, val in opts:
+        if key in ("-h", "--help"):
+            _showUsage()
+        elif key in ("-v", "--version"):
+            _showVersion()
+        elif key in ("-o", "--output"):
+            outputPat = val
+
+    # determine paths of input files
+    paths = [a for a in args if os.path.exists(a)]
+
+    for path in paths:    
+        svg2pdf(path, outputPat)
+
+
+if __name__ == '__main__':    
+    _main()
