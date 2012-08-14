@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<title>Svglib</title>
+<meta name="author" content="Dinu Gherman &lt;gherman&#64;darwin.in-berlin.de&gt;" />
+<meta name="date" content="2010-03-01" />
+<meta name="copyright" content="GNU Lesser General Public Licence v3 (LGPLv3)" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 5196 2007-06-03 20:25:28Z wiemann $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left {
+  clear: left }
+
+img.align-right {
+  clear: right }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font-family: serif ;
+  font-size: 100% }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="svglib">
+<h1 class="title">Svglib</h1>
+<h2 class="subtitle" id="an-experimental-library-for-reading-and-converting-svg">An experimental library for reading and converting SVG</h2>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Dinu Gherman &lt;<a class="reference external" href="mailto:gherman&#64;darwin.in-berlin.de">gherman&#64;darwin.in-berlin.de</a>&gt;</td></tr>
+<tr class="field"><th class="docinfo-name">Homepage:</th><td class="field-body"><a class="reference external" href="http://www.dinu-gherman.net/">http://www.dinu-gherman.net/</a></td>
+</tr>
+<tr><th class="docinfo-name">Version:</th>
+<td>Version 0.6.3</td></tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2010-03-01</td></tr>
+<tr><th class="docinfo-name">Copyright:</th>
+<td>GNU Lesser General Public Licence v3 (LGPLv3)</td></tr>
+</tbody>
+</table>
+<!-- -*- mode: rst -*- -->
+<div class="section" id="about">
+<h1>About</h1>
+<p><cite>Svglib</cite> is an experimental library for reading <a class="reference external" href="http://www.w3.org/Graphics/SVG/">SVG</a> files and converting them (to a
+reasonable degree) to other formats using the Open Source <a class="reference external" href="http://www.reportlab.org">ReportLab
+Toolkit</a>. As a package it reads existing
+SVG files and returns them converted to ReportLab Drawing objects that
+can be used in a variety of ReportLab-related contexts, e.g. as Platypus
+Flowable objects or in RML2PDF. As a command-line tool it converts SVG
+files into PDF ones.</p>
+<p>Tests include a vast amount of tests from the <a class="reference external" href="http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview">W3C SVG test suite</a>.
+It also accesses around <a class="reference external" href="http://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags">200 flags from Wikipedia.org</a>
+for test purposes (some of them hinting at more work to be done).</p>
+<p>This release changes the license from GPL 3 to LGPL 3, introduces
+tiny bug fix reported by Harald Armin Massa and adapts to changed
+URLs for Wikipedia SVG flags used for test purposes.</p>
+</div>
+<div class="section" id="features">
+<h1>Features</h1>
+<ul class="simple">
+<li>convert SVG files into ReportLab Graphics Drawing objects</li>
+<li>handle plain or compressed SVG files (.svg and .svgz)</li>
+<li>allow patterns for output files on command-line</li>
+<li>install a Python package named <tt class="docutils literal"><span class="pre">svglib</span></tt></li>
+<li>install a Python command-line script named <tt class="docutils literal"><span class="pre">svg2pdf</span></tt></li>
+<li>provide a Unittest test suite</li>
+<li>test on some standard W3C SVG tests available online</li>
+<li>test on some Wikipedia sample SVG symbols available online</li>
+<li>test on some Wikipedia sample SVG flags available online</li>
+</ul>
+</div>
+<div class="section" id="examples">
+<h1>Examples</h1>
+<p>You can use <cite>svglib</cite> as a Python package e.g. like in the following
+interactive Python session:</p>
+<pre class="literal-block">
+&gt;&gt;&gt; from svglib.svglib import svg2rlg
+&gt;&gt;&gt; from reportlab.graphics import renderPDF
+&gt;&gt;&gt;
+&gt;&gt;&gt; drawing = svg2rlg(&quot;file.svg&quot;)
+&gt;&gt;&gt; renderPDF.drawToFile(drawing, &quot;file.pdf&quot;)
+</pre>
+<p>In addition a script named <tt class="docutils literal"><span class="pre">svg2pdf</span></tt> can be used more easily from
+the system command-line like this (you can see more examples when
+typing <tt class="docutils literal"><span class="pre">svg2pdf</span> <span class="pre">-h</span></tt>):</p>
+<pre class="literal-block">
+$ svg2pdf file1.svg file2.svgz
+$ svg2pdf -o &quot;%(basename)s.pdf&quot; /path/file[12].svgz?
+</pre>
+</div>
+<div class="section" id="installation">
+<h1>Installation</h1>
+<p>There are two ways to install <cite>svglib</cite>, depending on whether you have
+the <cite>easy_install</cite> command available on your system or not.</p>
+<div class="section" id="using-easy-install">
+<h2>1. Using <cite>easy_install</cite></h2>
+<p>With the <cite>easy_install</cite> command on your system and a working internet
+connection you can install <cite>svglib</cite> with only one command in a terminal:</p>
+<pre class="literal-block">
+$ easy_install svglib
+</pre>
+<p>If the <cite>easy_install</cite> command is not available to you and you want to
+install it before installing <cite>svglib</cite>, you might want to go to the
+<a class="reference external" href="http://peak.telecommunity.com/DevCenter/EasyInstall">Easy Install homepage</a>
+and follow the <a class="reference external" href="http://peak.telecommunity.com/DevCenter/EasyInstall#installing-easy-install">instructions there</a>.</p>
+</div>
+<div class="section" id="manual-installation">
+<h2>2. Manual installation</h2>
+<p>Alternatively, you can install the <cite>svglib</cite> tarball after downloading
+the file <tt class="docutils literal"><span class="pre">svglib-0.6.3.tar.gz</span></tt> and decompressing it with the following
+command:</p>
+<pre class="literal-block">
+$ tar xfz svglib-0.6.3.tar.gz
+</pre>
+<p>Then change into the newly created directory <tt class="docutils literal"><span class="pre">svglib</span></tt> and install
+<cite>svglib</cite> by running the following command:</p>
+<pre class="literal-block">
+$ python setup.py install
+</pre>
+<p>This will install a Python module file named <tt class="docutils literal"><span class="pre">svglib.py</span></tt> in the
+<tt class="docutils literal"><span class="pre">site-packages</span></tt> subfolder of your Python interpreter and a script
+tool named <tt class="docutils literal"><span class="pre">svglib</span></tt> in your <tt class="docutils literal"><span class="pre">bin</span></tt> directory, usually in
+<tt class="docutils literal"><span class="pre">/usr/local/bin</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="dependencies">
+<h1>Dependencies</h1>
+<p><cite>Svglib</cite> depends on the <cite>reportlab</cite> package, which, as of now, you
+have to install manually, before you can use <cite>svglib</cite>. Unfortunately,
+up to its latest release, <cite>reportlab</cite> 2.2, this package cannot be
+installed automatically using <cite>easy_install</cite>.</p>
+</div>
+<div class="section" id="testing">
+<h1>Testing</h1>
+<p>The <cite>svglib</cite> tarball distribution contains a Unittest test suite
+in the file <tt class="docutils literal"><span class="pre">test_svglib.py</span></tt> which can be run like shown in the
+following lines on the system command-line:</p>
+<pre class="literal-block">
+$ tar xfz svglib-0.6.3.tar.gz
+$ cd svglib/src/test
+$ python test_svglib.py
+......
+[...]
+working on [0] wikipedia/Ankh.svg
+working on [1] wikipedia/Biohazard.svg
+working on [2] wikipedia/Dharma_wheel.svg
+working on [3] wikipedia/Eye_of_Horus_bw.svg
+[...]
+----------------------------------------------------------------------
+Ran 12 tests in 87.536s
+
+OK
+</pre>
+</div>
+<div class="section" id="bug-reports">
+<h1>Bug reports</h1>
+<p>Please report bugs and patches to Dinu Gherman
+&lt;<a class="reference external" href="mailto:gherman&#64;darwin.in-berlin.de">gherman&#64;darwin.in-berlin.de</a>&gt;. Don't forget to include information
+about the operating system, ReportLab and Python versions being used.</p>
+</div>
+</div>
+</body>
+</html>
