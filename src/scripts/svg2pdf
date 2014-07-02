@@ -16,10 +16,10 @@ from reportlab.graphics import renderPDF
 from svglib import svglib
 
 
-__version__ = "0.6.3"
+__version__ = "0.7.0b"
 __license__ = "LGPL 3"
 __author__ = "Dinu Gherman"
-__date__ = "2010-03-01"
+__date__ = "2014-03-31"
 
 
 def svg2pdf(path, outputPat=None):
@@ -29,7 +29,7 @@ def svg2pdf(path, outputPat=None):
     try:
         drawing = svglib.svg2rlg(path)
     except:
-        print "Rendering failed."
+        print("Rendering failed.")
         raise
 
     # derive output filename from output pattern
@@ -57,7 +57,7 @@ def _showVersion():
     "Print version message and terminate."
 
     prog = os.path.basename(sys.argv[0])
-    print "%s %s" % (prog, __version__)
+    print("%s %s" % (prog, __version__))
     sys.exit()
 
 
@@ -67,10 +67,10 @@ def _showUsage():
     prog = os.path.basename(sys.argv[0])
     copyrightYear = __date__[:__date__.find("-")]
     args = (prog, __version__, __author__, copyrightYear, __license__)
-    print "%s v. %s, Copyleft by %s, %s (%s)" % args 
-    print "An experimental SVG to PDF converter (via ReportLab Graphics)"
-    print "USAGE: %s [options] file1.svg(z) [file2.svg(z)...]" % prog
-    print """\
+    print("%s v. %s, Copyleft by %s, %s (%s)" % args)
+    print("An experimental SVG to PDF converter (via ReportLab Graphics)")
+    print("USAGE: %s [options] file1.svg(z) [file2.svg(z)...]" % prog)
+    print("""\
 OPTIONS:
   -h --help          Print this usage message and exits.
   -v --version       Print version number and exits.
@@ -85,7 +85,7 @@ EXAMPLES:
 
 COPYLEFT:
   see http://www.gnu.org/copyleft/gpl.html
-""" % {"prog": prog}
+""" % {"prog": prog})
 
     sys.exit()
 
@@ -97,7 +97,7 @@ def _main():
         longOpts = "help version output=".split()
         opts, args = getopt.getopt(sys.argv[1:], "hvo:", longOpts)
     except getopt.GetoptError:
-        print "ERROR"
+        print("ERROR")
         _showUsage()
     
     stopOptions = "-v --version -h --help"

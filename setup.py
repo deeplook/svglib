@@ -4,8 +4,8 @@
 import sys
 sys.path.insert(0, "src")
 
-import ez_setup
-ez_setup.use_setuptools()
+# import ez_setup
+# ez_setup.use_setuptools()
 from setuptools import setup
 
 

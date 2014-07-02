@@ -4,10 +4,10 @@
 "Project meta information"
 
 
-__version__ = "0.6.3"
+__version__ = "0.7.0b"
 __license__ = "LGPL 3"
 __author__ = "Dinu Gherman"
-__date__ = "2010-03-01"
+__date__ = "2014-03-31"
 
 
 name = "svglib"
@@ -94,7 +94,9 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Microsoft :: Windows",
     "Natural Language :: English",
-    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.3",
+    "Programming Language :: Python :: 3.4",
     "Topic :: Documentation",
     "Topic :: Utilities",
     "Topic :: Printing",

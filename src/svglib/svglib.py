@@ -29,12 +29,13 @@ from reportlab.graphics.shapes import *
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
+from functools import reduce
 
 
-__version__ = "0.6.3"
+__version__ = "0.7.0b"
 __license__ = "LGPL 3"
 __author__ = "Dinu Gherman"
-__date__ = "2010-03-01"
+__date__ = "2014-03-31"
 
 
 pt = 1
@@ -43,15 +44,75 @@ LOGMESSAGES = 0
 
 ### helpers ###
 
+# experimental
+def repl_implicit_lineto_ops(match_obj):
+    "Replace implicit line-to ops after an 'm' or 'M' move-to op."
+
+    nums = match_obj.group().split()
+    start = " ".join(nums[:3])
+    if len(nums) == 3:
+        return start + ' '
+    move_to = nums[0]
+    line_to = {"M": "L", "m": "l"}[move_to]
+    nums = nums[3:]
+    res = ""
+    while nums:
+        first, second = nums[:2]
+        res += "%s %s %s " % (line_to, first, second)
+        nums = nums[2:]
+
+    return start + ' ' + " ".join(nums[:3]) + res
+
+
+def norm_svg_path(d):
+    """
+    Normalize SVG path 'd' attribute.
+
+    This basically means adding spaces around operators and operands.
+
+    Example:
+
+    'm319.5 225.84 8.354 0.001c0.0311 3.1574 1.8815 6.5489 4.4798
+    8.4926h-16.008c2.5051-2.271 3.1897-4.9625 3.1741-8.4938z'
+    ->
+    'm 319.5 225.84 8.354 0.001 c 0.0311 3.1574 1.8815 6.5489 4.4798
+    8.4926 h -16.008 c 2.5051 -2.271 3.1897 -4.9625 3.1741 -8.4938 z'
+    """
+
+    d1 = d[:]
+
+    # remove commas
+    d1 = re.sub("\ *,\ *", " ", d1)
+    d1 = d1.strip()
+
+    # handle operator names, e.g. m, l, c, z... (must skip 'e' for exponents)
+    repl = lambda m: " %s " % m.group()
+    pat = "[abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ]"
+    d1, num = re.subn(pat, repl, d1)
+
+    # insert spaces before operands starting with '-'
+    repl = lambda m: " -%s" % m.groups()
+    d1, num = re.subn("(?<=[0-9\.])\-([0-9\.]+)", repl, d1)
+
+    # reduce multiple spaces (not strictly needed)
+    d1 = re.sub(" +", " ", d1)
+    d1 = d1.strip()
+
+    # expand implicit line-to ops
+    d1 = re.sub("([mM] [e0-9\.\+\- ]+)", repl_implicit_lineto_ops, d1)
+
+    return d1
+
+
 def convertToFloats(aList):
     "Convert number strings in list to floats (leave rest untouched)."
 
-    for i in xrange(len(aList)):
+    for i in range(len(aList)):
         try:
             aList[i] = float(aList[i])
         except ValueError:
             try:
-                aList[i] = aList[i].encode("ASCII")
+                aList[i] = aList[i] # .encode("ASCII")
             except:
                 pass
 
@@ -84,7 +145,7 @@ def fixSvgPath(aList):
     # for each coord. tuple of a tuple sequence... 
 
     hPos, vPos, HPos, VPos, numPos = [], [], [], [], []
-    for i in xrange(len(aList)):
+    for i in range(len(aList)):
         hPos.append(aList[i]=='h')
         vPos.append(aList[i]=='v')
         HPos.append(aList[i]=='H')
@@ -140,18 +201,18 @@ def normaliseSvgPath(attr):
       'h':1, 'v':1, 'C':6, 'c':6, 'Z':0, 'z':0}
 
     # do some preprocessing
-    opKeys = ops.keys()
+    opKeys = list(ops.keys())
     a = attr
     a = a.replace(',', ' ')
-    a = string.replace(a, 'e-', 'ee')
-    a = string.replace(a, '-', ' -')
-    a = string.replace(a, 'ee', 'e-')
+    # a = a.replace('e-', 'ee')
+    # a = a.replace('-', ' -')
+    # a = a.replace('ee', 'e-')
     for op in opKeys:
         a = a.replace(op, " %s " % op)
     a = a.strip()
     a = a.split()
     a = convertToFloats(a)
-    a = fixSvgPath(a)
+    # a = fixSvgPath(a)
 
     # insert op codes for each argument of an op with multiple arguments
     res = []
@@ -174,7 +235,7 @@ def normaliseSvgPath(attr):
 
     # fix sequences of M to one M plus a sequence of L operators,
     # same for m and l.
-    for i in xrange(0, len(res), 2):
+    for i in range(0, len(res), 2):
         op, nums = res[i:i+2]
         if i >= 2:
             if op == 'M' == res[i-2]:
@@ -197,13 +258,13 @@ class AttributeConverter:
         """
     
         try:
-            line = line.encode("ASCII")
+            line = line # .encode("ASCII")
         except:
             pass
 
         attrs = line.split(';')
         attrs = [a.strip() for a in attrs]
-        attrs = filter(lambda a:len(a)>0, attrs)
+        attrs = [a for a in attrs if len(a)>0]
 
         newAttrs = {}
         for a in attrs:
@@ -233,7 +294,7 @@ class AttributeConverter:
             return attrValue
         elif svgNode.getAttribute("style"):
             dict = self.parseMultiAttributes(svgNode.getAttribute("style"))
-            if dict.has_key(name):
+            if name in dict:
                 return dict[name]
         else:
             if svgNode.parentNode:
@@ -257,10 +318,11 @@ class AttributeConverter:
                 dict.update(d)
 
         attrs = svgNode.attributes
-        for i in xrange(attrs.length):
+        for i in range(attrs.length):
             a = attrs.item(i)
             if a.name != "style":
-                dict[a.name.encode("ASCII")] = a.value
+                # dict[a.name.encode("ASCII")] = a.value
+                dict[a.name] = a.value
 
         return dict
 
@@ -281,7 +343,7 @@ class AttributeConverter:
         line = svgAttr
 
         try:
-            line = line.encode("ASCII")
+            pass # line = line.encode("ASCII")
         except:
             pass
 
@@ -290,7 +352,7 @@ class AttributeConverter:
         brackets = []
         indices = []
         for i in range(len(line)):
-           if line[i] in "()": brackets.append(i)
+            if line[i] in "()": brackets.append(i)
         for i in range(0, len(brackets), 2):
             bi, bj = brackets[i], brackets[i+1]
             subline = line[bi+1:bj]
@@ -321,16 +383,18 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
         if text[-1] == '%':
             if LOGMESSAGES:
-                print "Fiddling length unit: %"
+                print("Fiddling length unit: %")
             return float(text[:-1]) / 100 * percentOf
         elif text[-2:] == "pc":
             return float(text[:-2]) * pica
 
         newSize = text[:]
+        if type(newSize) != str:
+            newSize = newSize.decode(encoding='UTF-8')
         for u in "em ex px".split():
             if newSize.find(u) >= 0:
                 if LOGMESSAGES:
-                    print "Ignoring unit: %s" % u
+                    print("Ignoring unit: %s" % u)
                 newSize = newSize.replace(u, '')
 
         newSize = newSize.strip()
@@ -346,7 +410,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         t = t.strip()
         t = re.sub("[ ]+", ' ', t)
         a = t.split(' ')
-        a = map(self.convertLength, a)
+        a = list(map(self.convertLength, a))
 
         return a
 
@@ -366,7 +430,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return None
 
         try:
-            text = text.encode("ASCII")
+            text = text # .encode("ASCII")
         except:
             pass
 
@@ -382,20 +446,20 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             t = text[:][3:]
             t = t.replace('%', '')
             tup = eval(t)
-            tup = map(lambda h:h[2:], map(hex, tup))
-            tup = map(lambda h:(2-len(h))*'0'+h, tup)
+            tup = [h[2:] for h in list(map(hex, tup))]
+            tup = [(2-len(h))*'0'+h for h in tup]
             col = "#%s%s%s" % tuple(tup)
             return colors.HexColor(col)
         elif text[:3] == 'rgb' and text.find('%') >= 0:
             t = text[:][3:]
             t = t.replace('%', '')
             tup = eval(t)
-            tup = map(lambda c:c/100.0, tup)
-            col = apply(colors.Color, tup)
+            tup = [c/100.0 for c in tup]
+            col = colors.Color(*tup)
             return col
 
         if LOGMESSAGES:
-            print "Can't handle color:", text
+            print("Can't handle color:", text)
 
         return None
 
@@ -566,11 +630,11 @@ class SvgRenderer:
                 self.printUnusedAttributes(node, n)
         else:
             if LOGMESSAGES:
-                print "Ignoring node: %s" % name
+                print("Ignoring node: %s" % name)
 
 
     def printUnusedAttributes(self, node, n):
-        allAttrs = self.attrConverter.getAllAttributes(node).keys()
+        allAttrs = list(self.attrConverter.getAllAttributes(node).keys())
         unusedAttrs = []
 
         for a in allAttrs:
@@ -588,7 +652,7 @@ class SvgRenderer:
         if LOGMESSAGES and unusedAttrs:
             #print "Used attrs:", n.nodeName, n.usedAttrs
             #print "All attrs:", n.nodeName, allAttrs
-            print "Unused attrs:", n.nodeName, unusedAttrs
+            print("Unused attrs:", n.nodeName, unusedAttrs)
 
 
     def renderTitle_(self, node):
@@ -603,8 +667,8 @@ class SvgRenderer:
 
     def renderSvg(self, node):
         getAttr = node.getAttribute
-        width, height = map(getAttr, ("width", "height"))
-        width, height = map(self.attrConverter.convertLength, (width, height))
+        width, height = list(map(getAttr, ("width", "height")))
+        width, height = list(map(self.attrConverter.convertLength, (width, height)))
         viewBox = getAttr("viewBox")
         if viewBox:
             viewBox = self.attrConverter.convertLengthList(viewBox)
@@ -615,7 +679,7 @@ class SvgRenderer:
 
     def renderG(self, node, display=1):
         getAttr = node.getAttribute
-        id, style, transform = map(getAttr, ("id", "style", "transform"))
+        id, style, transform = list(map(getAttr, ("id", "style", "transform")))
         #sw = map(getAttr, ("stroke-width",))
         self.attrs = self.attrConverter.parseMultiAttributes(style)
         gr = Group()
@@ -654,7 +718,7 @@ class SvgRenderer:
                 self.shapeConverter.applyTransformOnGroup(transform, grp)
         except KeyError:
             if self.verbose and LOGMESSAGES:
-                print "Ignoring unavailable object width ID '%s'." % xlink_href
+                print("Ignoring unavailable object width ID '%s'." % xlink_href)
 
         return grp
 
@@ -687,15 +751,15 @@ class SvgShapeConverter:
         "Determine a list of handled shape elements."
 
         items = dir(self)
-        items = self.__class__.__dict__.keys()
+        items = list(self.__class__.__dict__.keys())
         keys = []
         for i in items:
             keys.append(getattr(self, i))
-        keys = filter(lambda k:type(k) == types.MethodType, keys)
-        keys = map(lambda k:k.__name__, keys)
-        keys = filter(lambda k:k[:7] == "convert", keys)
-        keys = filter(lambda k:k != "convert", keys)
-        keys = map(lambda k:k[7:], keys)
+        keys = [k for k in keys if type(k) == types.MethodType]
+        keys = [k.__name__ for k in keys]
+        keys = [k for k in keys if k[:7] == "convert"]
+        keys = [k for k in keys if k != "convert"]
+        keys = [k[7:] for k in keys]
         shapeNames = [k.lower() for k in keys]
 
         return shapeNames
@@ -711,8 +775,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertLine(self, node):
         getAttr = node.getAttribute
-        x1, y1, x2, y2 = map(getAttr, ("x1", "y1", "x2", "y2"))
-        x1, y1, x2, y2 = map(self.attrConverter.convertLength, (x1, y1, x2, y2))
+        x1, y1, x2, y2 = list(map(getAttr, ("x1", "y1", "x2", "y2")))
+        x1, y1, x2, y2 = list(map(self.attrConverter.convertLength, (x1, y1, x2, y2)))
         shape = Line(x1, y1, x2, y2)
 
         return shape
@@ -720,10 +784,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertRect(self, node):
         getAttr = node.getAttribute
-        x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
-        x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
-        rx, ry = map(getAttr, ("rx", "ry"))
-        rx, ry = map(self.attrConverter.convertLength, (rx, ry))
+        x, y, width, height = list(map(getAttr, ('x', 'y', "width", "height")))
+        x, y, width, height = list(map(self.attrConverter.convertLength, (x, y, width, height)))
+        rx, ry = list(map(getAttr, ("rx", "ry")))
+        rx, ry = list(map(self.attrConverter.convertLength, (rx, ry)))
         shape = Rect(x, y, width, height, rx=rx, ry=ry)
 
         return shape
@@ -732,8 +796,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def convertCircle(self, node):
         # not rendered if r == 0, error if r < 0.
         getAttr = node.getAttribute
-        cx, cy, r = map(getAttr, ("cx", "cy", 'r'))
-        cx, cy, r = map(self.attrConverter.convertLength, (cx, cy, r))
+        cx, cy, r = list(map(getAttr, ("cx", "cy", 'r')))
+        cx, cy, r = list(map(self.attrConverter.convertLength, (cx, cy, r)))
         shape = Circle(cx, cy, r)
 
         return shape
@@ -741,8 +805,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertEllipse(self, node):
         getAttr = node.getAttribute
-        cx, cy, rx, ry = map(getAttr, ("cx", "cy", "rx", "ry"))
-        cx, cy, rx, ry = map(self.attrConverter.convertLength, (cx, cy, rx, ry))
+        cx, cy, rx, ry = list(map(getAttr, ("cx", "cy", "rx", "ry")))
+        cx, cy, rx, ry = list(map(self.attrConverter.convertLength, (cx, cy, rx, ry)))
         width, height = rx, ry
         shape = Ellipse(cx, cy, width, height)
 
@@ -754,7 +818,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = getAttr("points")
         points = points.replace(',', ' ')
         points = points.split()
-        points = map(self.attrConverter.convertLength, points)
+        points = list(map(self.attrConverter.convertLength, points))
 
         # Need to use two shapes, because standard RLG polylines
         # do not support filling...
@@ -775,7 +839,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = getAttr("points")
         points = points.replace(',', ' ')
         points = points.split()
-        points = map(self.attrConverter.convertLength, points)
+        points = list(map(self.attrConverter.convertLength, points))
         shape = Polygon(points)
 
         return shape
@@ -783,7 +847,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertText0(self, node):
         getAttr = node.getAttribute
-        x, y = map(getAttr, ('x', 'y'))
+        x, y = list(map(getAttr, ('x', 'y')))
         if not x: x = '0'
         if not y: y = '0'
         text = ''
@@ -792,7 +856,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 text = node.firstChild.nodeValue.encode("ASCII")
             except:
                 text = "Unicode"
-        x, y = map(self.attrConv.convertLength, (x, y))
+        x, y = list(map(self.attrConv.convertLength, (x, y)))
         shape = String(x, y, text)
         self.applyStyleOnShape(shape, node)
         gr = Group()
@@ -806,8 +870,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def convertText(self, node):
         attrConv = self.attrConverter
         getAttr = node.getAttribute
-        x, y = map(getAttr, ('x', 'y'))
-        x, y = map(attrConv.convertLength, (x, y))
+        x, y = list(map(getAttr, ('x', 'y')))
+        x, y = list(map(attrConv.convertLength, (x, y)))
 
         gr = Group()
 
@@ -819,10 +883,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         dx0, dy0 = 0, 0
         x1, y1 = 0, 0
         ff = attrConv.findAttr(node, "font-family") or "Helvetica"
-        ff = ff.encode("ASCII")
+        # ff = ff.encode("ASCII")
         ff = attrConv.convertFontFamily(ff)
         fs = attrConv.findAttr(node, "font-size") or "12"
-        fs = fs.encode("ASCII")
+        # fs = fs.encode("ASCII")
         fs = attrConv.convertLength(fs)
         for c in node.childNodes:
             dx, dy = 0, 0
@@ -839,8 +903,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 getAttr = c.getAttribute
                 y1 = getAttr('y')
                 y1 = attrConv.convertLength(y1)
-                dx, dy = map(getAttr, ("dx", "dy"))
-                dx, dy = map(attrConv.convertLength, (dx, dy))
+                dx, dy = list(map(getAttr, ("dx", "dy")))
+                dx, dy = list(map(attrConv.convertLength, (dx, dy)))
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
                 baseLineShift = getAttr("baseline-shift") or '0'
@@ -872,11 +936,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertPath(self, node):
         d = node.getAttribute('d')
+        # print("d:", d)
+        d = norm_svg_path(d)
         normPath = normaliseSvgPath(d)
+        # print("normed d:", d)
         pts, ops = [], []
         lastMoveToOp = None
 
-        for i in xrange(0, len(normPath), 2):
+        for i in range(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
  
             # moveto, lineto absolute
@@ -905,7 +972,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 ops.append(0)
             elif op == 'l':
                 xn, yn = nums
-                pts = pts + [pts[-2]+xn] + [pts[-1]+yn]
+                try:
+                    pts = pts + [pts[-2]+xn] + [pts[-1]+yn]
+                except TypeError:
+                    print pts, xn, yn
+                    raise
                 ops.append(1)
 
             # horizontal/vertical line absolute
@@ -942,8 +1013,16 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # cubic bezier, relative
             elif op == 'c':
                 xp, yp = pts[-2:]
-                x1, y1, x2, y2, xn, yn = nums
-                pts = pts + [xp+x1, yp+y1, xp+x2, yp+y2, xp+xn, yp+yn]
+                try:
+                    x1, y1, x2, y2, xn, yn = nums
+                except ValueError:
+                    print("*** nums:", nums)
+                    raise
+                try:
+                    pts = pts + [xp+x1, yp+y1, xp+x2, yp+y2, xp+xn, yp+yn]
+                except TypeError:
+                    print("***", [(xp,x1), (yp,y1), (xp,x2), (yp,y2), (xp,xn), (yp,yn)])
+                    raise
                 ops.append(2)
             elif op == 's':
                 xp, yp, x0, y0 = pts[-4:]
@@ -999,12 +1078,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # arcs
             else: #if op in unhandledOps.keys():
                 if LOGMESSAGES:
-                    print "Suspicious path operator:", op
+                    print("Suspicious path operator:", op)
                 if op in ('A', 'a'):
                     pts = pts + nums[-2:]
                     ops.append(1)
                     if LOGMESSAGES:
-                        print "(Replaced with straight line)"
+                        print("(Replaced with straight line)")
 
         # hack because RLG has no "semi-closed" paths...
         gr = Group()
@@ -1040,13 +1119,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertImage(self, node):
         if LOGMESSAGES:
-            print "Adding box instead image."
+            print("Adding box instead image.")
         getAttr = node.getAttribute
-        x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
-        x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
+        x, y, width, height = list(map(getAttr, ('x', 'y', "width", "height")))
+        x, y, width, height = list(map(self.attrConverter.convertLength, (x, y, width, height)))
         xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
         try:
-            xlink_href = xlink_href.encode("ASCII")
+            xlink_href = xlink_href # .encode("ASCII")
         except:
             pass
         xlink_href = os.path.join(os.path.dirname(self.svgSourceFile), xlink_href)
@@ -1085,17 +1164,17 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         tr = self.attrConverter.convertTransform(transform)
         for op, values in tr:
             if op == "scale":
-                if type(values) != types.TupleType:
+                if type(values) != tuple:
                     values = (values, values)
-                apply(group.scale, values)
+                group.scale(*values)
             elif op == "translate":
                 try: # HOTFIX
                     values = values[0], values[1]
                 except TypeError:
                     return
-                apply(group.translate, values)
+                group.translate(*values)
             elif op == "rotate":
-                if type(values) != types.TupleType or len(values) == 1:
+                if type(values) != tuple or len(values) == 1:
                     group.rotate(values)
                 elif len(values) == 3:
                     angle, cx, cy = values
@@ -1110,7 +1189,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 group.transform = values
             else:
                 if LOGMESSAGES:
-                    print "Ignoring transform:", op, values
+                    print("Ignoring transform:", op, values)
 
 
     def applyStyleOnShape(self, shape, *nodes):
@@ -1170,7 +1249,7 @@ def svg2rlg(path):
         doc = xml.dom.minidom.parse(path)
         svg = doc.documentElement
     except:
-        print "Failed to load input file!"
+        print("Failed to load input file!")
         return
 
     # convert to a RLG drawing

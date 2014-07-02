@@ -11,22 +11,32 @@ import sys
 import glob
 import re
 import gzip
-import urllib
-import httplib
-import cStringIO
 import tarfile
 import pickle
-from os.path import splitext, exists, join, basename, getsize
+from os.path import splitext, exists, join, dirname, basename, getsize
 import unittest
+if sys.version_info.major >= 3:
+    from urllib.parse import splithost, quote, unquote
+    from urllib.request import urlopen
+    from http.client import HTTPConnection
+    import io
+elif sys.version_info.major < 3:
+    from urllib import splithost, quote
+    from urlparse import unquote
+    from httplib import HTTPConnection, HTTP
+    import cStringIO as io
 
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.graphics import renderPDF, renderPM
 
 # import svglib from distribution
-sys.path.insert(0, "..")
+sys.path.insert(0, join(dirname(__file__), ".."))
 from svglib import svglib
 del sys.path[0]
+
+
+PY_VERSION_MAJOR = sys.version_info.major
 
 
 def testit(func, mapping):
@@ -39,18 +49,59 @@ def testit(func, mapping):
             failed.append((input, result, expected))
 
     if failed:
-        print "failed tests (input, result, expected):"
+        print("failed tests (input, result, expected):")
         for input, result, expected in failed:
-            print "  %s : %s != %s" % (repr(input), result, expected)
+            print("  %s : %s != %s" % (repr(input), result, expected))
 
     return failed
     
+
+def test_svg_paths(inpath):
+    "Inspect d attribute of SVG paths."
+
+    import re
+    from lxml import etree
+
+    inpath = "/Users/dinu/Volumes/MISTRAL8/repos/bitbucket/svglib/src/test/samples/wikipedia/flags/Afghanistan.svg"
+
+    assert inpath.lower().endswith(".svg")
+    content = open(inpath).read()
+    paths_strings = re.findall("<path .*?/>", content, re.M)
+    for i, path_str in enumerate(paths_strings):
+        tree = etree.fromstring(path_str)
+        t = tree.xpath('/path')[0]
+        d = t.attrib["d"]
+        print(i, d)
+        print()
+
+
+
+class FixSvgPathTestCase(unittest.TestCase):
+    "Testing fixing SVG paths."
+
+    def _test0(self):
+        "Test single path fixing."
+
+        inp = "M10 20, h 30 40 v 30 40"
+        exp = "M 10 20 h 70 v 70"
+        res = svglib.fixSvgPath(inp)
+        self.assertEqual(exp, res)
+
 
 class NormBezierPathTestCase(unittest.TestCase):
     "Testing Bezier paths."
 
     def test0(self):
-        "Test path normalisation."
+        "Test single path normalisation."
+
+        inp = "M10 20, L 30 40 "
+        exp = ["M", [10, 20], "L", [30, 40]]
+        res = svglib.normaliseSvgPath(inp)
+        self.assertEqual(exp, res)
+
+
+    def test1(self):
+        "Test multiple path normalisation."
 
         mapping = (
             ("", 
@@ -75,13 +126,23 @@ class NormBezierPathTestCase(unittest.TestCase):
                 ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
         )
         failed = testit(svglib.normaliseSvgPath, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class ColorAttrConverterTestCase(unittest.TestCase):
     "Testing color attribute conversion."
 
     def test0(self):
+        "Test color attribute conversion."
+
+        inp = "rgb(100%,0%,0%)"
+        exp = colors.red
+        ac = svglib.Svg2RlgAttributeConverter()
+        res = ac.convertColor(inp)
+        self.assertEqual(res, exp)
+
+
+    def test1(self):
         "Test color attribute conversion."
 
         mapping = (
@@ -92,7 +153,7 @@ class ColorAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertColor, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class LengthAttrConverterTestCase(unittest.TestCase):
@@ -115,7 +176,7 @@ class LengthAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertLength, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
     def test1(self):
@@ -125,7 +186,7 @@ class LengthAttrConverterTestCase(unittest.TestCase):
         attr = "1e1%"
         expected = 1
         obj = ac.convertLength(attr, 10)
-        self.failUnlessEqual(obj, expected)
+        self.assertEqual(obj, expected)
 
 
 class LengthListAttrConverterTestCase(unittest.TestCase):
@@ -140,7 +201,7 @@ class LengthListAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertLengthList, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class TransformAttrConverterTestCase(unittest.TestCase):
@@ -157,7 +218,7 @@ class TransformAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertTransform, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class AttrConverterTestCase(unittest.TestCase):
@@ -172,7 +233,7 @@ class AttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.parseMultiAttributes, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class SVGSamplesTestCase(unittest.TestCase):
@@ -185,21 +246,21 @@ class SVGSamplesTestCase(unittest.TestCase):
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print "working on [%d]" % i, path        
+            print("working on [%d]" % i, path)
 
             # convert
             try:
                 drawing = svglib.svg2rlg(path)
             except:
-                print "could not convert [%d]" % i, path
+                print("could not convert [%d]" % i, path)
                 continue
 
             # save as PDF
-            base = splitext(path)[0] + '-svglib.pdf'
+            base = splitext(path)[0] + '-svglib-py.pdf'
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print "could not save as PDF [%d]" % i, path        
+                print("could not save as PDF [%d]" % i, path)
 
 
     def _test1(self):
@@ -208,7 +269,7 @@ class SVGSamplesTestCase(unittest.TestCase):
 
         # skip test, if uniconv tool not found
         if not os.popen("which uniconv").read().strip():
-            print "Uniconv not found, test skipped."
+            print("Uniconv not found, test skipped.")
             return
             
         paths = glob.glob("samples/misc/*.svg")
@@ -226,16 +287,18 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
     def fetchFile(self, server, path):
         "Fetch file using httplib module."
     
-        print "downloading http://%s%s" % (server, path)
+        print("downloading http://%s%s" % (server, path))
             
-        req = httplib.HTTP(server)
+        req = HTTPConnection(server)
         req.putrequest('GET', path)
         req.putheader('Host', server)
         req.putheader('Accept', 'text/svg')
         req.endheaders()
+        req.close()
         ec, em, h = req.getreply()
         fd = req.getfile()
         data = fd.read()
+        fd.close()
         
         return data
 
@@ -272,7 +335,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
                 try:
                     data = self.fetchFile(server, path)
                 except:
-                    print "Check your internet connection and try again!"
+                    print("Check your internet connection and try again!")
                     break
                 if data:
                     open(p, "w").write(data)
@@ -285,13 +348,13 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print "working on [%d]" % i, path        
+            print("working on [%d]" % i, path)
 
             # convert
             try:
                 drawing = svglib.svg2rlg(path)
             except:
-                print "could not convert [%d]" % i, path
+                print("could not convert [%d]" % i, path)
                 continue
 
             # save as PDF
@@ -299,7 +362,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print "could not save as PDF [%d]" % i, path        
+                print("could not save as PDF [%d]" % i, path)
 
 
     # outcommented
@@ -308,7 +371,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
 
         # skip test, if uniconv tool not found
         if not os.popen("which uniconv").read().strip():
-            print "Uniconv not found, test skipped."
+            print("Uniconv not found, test skipped.")
             return
 
         paths = glob.glob("%s/*" % self.folderPath)
@@ -327,15 +390,17 @@ class WikipediaFlagsTestCase(unittest.TestCase):
 
     def fetchFile(self, url):
         "Get content with some given URL, uncompress if needed."
-    
-        server, path = urllib.splithost(url[url.find("//"):])
-        conn = httplib.HTTPConnection(server)
+
+        print("loading %s" % url)
+
+        server, path = splithost(url[url.find("//"):])
+        conn = HTTPConnection(server)
         conn.request("GET", path)
         r1 = conn.getresponse()
         if (r1.status, r1.reason) == (200, "OK"):
             data = r1.read()
             if r1.getheader("content-encoding") == "gzip":
-                zbuf = cStringIO.StringIO(data)
+                zbuf = io.StringIO(data)
                 zfile = gzip.GzipFile(mode="rb", fileobj=zbuf)
                 data = zfile.read()
                 zfile.close()
@@ -351,13 +416,14 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         http://upload.wikimedia.org/wikipedia/commons
         /9/91/Flag_of_Bhutan.svg
         -> Bhutan.svg
+
         /f/fa/Flag_of_the_People%27s_Republic_of_China.svg
         -> The_People's_Republic_of_China.svg
         """
 
         path = basename(url)[len("Flag_of_"):]
         path = path.capitalize() # capitalise leading "the_"
-        path = urllib.unquote(path)
+        path = unquote(path)
 
         return path
 
@@ -365,10 +431,10 @@ class WikipediaFlagsTestCase(unittest.TestCase):
     def setUp(self):
         "Check if files exists, else download."
 
-        self.folderPath = "samples/wikipedia/flags"
-
         # create directory if not already present
+        self.folderPath = "samples/wikipedia/flags"
         if not exists(self.folderPath):
+            print("creating %s" % self.folderPath)
             os.mkdir(self.folderPath)
 
         # fetch flags.html, if not already present
@@ -376,17 +442,20 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         if not exists(path):
             u = "http://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
             data = self.fetchFile(u)
+            print("saving %s" % path)
             open(path, "w").write(data)
         else:
             data = open(path).read()
 
         # find all flag base filenames
-        # ["Flag_of_Bhutan.svg", "Flag_of_Bhutan.svg", ...]
+        # ["Flag_of_Abkhazia.svg", ...]
         flagNames = re.findall("\:(Flag_of_.*?\.svg)", data)
-        flagNames = [urllib.unquote(fn) for fn in flagNames]
+        flagNames = [unquote(fn) for fn in flagNames]
+
+        flagNames = flagNames[:10]
 
         # save flag URLs into a pickle file, if not already present
-        picklePath = join(self.folderPath, "flags-pickle.txt")
+        picklePath = join(self.folderPath, "flags-pickle-py%d.txt" % PY_VERSION_MAJOR)
         if not exists(picklePath):            
             flagUrlMap = []
             prefix = "http://en.wikipedia.org/wiki/File:"
@@ -395,31 +464,33 @@ class WikipediaFlagsTestCase(unittest.TestCase):
                 
                 # load single flag HTML page, like  
                 # http://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
-                flagHtml = self.fetchFile(prefix + fn)
+                flagHtml = str(self.fetchFile(prefix + fn))
     
                 # search link to single SVG file to download, like
-                # http://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
-                svgPat = "http://upload.wikimedia.org/wikipedia/commons"
-                p = "%s/.*?/%s" % (svgPat, urllib.quote(fn))
-                print "check", prefix + fn
-                
+                # upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
+                svgPat = "//upload.wikimedia.org/wikipedia/commons"
+                p = "%s/.*?/%s" % (svgPat, quote(fn))
+                print("searching %s" % prefix + fn)
+
                 try:
                     flagUrl = re.search(p, flagHtml)
-                except:
+                except SyntaxError:
                     continue
                 if flagUrl:
                     start, end = flagUrl.span()
                     flagUrl = flagHtml[start:end]
                     flagUrlMap.append((prefix + fn, flagUrl))
+                # print(len(flagUrlMap))
+            print("saving %s" % picklePath)
             pickle.dump(flagUrlMap, open(picklePath, "wb"))
 
         # download flags in SVG format, if not present already
-        flagUrlMap = pickle.load(open(picklePath))
+        flagUrlMap = pickle.load(open(picklePath, "rb"))
         for dummy, flagUrl in flagUrlMap:
             path = join(self.folderPath, self.flagUrl2filename(flagUrl))
             if not exists(path):
-                print "fetch", flagUrl
                 flagSvg = self.fetchFile(flagUrl)
+                print("saving %s" % flagUrl)
                 open(path, "w").write(flagSvg)
 
 
@@ -430,21 +501,20 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print "working on [%d]" % i, path        
+            print("working on [%d] %s" % (i, path))
 
             # convert
             try:
                 drawing = svglib.svg2rlg(path)
-            except:
-                print "could not convert [%d]" % i, path
-                continue
+            except ValueError:
+                print("could not convert [%d] %s" % (i, path))
 
             # save as PDF
-            base = splitext(path)[0] + '-svglib.pdf'
+            base = splitext(path)[0] + '-svglib-py%d.pdf' % PY_VERSION_MAJOR
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print "could not save as PDF [%d]" % i, path        
+                print("could not save as PDF [%d] %s" % (i, path))
 
 
     # outcommented, because many SVG samples seem to generate errors
@@ -453,7 +523,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
 
         # skip test, if uniconv tool not found
         if not os.popen("which uniconv").read().strip():
-            print "Uniconv not found, test skipped."
+            print("Uniconv not found, test skipped.")
             return
 
         paths = glob.glob("%s/*" % self.folderPath)
@@ -484,19 +554,19 @@ class W3CTestCase(unittest.TestCase):
         if not exists(self.folderPath):
             if not exists(join("samples", tarPath)):
                 if not exists(join("samples", archivePath)):
-                    print "downloading %s" % url
+                    print("downloading %s" % url)
                     try:
-                        data = urllib.urlopen(url).read()
-                    except IOError, details:
-                        print details
-                        print "Check your internet connection and try again!"
+                        data = urllib.request.urlopen(url).read()
+                    except IOError as details:
+                        print(details)
+                        print("Check your internet connection and try again!")
                         return
                     archivePath = basename(url)
                     open(join("samples", archivePath), "wb").write(data)
-                print "unpacking %s" % archivePath
+                print("unpacking %s" % archivePath)
                 tarData = gzip.open(join("samples", archivePath), "rb").read()    
                 open(join("samples", tarPath), "wb").write(tarData)
-            print "extracting into %s" % self.folderPath
+            print("extracting into %s" % self.folderPath)
             os.mkdir(self.folderPath)
             tarFile = tarfile.TarFile(join("samples", tarPath))
             tarFile.extractall(self.folderPath)
@@ -513,20 +583,20 @@ class W3CTestCase(unittest.TestCase):
         
         paths = glob.glob("%s/svg/*.svg" % self.folderPath)
         msg = "Destination folder '%s/svg' not found." % self.folderPath
-        self.failUnless(len(paths) > 0, msg)
+        self.assertTrue(len(paths) > 0, msg)
         
         for i, path in enumerate(paths):
-            print "working on [%d]" % i, path        
+            print("working on [%d]" % i, path)
 
             if basename(path) in excludeList:
-                print "excluded (to be tested later)"
+                print("excluded (to be tested later)")
                 continue
             
             # convert
             try:
                 drawing = svglib.svg2rlg(path)
             except:
-                print "could not convert [%d]" % i, path        
+                print("could not convert [%d]" % i, path)
                 continue
 
             # save as PDF
@@ -534,7 +604,7 @@ class W3CTestCase(unittest.TestCase):
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print "could not save as PDF [%d]" % i, path        
+                print("could not save as PDF [%d]" % i, path)
 
             # save as PNG
             # (endless loop for file paint-stroke-06-t.svg)
@@ -542,7 +612,7 @@ class W3CTestCase(unittest.TestCase):
             try:
                 renderPM.drawToFile(drawing, base, 'PNG')
             except:
-                print "could not save as PNG [%d]" % i, path               
+                print("could not save as PNG [%d]" % i, path)
 
 
     # outcommented, because many SVG samples seem to generate errors
@@ -551,7 +621,7 @@ class W3CTestCase(unittest.TestCase):
 
         # skip test, if uniconv tool not found
         if not os.popen("which uniconv").read().strip():
-            print "Uniconv not found, test skipped."
+            print("Uniconv not found, test skipped.")
             return
             
         paths = glob.glob("%s/svg/*" % self.folderPath)
@@ -566,4 +636,7 @@ class W3CTestCase(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    if PY_VERSION_MAJOR <= 2:
+        unittest.main()
+    else:
+        unittest.main(warnings='ignore')
