@@ -322,7 +322,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
         if text[-1] == '%':
             if LOGMESSAGES:
-                print "Fiddling length unit: %"
+                print("Fiddling length unit: %")
             return float(text[:-1]) / 100 * percentOf
         elif text[-2:] == "pc":
             return float(text[:-2]) * pica
@@ -331,7 +331,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         for u in "em ex px".split():
             if newSize.find(u) >= 0:
                 if LOGMESSAGES:
-                    print "Ignoring unit: %s" % u
+                    print("Ignoring unit: %s" % u)
                 newSize = newSize.replace(u, '')
 
         newSize = newSize.strip()
@@ -396,7 +396,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return col
 
         if LOGMESSAGES:
-            print "Can't handle color:", text
+            print("Can't handle color: %s" % text)
 
         return None
 
@@ -567,7 +567,7 @@ class SvgRenderer:
                 self.printUnusedAttributes(node, n)
         else:
             if LOGMESSAGES:
-                print "Ignoring node: %s" % name
+                print("Ignoring node: %s" % name)
 
 
     def printUnusedAttributes(self, node, n):
@@ -589,7 +589,7 @@ class SvgRenderer:
         if LOGMESSAGES and unusedAttrs:
             #print "Used attrs:", n.nodeName, n.usedAttrs
             #print "All attrs:", n.nodeName, allAttrs
-            print "Unused attrs:", n.nodeName, unusedAttrs
+            print("Unused attrs: %s %s" % (n.nodeName, unusedAttrs))
 
 
     def renderTitle_(self, node):
@@ -655,7 +655,7 @@ class SvgRenderer:
                 self.shapeConverter.applyTransformOnGroup(transform, grp)
         except KeyError:
             if self.verbose and LOGMESSAGES:
-                print "Ignoring unavailable object width ID '%s'." % xlink_href
+                print("Ignoring unavailable object width ID '%s'." % xlink_href)
 
         return grp
 
@@ -1000,12 +1000,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # arcs
             else: #if op in unhandledOps.keys():
                 if LOGMESSAGES:
-                    print "Suspicious path operator:", op
+                    print("Suspicious path operator: %s" % op)
                 if op in ('A', 'a'):
                     pts = pts + nums[-2:]
                     ops.append(1)
                     if LOGMESSAGES:
-                        print "(Replaced with straight line)"
+                        print("(Replaced with straight line)")
 
         # hack because RLG has no "semi-closed" paths...
         gr = Group()
@@ -1041,7 +1041,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertImage(self, node):
         if LOGMESSAGES:
-            print "Adding box instead image."
+            print("Adding box instead image.")
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
@@ -1111,7 +1111,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 group.transform = values
             else:
                 if LOGMESSAGES:
-                    print "Ignoring transform:", op, values
+                    print("Ignoring transform: %s %s" % (op, values))
 
 
     def applyStyleOnShape(self, shape, *nodes):
@@ -1171,7 +1171,7 @@ def svg2rlg(path):
         doc = xml.dom.minidom.parse(path)
         svg = doc.documentElement
     except:
-        print "Failed to load input file!"
+        print("Failed to load input file!")
         return
 
     # convert to a RLG drawing
