@@ -23,7 +23,6 @@ import re
 import operator
 import gzip
 import xml.dom.minidom
-import string
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.graphics.shapes import *
@@ -51,10 +50,7 @@ def convertToFloats(aList):
         try:
             aList[i] = float(aList[i])
         except ValueError:
-            try:
-                aList[i] = aList[i].encode("ASCII")
-            except:
-                pass
+            pass
 
     return aList
 
@@ -144,9 +140,9 @@ def normaliseSvgPath(attr):
     opKeys = ops.keys()
     a = attr
     a = a.replace(',', ' ')
-    a = string.replace(a, 'e-', 'ee')
-    a = string.replace(a, '-', ' -')
-    a = string.replace(a, 'ee', 'e-')
+    a = a.replace('e-', 'ee')
+    a = a.replace('-', ' -')
+    a = a.replace('ee', 'e-')
     for op in opKeys:
         a = a.replace(op, " %s " % op)
     a = a.strip()
@@ -197,11 +193,6 @@ class AttributeConverter:
         Return a dictionary with single attributes in 'line'.
         """
     
-        try:
-            line = line.encode("ASCII")
-        except:
-            pass
-
         attrs = line.split(';')
         attrs = [a.strip() for a in attrs]
         attrs = filter(lambda a:len(a)>0, attrs)
@@ -234,7 +225,7 @@ class AttributeConverter:
             return attrValue
         elif svgNode.getAttribute("style"):
             dict = self.parseMultiAttributes(svgNode.getAttribute("style"))
-            if dict.has_key(name):
+            if name in dict:
                 return dict[name]
         else:
             if svgNode.parentNode:
@@ -279,14 +270,8 @@ class AttributeConverter:
              -> [("scale", 2), ("translate", (10,20))]
         """
 
-        line = svgAttr
+        line = svgAttr.strip()
 
-        try:
-            line = line.encode("ASCII")
-        except:
-            pass
-
-        line = line.strip()
         ops = line[:]
         brackets = []
         indices = []
@@ -347,9 +332,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         t = t.strip()
         t = re.sub("[ ]+", ' ', t)
         a = t.split(' ')
-        a = map(self.convertLength, a)
 
-        return a
+        return [self.convertLength(a) for a in a]
 
 
     def convertColor(self, svgAttr):
@@ -366,11 +350,6 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if not text or text == "none":
             return None
 
-        try:
-            text = text.encode("ASCII")
-        except:
-            pass
-
         if text in predefined.split():
             return getattr(colors, text)
         elif text == "currentColor":
@@ -383,17 +362,16 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             t = text[:][3:]
             t = t.replace('%', '')
             tup = eval(t)
-            tup = map(lambda h:h[2:], map(hex, tup))
-            tup = map(lambda h:(2-len(h))*'0'+h, tup)
+            tup = [h[2:] for h in [hex(t) for t in tup]]
+            tup = [(2 - len(h)) * '0' + h for h in tup]
             col = "#%s%s%s" % tuple(tup)
             return colors.HexColor(col)
         elif text[:3] == 'rgb' and text.find('%') >= 0:
             t = text[:][3:]
             t = t.replace('%', '')
             tup = eval(t)
-            tup = map(lambda c:c/100.0, tup)
-            col = apply(colors.Color, tup)
-            return col
+            tup = [c/100.0 for c in tup]
+            return colors.Color(*tup)
 
         if LOGMESSAGES:
             print("Can't handle color: %s" % text)
@@ -755,7 +733,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = getAttr("points")
         points = points.replace(',', ' ')
         points = points.split()
-        points = map(self.attrConverter.convertLength, points)
+        points = list(map(self.attrConverter.convertLength, points))
 
         # Need to use two shapes, because standard RLG polylines
         # do not support filling...
@@ -776,7 +754,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = getAttr("points")
         points = points.replace(',', ' ')
         points = points.split()
-        points = map(self.attrConverter.convertLength, points)
+        points = list(map(self.attrConverter.convertLength, points))
         shape = Polygon(points)
 
         return shape
@@ -1086,17 +1064,17 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         tr = self.attrConverter.convertTransform(transform)
         for op, values in tr:
             if op == "scale":
-                if type(values) != types.TupleType:
+                if not isinstance(values, tuple):
                     values = (values, values)
-                apply(group.scale, values)
+                group.scale(*values)
             elif op == "translate":
                 try: # HOTFIX
                     values = values[0], values[1]
                 except TypeError:
                     return
-                apply(group.translate, values)
+                group.translate(*values)
             elif op == "rotate":
-                if type(values) != types.TupleType or len(values) == 1:
+                if not isinstance(values, tuple) or len(values) == 1:
                     group.rotate(values)
                 elif len(values) == 3:
                     angle, cx, cy = values

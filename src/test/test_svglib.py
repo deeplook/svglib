@@ -12,12 +12,21 @@ import glob
 import re
 import gzip
 import urllib
-import httplib
-import cStringIO
+import io
 import tarfile
 import pickle
 from os.path import splitext, exists, join, basename, getsize
 import unittest
+try:
+    from httplib import HTTPSConnection  # PY2
+except ImportError:
+    from http.client import HTTPSConnection  # PY3
+try:
+    from urllib import quote, unquote, urlopen  # PY2
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import quote, unquote, urlparse  # PY3
+    from urllib.request import urlopen
 
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -75,7 +84,7 @@ class NormBezierPathTestCase(unittest.TestCase):
                 ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
         )
         failed = testit(svglib.normaliseSvgPath, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class ColorAttrConverterTestCase(unittest.TestCase):
@@ -92,7 +101,7 @@ class ColorAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertColor, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class LengthAttrConverterTestCase(unittest.TestCase):
@@ -115,7 +124,7 @@ class LengthAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertLength, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
     def test1(self):
@@ -125,7 +134,7 @@ class LengthAttrConverterTestCase(unittest.TestCase):
         attr = "1e1%"
         expected = 1
         obj = ac.convertLength(attr, 10)
-        self.failUnlessEqual(obj, expected)
+        self.assertEqual(obj, expected)
 
 
 class LengthListAttrConverterTestCase(unittest.TestCase):
@@ -140,7 +149,7 @@ class LengthListAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertLengthList, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class TransformAttrConverterTestCase(unittest.TestCase):
@@ -157,7 +166,7 @@ class TransformAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.convertTransform, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class AttrConverterTestCase(unittest.TestCase):
@@ -172,7 +181,7 @@ class AttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = testit(ac.parseMultiAttributes, mapping)
-        self.failUnlessEqual(len(failed), 0)
+        self.assertEqual(len(failed), 0)
 
 
 class SVGSamplesTestCase(unittest.TestCase):
@@ -228,7 +237,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
     
         print("downloading https://%s%s" % (server, path))
             
-        req = httplib.HTTPSConnection(server)
+        req = HTTPSConnection(server)
         req.putrequest('GET', path)
         req.putheader('Host', server)
         req.putheader('Accept', 'text/svg')
@@ -328,19 +337,21 @@ class WikipediaFlagsTestCase(unittest.TestCase):
     def fetchFile(self, url):
         "Get content with some given URL, uncompress if needed."
     
-        server, path = urllib.splithost(url[url.find("//"):])
-        conn = httplib.HTTPSConnection(server)
-        conn.request("GET", path)
+        parsed = urlparse(url)
+        conn = HTTPSConnection(parsed.netloc)
+        conn.request("GET", parsed.path)
         r1 = conn.getresponse()
         if (r1.status, r1.reason) == (200, "OK"):
             data = r1.read()
             if r1.getheader("content-encoding") == "gzip":
-                zbuf = cStringIO.StringIO(data)
+                zbuf = io.BytesIO(data)
                 zfile = gzip.GzipFile(mode="rb", fileobj=zbuf)
                 data = zfile.read()
                 zfile.close()
+            data = data.decode('utf-8')
         else:
             data = None
+        conn.close()
     
         return data
 
@@ -357,7 +368,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
 
         path = basename(url)[len("Flag_of_"):]
         path = path.capitalize() # capitalise leading "the_"
-        path = urllib.unquote(path)
+        path = unquote(path)
 
         return path
 
@@ -384,7 +395,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         # find all flag base filenames
         # ["Flag_of_Bhutan.svg", "Flag_of_Bhutan.svg", ...]
         flagNames = re.findall("\:(Flag_of_.*?\.svg)", data)
-        flagNames = [urllib.unquote(fn) for fn in flagNames]
+        flagNames = [unquote(fn) for fn in flagNames]
 
         # save flag URLs into a pickle file, if not already present
         picklePath = join(self.folderPath, "flags-pickle.txt")
@@ -396,12 +407,12 @@ class WikipediaFlagsTestCase(unittest.TestCase):
                 
                 # load single flag HTML page, like  
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
-                flagHtml = self.fetchFile(prefix + fn)
+                flagHtml = self.fetchFile(prefix + quote(fn))
     
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
                 svgPat = "//upload.wikimedia.org/wikipedia/commons"
-                p = "%s/.*?/%s" % (svgPat, urllib.quote(fn))
+                p = "%s/.*?/%s" % (svgPat, quote(fn))
                 print("check %s" % prefix + fn)
                 
                 flagUrl = re.search(p, flagHtml)
@@ -412,7 +423,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
             pickle.dump(flagUrlMap, open(picklePath, "wb"))
 
         # download flags in SVG format, if not present already
-        flagUrlMap = pickle.load(open(picklePath))
+        flagUrlMap = pickle.load(open(picklePath, "rb"))
         for dummy, flagUrl in flagUrlMap:
             path = join(self.folderPath, self.flagUrl2filename(flagUrl))
             if not exists(path):
