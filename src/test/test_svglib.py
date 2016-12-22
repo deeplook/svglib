@@ -226,16 +226,16 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
     def fetchFile(self, server, path):
         "Fetch file using httplib module."
     
-        print "downloading http://%s%s" % (server, path)
+        print "downloading https://%s%s" % (server, path)
             
-        req = httplib.HTTP(server)
+        req = httplib.HTTPSConnection(server)
         req.putrequest('GET', path)
         req.putheader('Host', server)
         req.putheader('Accept', 'text/svg')
         req.endheaders()
-        ec, em, h = req.getreply()
-        fd = req.getfile()
-        data = fd.read()
+        r1 = req.getresponse()
+        data = r1.read()
+        req.close()
         
         return data
 
@@ -329,7 +329,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         "Get content with some given URL, uncompress if needed."
     
         server, path = urllib.splithost(url[url.find("//"):])
-        conn = httplib.HTTPConnection(server)
+        conn = httplib.HTTPSConnection(server)
         conn.request("GET", path)
         r1 = conn.getresponse()
         if (r1.status, r1.reason) == (200, "OK"):
@@ -374,9 +374,10 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         # fetch flags.html, if not already present
         path = join(self.folderPath, "flags.html")
         if not exists(path):
-            u = "http://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
+            u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
             data = self.fetchFile(u)
-            open(path, "w").write(data)
+            if data:
+                open(path, "w").write(data)
         else:
             data = open(path).read()
 
@@ -389,24 +390,21 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         picklePath = join(self.folderPath, "flags-pickle.txt")
         if not exists(picklePath):            
             flagUrlMap = []
-            prefix = "http://en.wikipedia.org/wiki/File:"
+            prefix = "https://en.wikipedia.org/wiki/File:"
             for i in range(len(flagNames)):
                 fn = flagNames[i]
                 
                 # load single flag HTML page, like  
-                # http://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
+                # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
                 flagHtml = self.fetchFile(prefix + fn)
     
                 # search link to single SVG file to download, like
-                # http://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
-                svgPat = "http://upload.wikimedia.org/wikipedia/commons"
+                # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
+                svgPat = "//upload.wikimedia.org/wikipedia/commons"
                 p = "%s/.*?/%s" % (svgPat, urllib.quote(fn))
                 print "check", prefix + fn
                 
-                try:
-                    flagUrl = re.search(p, flagHtml)
-                except:
-                    continue
+                flagUrl = re.search(p, flagHtml)
                 if flagUrl:
                     start, end = flagUrl.span()
                     flagUrl = flagHtml[start:end]
