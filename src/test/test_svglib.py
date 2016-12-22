@@ -13,8 +13,8 @@ import re
 import gzip
 import urllib
 import io
+import json
 import tarfile
-import pickle
 from os.path import splitext, exists, join, basename, getsize
 import unittest
 try:
@@ -397,9 +397,9 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         flagNames = re.findall("\:(Flag_of_.*?\.svg)", data)
         flagNames = [unquote(fn) for fn in flagNames]
 
-        # save flag URLs into a pickle file, if not already present
-        picklePath = join(self.folderPath, "flags-pickle.txt")
-        if not exists(picklePath):            
+        # save flag URLs into a JSON file, if not already present
+        jsonPath = join(self.folderPath, "flags.json")
+        if not exists(jsonPath):
             flagUrlMap = []
             prefix = "https://en.wikipedia.org/wiki/File:"
             for i in range(len(flagNames)):
@@ -420,10 +420,12 @@ class WikipediaFlagsTestCase(unittest.TestCase):
                     start, end = flagUrl.span()
                     flagUrl = flagHtml[start:end]
                     flagUrlMap.append((prefix + fn, flagUrl))
-            pickle.dump(flagUrlMap, open(picklePath, "wb"))
+            with open(jsonPath, "w") as fh:
+                json.dump(flagUrlMap, fh)
 
         # download flags in SVG format, if not present already
-        flagUrlMap = pickle.load(open(picklePath, "rb"))
+        with open(jsonPath, "r") as fh:
+            flagUrlMap = json.load(fh)
         for dummy, flagUrl in flagUrlMap:
             path = join(self.folderPath, self.flagUrl2filename(flagUrl))
             if not exists(path):
