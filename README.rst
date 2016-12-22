@@ -4,6 +4,12 @@
 Svglib
 ========
 
+.. WARNING::
+      This repository was imported from https://bitbucket.org/deeplook/svglib
+      and is being worked on to incorporate pull requests from other forks
+      in order to bring it back in shape, apply some pending fixes and
+      support Python 2 and 3. Please stay tuned!
+
 ---------------------------------------------------------------------------
 An experimental library for reading and converting SVG
 ---------------------------------------------------------------------------
