@@ -11,7 +11,6 @@ import sys
 import glob
 import re
 import gzip
-import urllib
 import io
 import json
 import tarfile
@@ -497,7 +496,7 @@ class W3CTestCase(unittest.TestCase):
                 if not exists(join("samples", archivePath)):
                     print("downloading %s" % url)
                     try:
-                        data = urllib.urlopen(url).read()
+                        data = urlopen(url).read()
                     except IOError as details:
                         print(details)
                         print("Check your internet connection and try again!")
