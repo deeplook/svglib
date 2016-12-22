@@ -35,7 +35,7 @@ def testit(func, mapping):
     failed = []
     for input, expected in mapping:
         result = func(input)
-        if result != expected:
+        if not result == expected:
             failed.append((input, result, expected))
 
     if failed:
