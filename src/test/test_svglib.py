@@ -216,7 +216,7 @@ class AttrConverterTestCase(unittest.TestCase):
         Any shape with no fill property should set black color in rlg syntax.
         """
         drawing = svglib.svg2rlg(io.StringIO(
-'''<?xml version="1.0" encoding="UTF-8"?>
+u'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 36 24">
 <rect y="10" width="36" height="4"/>
 </svg>'''
