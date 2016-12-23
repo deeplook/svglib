@@ -1045,10 +1045,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     values = (values, values)
                 group.scale(*values)
             elif op == "translate":
-                try: # HOTFIX
-                    values = values[0], values[1]
-                except TypeError:
-                    return
+                if isinstance(values, (int, float)):
+                    # From the SVG spec: If <ty> is not provided, it is assumed to be zero.
+                    values = values, 0
                 group.translate(*values)
             elif op == "rotate":
                 if not isinstance(values, tuple) or len(values) == 1:
