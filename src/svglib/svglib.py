@@ -450,7 +450,6 @@ class SvgRenderer:
         self.drawing = None
         self.mainGroup = Group()
         self.definitions = {}
-        self.doesProcessDefinitions = 0
         self.verbose = 0
         self.level = 0
         self.path = path
@@ -472,9 +471,13 @@ class SvgRenderer:
             #else:
             #    self.logFile.write((format+"\n") % args)
 
+        n = NodeTracker(node)
+        nid = n.getAttribute("id")
+        ignored = False
+        item = None
+
         if name == "svg":
             self.level = self.level + 1
-            n = NodeTracker(node)
             drawing = self.renderSvg(n)
             children = n.childNodes
             for child in children:
@@ -482,63 +485,57 @@ class SvgRenderer:
                     continue
                 self.render(child, self.mainGroup)
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
         elif name == "defs":
-            self.doesProcessDefinitions = 1
-            n = NodeTracker(node)
             self.level = self.level + 1
-            parent.add(self.renderG(n))
+            item = self.renderG(n)
+            parent.add(item)
             self.level = self.level - 1
-            self.doesProcessDefinitions = 0
-            self.printUnusedAttributes(node, n)
         elif name == 'a':
             self.level = self.level + 1
-            n = NodeTracker(node)
             item = self.renderA(n)
             parent.add(item)
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
         elif name == 'g':
             self.level = self.level + 1
-            n = NodeTracker(node)
             display = n.getAttribute("display")
             if display != "none":
                 item = self.renderG(n)
                 parent.add(item)
-                if self.doesProcessDefinitions:
-                    id = n.getAttribute("id")
-                    self.definitions[id] = item
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
         elif name == "symbol":
             self.level = self.level + 1
-            n = NodeTracker(node)
             item = self.renderSymbol(n)
             # parent.add(item)
-            id = n.getAttribute("id")
-            if id:
-                self.definitions[id] = item
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
+        elif name == "use":
+            self.level = self.level + 1
+            item = self.renderUse(n)
+            if item:
+                parent.add(item)
+            self.level = self.level - 1
         elif name in self.handledShapes:
             methodName = "convert"+name[0].upper()+name[1:]
-            n = NodeTracker(node)
-            shape = getattr(self.shapeConverter, methodName)(n)
-            if shape:
-                self.shapeConverter.applyStyleOnShape(shape, n)
+            item = getattr(self.shapeConverter, methodName)(n)
+            if item:
+                self.shapeConverter.applyStyleOnShape(item, n)
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
                 if transform and display != "none": 
                     gr = Group()
                     self.shapeConverter.applyTransformOnGroup(transform, gr)
-                    gr.add(shape)
+                    gr.add(item)
                     parent.add(gr)
+                    item = gr
                 elif display != "none":
-                    parent.add(shape)
-                self.printUnusedAttributes(node, n)
+                    parent.add(item)
         else:
+            ignored = True
             if LOGMESSAGES:
                 print("Ignoring node: %s" % name)
+        if not ignored:
+            if nid and item:
+                self.definitions[nid] = item
+            self.printUnusedAttributes(node, n)
 
 
     def printUnusedAttributes(self, node, n):
@@ -617,16 +614,23 @@ class SvgRenderer:
 
     def renderUse(self, node):
         xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
-        grp = Group()
-        try:
-            item = self.definitions[xlink_href[1:]]
-            grp.add(item)
-            transform = node.getAttribute("transform")
-            if transform:
-                self.shapeConverter.applyTransformOnGroup(transform, grp)
-        except KeyError:
+        if not xlink_href:
+            return
+        if xlink_href[1:] not in self.definitions:
             if self.verbose and LOGMESSAGES:
                 print("Ignoring unavailable object width ID '%s'." % xlink_href)
+            return None
+        item = self.definitions[xlink_href[1:]]
+        grp = Group()
+        grp.add(item)
+        getAttr = node.getAttribute
+        transform = getAttr("transform")
+        x, y = map(getAttr, ("x", "y"))
+        if x or y:
+            transform += " translate(%s, %s)" % (x or '0', y or '0')
+        if transform:
+            self.shapeConverter.applyTransformOnGroup(transform, grp)
+        # TODO: apply other 'use' properties to the group
 
         return grp
 

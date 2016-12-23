@@ -208,3 +208,38 @@ u'''<?xml version="1.0" encoding="UTF-8"?>
 </svg>'''
         ))
         assert drawing.contents[0].contents[0].fillColor == colors.black
+
+
+class TestUseNode(object):
+    def test_use(self):
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg width="10cm" height="3cm" viewBox="0 0 100 30" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <rect id="MyRect" width="60" height="10"/>
+  </defs>
+  <rect x=".1" y=".1" width="99.8" height="29.8"
+        fill="none" stroke="blue" stroke-width=".2" />
+  <use x="20" y="10" xlink:href="#MyRect" />
+</svg>'''
+        ))
+        # First Rect
+        assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'
+        # Second Rect defined by the use node (inside a Group)
+        assert drawing.contents[0].contents[2].contents[0].__class__.__name__ ==  'Rect'
+
+    def test_transform_inherited_by_use(self):
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g id="c">
+    <path id="t" d="M 0,-100 V 0 H 50" transform="rotate(18 0,-100)"/>
+    <use xlink:href="#t" transform="scale(-1,1)"/>
+  </g>
+</svg>'''
+        ))
+        cgroup_node = drawing.contents[0].contents[0]
+        assert (
+            cgroup_node.contents[0].transform == cgroup_node.contents[1].contents[0].transform
+        ), "The transform of the original path is different from the transform of the reused path."
