@@ -331,6 +331,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         return [self.convertLength(a) for a in a]
 
 
+    def convertOpacity(self, svgAttr):
+        return float(svgAttr)
+
+
     def convertColor(self, svgAttr):
         "Convert string to a RL color object."
 
@@ -1077,6 +1081,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         # tuple format: (svgAttr, rlgAttr, converter, default)
         mappingN = (
             ("fill", "fillColor", "convertColor", "black"),
+            ("fill-opacity", "fillOpacity", "convertOpacity", 1),
             ("stroke", "strokeColor", "convertColor", "none"),
             ("stroke-width", "strokeWidth", "convertLength", "0"),
             ("stroke-linejoin", "strokeLineJoin", "convertLineJoin", "0"),
@@ -1113,6 +1118,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     setattr(shape, rlgAttr, meth(svgAttrValue))
                 except Exception:
                     pass
+        if getattr(shape, 'fillOpacity', None) is not None and shape.fillColor:
+            shape.fillColor.alpha = shape.fillOpacity
 
 
 def svg2rlg(path):

@@ -209,6 +209,19 @@ u'''<?xml version="1.0" encoding="UTF-8"?>
         ))
         assert drawing.contents[0].contents[0].fillColor == colors.black
 
+    def test_fillopacity(self):
+        """
+        The fill-opacity property set the alpha of the color.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="660" height="480">
+  <polygon id="triangle" points="0,-29.14 -25.23, 14.57 25.23, 14.57"
+      stroke="#0038b8" stroke-width="5.5" fill-opacity="0"/>
+</svg>'''
+        ))
+        assert drawing.contents[0].contents[0].fillColor == colors.Color(0, 0, 0, 0)
+
 
 class TestUseNode(object):
     def test_use(self):
