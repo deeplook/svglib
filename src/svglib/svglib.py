@@ -25,7 +25,10 @@ import gzip
 import xml.dom.minidom
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from reportlab.graphics.shapes import *
+from reportlab.graphics.shapes import (
+    _CLOSEPATH, Circle, Drawing, Ellipse, Group, Line, Path, PolyLine, Polygon,
+    Rect, String,
+)
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
@@ -825,170 +828,141 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def convertPath(self, node):
         d = node.getAttribute('d')
         normPath = normaliseSvgPath(d)
-        pts, ops = [], []
-        lastMoveToOp = None
+        path = Path()
 
         for i in xrange(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
  
-            # moveto, lineto absolute
-            if op in ('M', 'L'):
-                xn, yn = nums
-                pts = pts + [xn, yn]
-                if op == 'M': 
-                    ops.append(0)
-                    lastMoveToOp = (op, xn, yn)
-                elif op == 'L': 
-                    ops.append(1)
+            # moveto absolute
+            if op == 'M':
+                path.moveTo(*nums)
+            # lineto absolute
+            elif op == 'L':
+                path.lineTo(*nums)
 
-            # moveto, lineto relative
+            # moveto relative
             elif op == 'm':
-                xn, yn = nums
-                if len(pts) >= 2:
-                    pts = pts + [pts[-2]+xn] + [pts[-1]+yn]
+                if len(path.points) >= 2:
+                    xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]
+                    path.moveTo(xn, yn)
                 else:
-                    pts = pts + [xn, yn]
-                if normPath[-2] in ('z', 'Z') and lastMoveToOp:
-                    pts[-2] = xn + lastMoveToOp[-2]
-                    pts[-1] = yn + lastMoveToOp[-1]
-                    lastMoveToOp = (op, pts[-2], pts[-1])
-                if not lastMoveToOp:
-                    lastMoveToOp = (op, xn, yn)
-                ops.append(0)
+                    path.moveTo(*nums)
+            # lineto relative
             elif op == 'l':
-                xn, yn = nums
-                pts = pts + [pts[-2]+xn] + [pts[-1]+yn]
-                ops.append(1)
+                xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]
+                path.lineTo(xn, yn)
 
             # horizontal/vertical line absolute
-            elif op in ('H', 'V'):
-                k = nums[0]
-                if op == 'H':
-                    pts = pts + [k] + [pts[-1]]
-                elif op == 'V':
-                    pts = pts + [pts[-2]] + [k]
-                ops.append(1)
+            elif op == 'H':
+                path.lineTo(nums[0], path.points[-1])
+            elif op == 'V':
+                path.lineTo(path.points[-2], nums[0])
 
             # horizontal/vertical line relative
-            elif op in ('h', 'v'):
-                k = nums[0]
-                if op == 'h':
-                    pts = pts + [pts[-2]+k] + [pts[-1]]
-                elif op == 'v':
-                    pts = pts + [pts[-2]] + [pts[-1]+k]
-                ops.append(1)
+            elif op == 'h':
+                path.lineTo(path.points[-2] + nums[0], path.points[-1])
+            elif op == 'v':
+                path.lineTo(path.points[-2], path.points[-1] + nums[0])
 
             # cubic bezier, absolute
             elif op == 'C':
-                x1, y1, x2, y2, xn, yn = nums
-                pts = pts + [x1, y1, x2, y2, xn, yn]
-                ops.append(2)
+                path.curveTo(*nums)
             elif op == 'S':
                 x2, y2, xn, yn = nums
-                if len(pts) < 4:
-                    xp, yp, x0, y0 = pts[-2:] * 2
+                if len(path.points) < 4:
+                    xp, yp, x0, y0 = path.points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = pts[-4:]
-                xi, yi = x0+(x0-xp), y0+(y0-yp)
-                # pts = pts + [xcp2, ycp2, x2, y2, xn, yn]
-                pts = pts + [xi, yi, x2, y2, xn, yn]
-                ops.append(2)
+                    xp, yp, x0, y0 = path.points[-4:]
+                xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
+                path.curveTo(xi, yi, x2, y2, xn, yn)
 
             # cubic bezier, relative
             elif op == 'c':
-                xp, yp = pts[-2:]
+                xp, yp = path.points[-2:]
                 x1, y1, x2, y2, xn, yn = nums
-                pts = pts + [xp+x1, yp+y1, xp+x2, yp+y2, xp+xn, yp+yn]
-                ops.append(2)
+                path.curveTo(xp + x1, yp + y1, xp + x2, yp + y2, xp + xn, yp + yn)
             elif op == 's':
-                if len(pts) < 4:
-                    xp, yp, x0, y0 = pts[-2:] * 2
+                if len(path.points) < 4:
+                    xp, yp, x0, y0 = path.points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = pts[-4:]
-                xi, yi = x0+(x0-xp), y0+(y0-yp)
+                    xp, yp, x0, y0 = path.points[-4:]
+                xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 x2, y2, xn, yn = nums
-                pts = pts + [xi, yi, x0+x2, y0+y2, x0+xn, y0+yn]
-                ops.append(2)
+                path.curveTo(xi, yi, x0 + x2, y0 + y2, x0 + xn, y0 + yn)
 
             # quadratic bezier, absolute
             elif op == 'Q':
-                x0, y0 = pts[-2:]
+                x0, y0 = path.points[-2:]
                 x1, y1, xn, yn = nums
-                xcp, ycp = x1, y1
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
-                pts = pts + [x1,y1, x2,y2, xn,yn]
-                ops.append(2)
+                path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 'T':
-                if len(pts) < 4:
-                    xp, yp, x0, y0 = pts[-2:] * 2
+                if len(path.points) < 4:
+                    xp, yp, x0, y0 = path.points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = pts[-4:]
-                xi, yi = x0+(x0-xp), y0+(y0-yp)
-                xcp, ycp = xi, yi
+                    xp, yp, x0, y0 = path.points[-4:]
+                xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (xi,yi), (xn,yn))
-                pts = pts + [x1,y1, x2,y2, xn,yn]
-                ops.append(2)
+                path.curveTo(x1, y1, x2, y2, xn, yn)
 
             # quadratic bezier, relative
             elif op == 'q':
-                x0, y0 = pts[-2:]
+                x0, y0 = path.points[-2:]
                 x1, y1, xn, yn = nums
-                x1, y1, xn, yn = x0+x1, y0+y1, x0+xn, y0+yn
-                xcp, ycp = x1, y1
+                x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
-                pts = pts + [x1,y1, x2,y2, xn,yn]
-                ops.append(2)
+                path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 't':
-                x0, y0 = pts[-2:]
+                if len(path.points) < 4:
+                    xp, yp, x0, y0 = path.points[-2:] * 2
+                else:
+                    xp, yp, x0, y0 = path.points[-4:]
+                x0, y0 = path.points[-2:]
                 xn, yn = nums
-                xn, yn = x0+xn, y0+yn
-                xi, yi = x0+(x0-xcp), y0+(y0-ycp)
-                xcp, ycp = xi, yi
+                xn, yn = x0 + xn, y0 + yn
+                xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (xi,yi), (xn,yn))
-                pts = pts + [x1,y1, x2,y2, xn,yn]
-                ops.append(2)
+                path.curveTo(x1, y1, x2, y2, xn, yn)
+
+            # elliptic arc, unsupported (simplified to line)
+            elif op in ('A', 'a'):
+                path.lineTo(*nums[-2:])
+                if LOGMESSAGES:
+                    print ("(Replaced with straight line)")
 
             # close path
             elif op in ('Z', 'z'):
-                ops.append(3)
+                path.closePath()
 
-            # arcs
-            else: #if op in unhandledOps.keys():
-                if LOGMESSAGES:
-                    print("Suspicious path operator: %s" % op)
-                if op in ('A', 'a'):
-                    pts = pts + nums[-2:]
-                    ops.append(1)
-                    if LOGMESSAGES:
-                        print("(Replaced with straight line)")
+            elif LOGMESSAGES:
+                print("Suspicious path operator: %s" % op)
 
         # hack because RLG has no "semi-closed" paths...
         gr = Group()
-        if ops[-1] == 3:
-            shape1 = Path(pts, ops)
-            self.applyStyleOnShape(shape1, node)
+        if path.operators[-1] == _CLOSEPATH:
+            self.applyStyleOnShape(path, node)
             sc = self.attrConverter.findAttr(node, "stroke")
             if not sc:
-                shape1.strokeColor = None
-            gr.add(shape1)
+                path.strokeColor = None
+            gr.add(path)
         else:
-            shape1 = Path(pts, ops+[3])
-            self.applyStyleOnShape(shape1, node)
-            shape1.strokeColor = None
-            gr.add(shape1)
-        
-            shape2 = Path(pts, ops)
-            self.applyStyleOnShape(shape2, node)
-            shape2.fillColor = None
+            closed_path = path.copy()
+            closed_path.closePath()
+            self.applyStyleOnShape(closed_path, node)
+            closed_path.strokeColor = None
+            gr.add(closed_path)
+
+            self.applyStyleOnShape(path, node)
+            path.fillColor = None
             sc = self.attrConverter.findAttr(node, "stroke")
             if not sc:
-                shape2.strokeColor = None
-            gr.add(shape2)
+                path.strokeColor = None
+            gr.add(path)
 
         return gr
 
