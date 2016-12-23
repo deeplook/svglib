@@ -144,7 +144,7 @@ def normaliseSvgPath(attr):
     a = a.replace('-', ' -')
     a = a.replace('ee', 'e-')
     for op in opKeys:
-        a = a.replace(op, " %s " % op)
+        a = a.replace(op, " {0!s} ".format(op))
     a = a.strip()
     a = a.split()
     a = convertToFloats(a)
@@ -316,7 +316,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         for u in "em ex px".split():
             if newSize.find(u) >= 0:
                 if LOGMESSAGES:
-                    print("Ignoring unit: %s" % u)
+                    print("Ignoring unit: {0!s}".format(u))
                 newSize = newSize.replace(u, '')
 
         newSize = newSize.strip()
@@ -364,7 +364,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             tup = eval(t)
             tup = [h[2:] for h in [hex(t) for t in tup]]
             tup = [(2 - len(h)) * '0' + h for h in tup]
-            col = "#%s%s%s" % tuple(tup)
+            col = "#{0!s}{1!s}{2!s}".format(*tuple(tup))
             return colors.HexColor(col)
         elif text[:3] == 'rgb' and text.find('%') >= 0:
             t = text[:][3:]
@@ -374,7 +374,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return colors.Color(*tup)
 
         if LOGMESSAGES:
-            print("Can't handle color: %s" % text)
+            print("Can't handle color: {0!s}".format(text))
 
         return None
 
@@ -545,7 +545,7 @@ class SvgRenderer:
                 self.printUnusedAttributes(node, n)
         else:
             if LOGMESSAGES:
-                print("Ignoring node: %s" % name)
+                print("Ignoring node: {0!s}".format(name))
 
 
     def printUnusedAttributes(self, node, n):
@@ -567,7 +567,7 @@ class SvgRenderer:
         if LOGMESSAGES and unusedAttrs:
             #print "Used attrs:", n.nodeName, n.usedAttrs
             #print "All attrs:", n.nodeName, allAttrs
-            print("Unused attrs: %s %s" % (n.nodeName, unusedAttrs))
+            print("Unused attrs: {0!s} {1!s}".format(n.nodeName, unusedAttrs))
 
 
     def renderTitle_(self, node):
@@ -633,7 +633,7 @@ class SvgRenderer:
                 self.shapeConverter.applyTransformOnGroup(transform, grp)
         except KeyError:
             if self.verbose and LOGMESSAGES:
-                print("Ignoring unavailable object width ID '%s'." % xlink_href)
+                print("Ignoring unavailable object width ID '{0!s}'.".format(xlink_href))
 
         return grp
 
@@ -978,7 +978,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # arcs
             else: #if op in unhandledOps.keys():
                 if LOGMESSAGES:
-                    print("Suspicious path operator: %s" % op)
+                    print("Suspicious path operator: {0!s}".format(op))
                 if op in ('A', 'a'):
                     pts = pts + nums[-2:]
                     ops.append(1)
@@ -1038,7 +1038,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             import base64, md5
             jpegData = base64.decodestring(xlink_href[len(magic):])
             hashVal = md5.new(jpegData).hexdigest()
-            name = "images/img%s.%s" % (hashVal, ext)
+            name = "images/img{0!s}.{1!s}".format(hashVal, ext)
             path = os.path.join(dirname(self.svgSourceFile), name)
             open(path, "wb").write(jpegData)
             img = Image(x, y+height, width, -height, path)
@@ -1089,7 +1089,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 group.transform = values
             else:
                 if LOGMESSAGES:
-                    print("Ignoring transform: %s %s" % (op, values))
+                    print("Ignoring transform: {0!s} {1!s}".format(op, values))
 
 
     def applyStyleOnShape(self, shape, *nodes):
