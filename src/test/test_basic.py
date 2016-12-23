@@ -243,3 +243,19 @@ u'''<?xml version="1.0"?>
         assert (
             cgroup_node.contents[0].transform == cgroup_node.contents[1].contents[0].transform
         ), "The transform of the original path is different from the transform of the reused path."
+
+    def test_use_forward_reference(self):
+        """
+        Sometimes, a node definition pointed to by xlink:href can appear after
+        it has been referenced. But the order should remain.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <use xlink:href="#back" x="-100"/>
+  <rect id="back" x="42" y="42" width="416" height="216" fill="#007a5e"/>
+</svg>'''
+        ))
+        assert len(drawing.contents[0].contents) == 2
+        assert drawing.contents[0].contents[0].__class__.__name__ == 'Group'
+        assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'

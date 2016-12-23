@@ -23,6 +23,7 @@ import re
 import operator
 import gzip
 import xml.dom.minidom
+from collections import defaultdict
 from functools import reduce
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -450,6 +451,7 @@ class SvgRenderer:
         self.drawing = None
         self.mainGroup = Group()
         self.definitions = {}
+        self.waiting_use_nodes = defaultdict(list)
         self.verbose = 0
         self.level = 0
         self.path = path
@@ -510,8 +512,7 @@ class SvgRenderer:
         elif name == "use":
             self.level = self.level + 1
             item = self.renderUse(n)
-            if item:
-                parent.add(item)
+            parent.add(item)
             self.level = self.level - 1
         elif name in self.handledShapes:
             methodName = "convert"+name[0].upper()+name[1:]
@@ -535,6 +536,9 @@ class SvgRenderer:
         if not ignored:
             if nid and item:
                 self.definitions[nid] = item
+            if nid in self.waiting_use_nodes.keys():
+                for use_node, group in self.waiting_use_nodes[nid]:
+                    self.renderUse(use_node, group)
             self.printUnusedAttributes(node, n)
 
 
@@ -612,30 +616,36 @@ class SvgRenderer:
         return self.renderG(node)
 
 
-    def renderUse(self, node):
+    def renderUse(self, node, group=None):
+        if group is None:
+            group = Group()
+
         xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
         if not xlink_href:
             return
         if xlink_href[1:] not in self.definitions:
-            if self.verbose and LOGMESSAGES:
-                print("Ignoring unavailable object width ID '%s'." % xlink_href)
-            return None
+            # The missing definition should appear later in the file
+            self.waiting_use_nodes[xlink_href[1:]].append((node, group))
+            return group
+
         item = self.definitions[xlink_href[1:]]
-        grp = Group()
-        grp.add(item)
+        group.add(item)
         getAttr = node.getAttribute
         transform = getAttr("transform")
         x, y = map(getAttr, ("x", "y"))
         if x or y:
             transform += " translate(%s, %s)" % (x or '0', y or '0')
         if transform:
-            self.shapeConverter.applyTransformOnGroup(transform, grp)
+            self.shapeConverter.applyTransformOnGroup(transform, group)
         # TODO: apply other 'use' properties to the group
-
-        return grp
+        return group
 
 
     def finish(self):
+        if self.verbose and LOGMESSAGES:
+            for xlink in self.waiting_use_nodes.keys():
+                print ("Ignoring unavailable object width ID '%s'." % xlink)
+
         height = self.drawing.height
         self.mainGroup.scale(1, -1)
         self.mainGroup.translate(0, -height)
