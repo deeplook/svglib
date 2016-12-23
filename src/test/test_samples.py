@@ -103,7 +103,7 @@ class TestSVGSamples(object):
 class TestWikipediaSymbols(object):
     "Tests on sample symbol SVG files from wikipedia.org."
 
-    def fetchFile(self, server, path):
+    def fetch_file(self, server, path):
         "Fetch file using httplib module."
     
         print("downloading https://%s%s" % (server, path))
@@ -150,7 +150,7 @@ class TestWikipediaSymbols(object):
             p = join(os.getcwd(), self.folderPath, basename(path))
             if not exists(p):
                 try:
-                    data = self.fetchFile(server, path)
+                    data = self.fetch_file(server, path)
                 except:
                     print("Check your internet connection and try again!")
                     break
@@ -207,7 +207,7 @@ class TestWikipediaSymbols(object):
 class TestWikipediaFlags(object):
     "Tests using SVG flags from Wikipedia.org."
 
-    def fetchFile(self, url):
+    def fetch_file(self, url):
         "Get content with some given URL, uncompress if needed."
     
         parsed = urlparse(url)
@@ -229,7 +229,7 @@ class TestWikipediaFlags(object):
         return data
 
 
-    def flagUrl2filename(self, url):
+    def flag_url2filename(self, url):
         """Convert given flag URL into a local filename.
 
         http://upload.wikimedia.org/wikipedia/commons
@@ -259,7 +259,7 @@ class TestWikipediaFlags(object):
         path = join(self.folderPath, "flags.html")
         if not exists(path):
             u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
-            data = self.fetchFile(u)
+            data = self.fetch_file(u)
             if data:
                 open(path, "w").write(data)
         else:
@@ -280,7 +280,7 @@ class TestWikipediaFlags(object):
                 
                 # load single flag HTML page, like  
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
-                flagHtml = self.fetchFile(prefix + quote(fn))
+                flagHtml = self.fetch_file(prefix + quote(fn))
     
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
@@ -300,10 +300,10 @@ class TestWikipediaFlags(object):
         with open(jsonPath, "r") as fh:
             flagUrlMap = json.load(fh)
         for dummy, flagUrl in flagUrlMap:
-            path = join(self.folderPath, self.flagUrl2filename(flagUrl))
+            path = join(self.folderPath, self.flag_url2filename(flagUrl))
             if not exists(path):
                 print("fetch %s" % flagUrl)
-                flagSvg = self.fetchFile(flagUrl)
+                flagSvg = self.fetch_file(flagUrl)
                 open(path, "w").write(flagSvg)
 
 
