@@ -43,18 +43,6 @@ LOGMESSAGES = 0
 
 ### helpers ###
 
-def convertToFloats(aList):
-    "Convert number strings in list to floats (leave rest untouched)."
-
-    for i in xrange(len(aList)):
-        try:
-            aList[i] = float(aList[i])
-        except ValueError:
-            pass
-
-    return aList
-
-
 def convertQuadraticToCubicPath(Q0, Q1, Q2):
     "Convert a quadratic Bezier curve through Q0, Q1, Q2 to a cubic one."
 
@@ -117,6 +105,16 @@ def fixSvgPath(aList):
     return fixedList
 
 
+def split_floats(op, min_num, value):
+    floats = [float(seq) for seq in re.findall('(-?\d*\.?\d*(?:e[+-]\d+)?)', value) if seq]
+    res = []
+    for i in range(0, len(floats), min_num):
+        if i > 0 and op in {'m', 'M'}:
+            op = 'l' if op == 'm' else 'L'
+        res.extend([op, floats[i:i + min_num]])
+    return res
+
+
 def normaliseSvgPath(attr):
     """Normalise SVG path.
 
@@ -135,51 +133,30 @@ def normaliseSvgPath(attr):
       'Q':4, 'q':4, 'T':2, 't':2, 'S':4, 's':4, 
       'M':2, 'L':2, 'm':2, 'l':2, 'H':1, 'V':1,  
       'h':1, 'v':1, 'C':6, 'c':6, 'Z':0, 'z':0}
+    op_keys = ops.keys()
 
     # do some preprocessing
-    opKeys = ops.keys()
-    a = attr
-    a = a.replace(',', ' ')
-    a = a.replace('e-', 'ee')
-    a = a.replace('-', ' -')
-    a = a.replace('ee', 'e-')
-    for op in opKeys:
-        a = a.replace(op, " %s " % op)
-    a = a.strip()
-    a = a.split()
-    a = convertToFloats(a)
-    a = fixSvgPath(a)
-
-    # insert op codes for each argument of an op with multiple arguments
-    res = []
-    i = 0
-    while i < len(a):
-        el = a[i]
-        if el in opKeys:
-            if el in ('z', 'Z'):
-                res.append(el)
-                res.append([])
+    result = []
+    groups = re.split('([achlmqstvz])', attr.strip(), flags=re.I)
+    op = None
+    for item in groups:
+        if item.strip() == '':
+            continue
+        if item in op_keys:
+            # fix sequences of M to one M plus a sequence of L operators,
+            # same for m and l.
+            if item == 'M' and item == op:
+                op = 'L'
+            elif item == 'm' and item == op:
+                op = 'l'
             else:
-                while i < len(a)-1:
-                    if a[i+1] not in opKeys:
-                        res.append(el)
-                        res.append(a[i+1:i+1+ops[el]])
-                        i = i + ops[el]
-                    else:
-                        break
-        i = i + 1
+                op = item
+            if ops[op] == 0:  # Z, z
+                result.extend([op, []])
+        else:
+            result.extend(split_floats(op, ops[op], item))
 
-    # fix sequences of M to one M plus a sequence of L operators,
-    # same for m and l.
-    for i in xrange(0, len(res), 2):
-        op, nums = res[i:i+2]
-        if i >= 2:
-            if op == 'M' == res[i-2]:
-                res[i] = 'L'
-            elif op == 'm' == res[i-2]:
-                res[i] = 'l'
-
-    return res
+    return result
 
 
 ### attribute converters (from SVG to RLG)
