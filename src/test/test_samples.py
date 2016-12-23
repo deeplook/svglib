@@ -365,11 +365,30 @@ class W3CTestCase(unittest.TestCase):
 
         excludeList = [
             "paint-stroke-06-t.svg",
+            "coords-trans-09-t.svg",  # renderPDF issue (div by 0)
+            # ExpatError while parsing due to the ev namespace
+            "interact-order-04-t.svg",
+            "interact-order-05-t.svg",
+            "media-video-220-t.svg",
+            "script-listener-201-t.svg",
+            # Unsupported 'transform="ref(svg, ...)"' expression
+            "coords-constr-201-t.svg",
+            "coords-constr-202-t.svg",
+            "coords-constr-203-t.svg",
+            "coords-constr-204-t.svg",
+            # Crash due to odd number of points
+            "shapes-polygon-02-t.svg",
+            "shapes-polyline-02-t.svg",
+            # Errors to be investigated
+            "paint-grad-201-t.svg",
+            "media-alevel-201-t.svg",
+            "media-alevel-202-t.svg",
+            "udom-event-207-t.svg",
         ]
         
         paths = glob.glob("%s/svg/*.svg" % self.folderPath)
         msg = "Destination folder '%s/svg' not found." % self.folderPath
-        self.failUnless(len(paths) > 0, msg)
+        self.assertGreater(len(paths), 0, msg)
         
         for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
@@ -377,29 +396,18 @@ class W3CTestCase(unittest.TestCase):
             if basename(path) in excludeList:
                 print("excluded (to be tested later)")
                 continue
-            
+
             # convert
-            try:
-                drawing = svglib.svg2rlg(path)
-            except:
-                print("could not convert [%d] %s" % (i, path))
-                continue
+            drawing = svglib.svg2rlg(path)
 
             # save as PDF
             base = splitext(path)[0] + '-svglib.pdf'
-            try:
-                renderPDF.drawToFile(drawing, base, showBoundary=0)
-            except:
-                print("could not save as PDF [%d] %s" % (i, path))
+            renderPDF.drawToFile(drawing, base, showBoundary=0)
 
             # save as PNG
             # (endless loop for file paint-stroke-06-t.svg)
             base = splitext(path)[0] + '-svglib.png'
-            try:
-                renderPM.drawToFile(drawing, base, 'PNG')
-            except:
-                print("could not save as PNG [%d] %s" % (i, path))
-
+            renderPM.drawToFile(drawing, base, 'PNG')
 
     # outcommented, because many SVG samples seem to generate errors
     def _test1(self):
