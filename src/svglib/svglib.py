@@ -166,6 +166,7 @@ def normaliseSvgPath(attr):
                 result.extend([op, []])
         else:
             result.extend(split_floats(op, ops[op], item))
+            op = result[-2]  # Remember last op
 
     return result
 
