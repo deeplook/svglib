@@ -236,7 +236,7 @@ class AttributeConverter:
         for i in xrange(attrs.length):
             a = attrs.item(i)
             if a.name != "style":
-                dict[a.name.encode("ASCII")] = a.value
+                dict[a.name] = a.value
 
         return dict
 
@@ -751,10 +751,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         if not y: y = '0'
         text = ''
         if node.firstChild.nodeValue:
-            try:
-                text = node.firstChild.nodeValue.encode("ASCII")
-            except:
-                text = "Unicode"
+            text = node.firstChild.nodeValue
         x, y = map(self.attrConv.convertLength, (x, y))
         shape = String(x, y, text)
         self.applyStyleOnShape(shape, node)
@@ -782,20 +779,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         dx0, dy0 = 0, 0
         x1, y1 = 0, 0
         ff = attrConv.findAttr(node, "font-family") or "Helvetica"
-        ff = ff.encode("ASCII")
         ff = attrConv.convertFontFamily(ff)
         fs = attrConv.findAttr(node, "font-size") or "12"
-        fs = fs.encode("ASCII")
         fs = attrConv.convertLength(fs)
         for c in node.childNodes:
             dx, dy = 0, 0
             baseLineShift = 0
             if c.nodeType == c.TEXT_NODE:
                 frags.append(c.nodeValue)
-                try:
-                    tx = ''.join([chr(ord(f)) for f in frags[-1]])
-                except ValueError:
-                    tx = "Unicode"
+                tx = frags[-1]
             elif c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
                 frags.append(c.firstChild.nodeValue)
                 tx = ''.join([chr(ord(f)) for f in frags[-1]])
@@ -816,10 +808,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             fragLengths.append(stringWidth(tx, ff, fs))
             rl = reduce(operator.__add__, fragLengths[:-1], 0)
-            try:
-                text = ''.join([chr(ord(f)) for f in frags[-1]])
-            except ValueError:
-                text = "Unicode"
+            text = frags[-1]
             shape = String(x+rl, y-y1-dy0+baseLineShift, text)
             self.applyStyleOnShape(shape, node)
             if c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
@@ -1011,10 +1000,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
         xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
-        try:
-            xlink_href = xlink_href.encode("ASCII")
-        except:
-            pass
         xlink_href = os.path.join(os.path.dirname(self.svgSourceFile), xlink_href)
         # print "***", x, y, width, height, xlink_href[:30]
 
