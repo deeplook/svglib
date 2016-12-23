@@ -15,6 +15,10 @@ format in the subdirectories `samples`, `wikipedia/flags` and
 be downloaded from the internet at the start of the test or if 
 they are still available locally.
 
+Run this in order to clean-up all generated files:
+
+    py.test -v -s --override-ini=python_functions=cleanup
+
 As an experimental feature some of the tests try using a vector 
 conversion tool named `UniConvertor 
 <http://sourceforge.net/projects/uniconvertor>`_ 

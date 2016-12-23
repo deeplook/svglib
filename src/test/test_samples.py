@@ -9,6 +9,11 @@ to convert SVG files into PDF for comparision with svglib.
 Run with one of these lines from inside the test directory:
 
     py.test -v -s test_samples.py
+
+The following needs pytest 3.0.5 and will run functions that
+are named `cleanup` only:
+
+    py.test -v -s --override-ini=python_functions=cleanup
 """
 
 import os
@@ -41,8 +46,17 @@ from svglib import svglib
 del sys.path[0]
 
 
-class TestSVGSamplesTestCase(object):
+class TestSVGSamples(object):
     "Tests on sample SVG files included in svglib test suite."
+
+    def cleanup(self):
+        "Remove generated files when running this test class."
+
+        paths = glob.glob("samples/misc/*.pdf")
+        for i, path in enumerate(paths):
+            print("deleting [%d] %s" % (i, path))
+            os.remove(path)
+
 
     def test_0(self):
         "Test sample SVG files included in svglib test suite."
@@ -51,7 +65,7 @@ class TestSVGSamplesTestCase(object):
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print("working on [%d]" % i, path)
+            print("working on [%d] %s" % (i, path))
 
             # convert
             try:
@@ -86,7 +100,7 @@ class TestSVGSamplesTestCase(object):
                 os.remove(out)
 
 
-class TestWikipediaSymbolsTestCase(object):
+class TestWikipediaSymbols(object):
     "Tests on sample symbol SVG files from wikipedia.org."
 
     def fetchFile(self, server, path):
@@ -106,7 +120,7 @@ class TestWikipediaSymbolsTestCase(object):
         return data
 
 
-    def setUp(self):
+    def setup_method(self):
         "Check if files exists, else download and unpack it."
 
         self.folderPath = "samples/wikipedia/symbols"
@@ -145,6 +159,15 @@ class TestWikipediaSymbolsTestCase(object):
                         fh.write(data)
 
 
+    def cleanup(self):
+        "Remove generated files when running this test class."
+
+        paths = glob.glob(join(self.folderPath, '*.pdf'))
+        for i, path in enumerate(paths):
+            print("deleting [%d] %s" % (i, path))
+            os.remove(path)
+
+
     def test_0(self):
         "Test converting symbol SVG files to PDF using svglib."
 
@@ -181,7 +204,7 @@ class TestWikipediaSymbolsTestCase(object):
                 os.remove(out)            
 
 
-class TestWikipediaFlagsTestCase(object):
+class TestWikipediaFlags(object):
     "Tests using SVG flags from Wikipedia.org."
 
     def fetchFile(self, url):
@@ -223,7 +246,7 @@ class TestWikipediaFlagsTestCase(object):
         return path
 
         
-    def setUp(self):
+    def setup_method(self):
         "Check if files exists, else download."
 
         self.folderPath = "samples/wikipedia/flags"
@@ -284,6 +307,15 @@ class TestWikipediaFlagsTestCase(object):
                 open(path, "w").write(flagSvg)
 
 
+    def cleanup(self):
+        "Remove generated files when running this test class."
+
+        paths = glob.glob(join(self.folderPath, '*.pdf'))
+        for i, path in enumerate(paths):
+            print("deleting [%d] %s" % (i, path))
+            os.remove(path)
+
+
     def test_0(self):
         "Test converting flag SVG files to PDF using svglib."
 
@@ -324,7 +356,7 @@ class TestWikipediaFlagsTestCase(object):
 class TestW3CTestCase(object):
     "Tests using the official W3C SVG testsuite."
 
-    def setUp(self):
+    def setup_method(self):
         "Check if testsuite archive exists, else download and unpack it."
 
         server = "http://www.w3.org"
@@ -356,6 +388,15 @@ class TestW3CTestCase(object):
             tarFile.extractall(self.folderPath)
             if exists(join("samples", tarPath)):
                 os.remove(join("samples", tarPath))
+
+
+    def cleanup(self):
+        "Remove generated files when running this test class."
+
+        paths = glob.glob(join(self.folderPath, 'svg/*.pdf'))
+        for i, path in enumerate(paths):
+            print("deleting [%d] %s" % (i, path))
+            os.remove(path)
 
 
     def test_0(self):
