@@ -376,9 +376,6 @@ class W3CTestCase(unittest.TestCase):
             "coords-constr-202-t.svg",
             "coords-constr-203-t.svg",
             "coords-constr-204-t.svg",
-            # Crash due to odd number of points
-            "shapes-polygon-02-t.svg",
-            "shapes-polyline-02-t.svg",
             # Errors to be investigated
             "paint-grad-201-t.svg",
             "media-alevel-201-t.svg",

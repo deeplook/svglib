@@ -727,6 +727,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = points.replace(',', ' ')
         points = points.split()
         points = list(map(self.attrConverter.convertLength, points))
+        if len(points) % 2 != 0 or len(points) == 0:
+            # Odd number of coordinates or no coordinates, invalid polyline
+            return None
 
         # Need to use two shapes, because standard RLG polylines
         # do not support filling...
@@ -748,6 +751,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = points.replace(',', ' ')
         points = points.split()
         points = list(map(self.attrConverter.convertLength, points))
+        if len(points) % 2 != 0 or len(points) == 0:
+            # Odd number of coordinates or no coordinates, invalid polygon
+            return None
         shape = Polygon(points)
 
         return shape
