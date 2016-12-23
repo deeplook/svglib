@@ -468,7 +468,7 @@ class SvgRenderer:
 
 
     def render(self, node, parent=None):
-        if parent == None:
+        if parent is None:
             parent = self.mainGroup
         name = node.nodeName
         if self.verbose:
