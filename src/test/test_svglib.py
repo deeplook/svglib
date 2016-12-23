@@ -211,6 +211,18 @@ class AttrConverterTestCase(unittest.TestCase):
         failed = testit(ac.parseMultiAttributes, mapping)
         self.assertEqual(len(failed), 0)
 
+    def test_no_fill_on_shape(self):
+        """
+        Any shape with no fill property should set black color in rlg syntax.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(
+'''<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 36 24">
+<rect y="10" width="36" height="4"/>
+</svg>'''
+        ))
+        self.assertEqual(drawing.contents[0].contents[0].fillColor, colors.black)
+
 
 class SVGSamplesTestCase(unittest.TestCase):
     "Tests on sample SVG files included in svglib test suite."
