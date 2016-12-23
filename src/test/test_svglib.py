@@ -49,7 +49,7 @@ def testit(func, mapping):
     if failed:
         print("failed tests (input, result, expected):")
         for input, result, expected in failed:
-            print("  %s : %s != %s" % (repr(input), result, expected))
+            print("  {0!s} : {1!s} != {2!s}".format(repr(input), result, expected))
 
     return failed
     
@@ -193,13 +193,13 @@ class SVGSamplesTestCase(unittest.TestCase):
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print("working on [%d]" % i, path)
+            print("working on [{0:d}]".format(i), path)
 
             # convert
             try:
                 drawing = svglib.svg2rlg(path)
             except:
-                print("could not convert [%d]" % i, path)
+                print("could not convert [{0:d}]".format(i), path)
                 continue
 
             # save as PDF
@@ -207,7 +207,7 @@ class SVGSamplesTestCase(unittest.TestCase):
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print("could not save as PDF [%d] %s" % (i, path))
+                print("could not save as PDF [{0:d}] {1!s}".format(i, path))
 
 
     def _test1(self):
@@ -222,7 +222,7 @@ class SVGSamplesTestCase(unittest.TestCase):
         paths = glob.glob("samples/misc/*.svg")
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = "uniconv '{0!s}' '{1!s}'".format(path, out)
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
@@ -234,7 +234,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
     def fetchFile(self, server, path):
         "Fetch file using httplib module."
     
-        print("downloading https://%s%s" % (server, path))
+        print("downloading https://{0!s}{1!s}".format(server, path))
             
         req = HTTPSConnection(server)
         req.putrequest('GET', path)
@@ -290,11 +290,11 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
     def test0(self):
         "Test converting symbol SVG files to PDF using svglib."
 
-        paths = glob.glob("%s/*" % self.folderPath)
+        paths = glob.glob("{0!s}/*".format(self.folderPath))
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print("working on [%d] %s" % (i, path))
+            print("working on [{0:d}] {1!s}".format(i, path))
 
             # convert
             drawing = svglib.svg2rlg(path)
@@ -312,12 +312,12 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
             print("Uniconv not found, test skipped.")
             return
 
-        paths = glob.glob("%s/*" % self.folderPath)
+        paths = glob.glob("{0!s}/*".format(self.folderPath))
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = "uniconv '{0!s}' '{1!s}'".format(path, out)
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)            
@@ -404,8 +404,8 @@ class WikipediaFlagsTestCase(unittest.TestCase):
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
                 svgPat = "//upload.wikimedia.org/wikipedia/commons"
-                p = "%s/.*?/%s" % (svgPat, quote(fn))
-                print("check %s" % prefix + fn)
+                p = "{0!s}/.*?/{1!s}".format(svgPat, quote(fn))
+                print("check {0!s}".format(prefix) + fn)
                 
                 flagUrl = re.search(p, flagHtml)
                 if flagUrl:
@@ -421,7 +421,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
         for dummy, flagUrl in flagUrlMap:
             path = join(self.folderPath, self.flagUrl2filename(flagUrl))
             if not exists(path):
-                print("fetch %s" % flagUrl)
+                print("fetch {0!s}".format(flagUrl))
                 flagSvg = self.fetchFile(flagUrl)
                 open(path, "w").write(flagSvg)
 
@@ -429,17 +429,17 @@ class WikipediaFlagsTestCase(unittest.TestCase):
     def test0(self):
         "Test converting flag SVG files to PDF using svglib."
 
-        paths = glob.glob("%s/*" % self.folderPath)
+        paths = glob.glob("{0!s}/*".format(self.folderPath))
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):            
-            print("working on [%d] %s" % (i, path))
+            print("working on [{0:d}] {1!s}".format(i, path))
 
             # convert
             try:
                 drawing = svglib.svg2rlg(path)
             except:
-                print("could not convert [%d] %s" % (i, path))
+                print("could not convert [{0:d}] {1!s}".format(i, path))
                 continue
 
             # save as PDF
@@ -447,7 +447,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print("could not save as PDF [%d] %s" % (i, path))
+                print("could not save as PDF [{0:d}] {1!s}".format(i, path))
 
 
     # outcommented, because many SVG samples seem to generate errors
@@ -459,12 +459,12 @@ class WikipediaFlagsTestCase(unittest.TestCase):
             print("Uniconv not found, test skipped.")
             return
 
-        paths = glob.glob("%s/*" % self.folderPath)
+        paths = glob.glob("{0!s}/*".format(self.folderPath))
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = "uniconv '{0!s}' '{1!s}'".format(path, out)
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)            
@@ -487,7 +487,7 @@ class W3CTestCase(unittest.TestCase):
         if not exists(self.folderPath):
             if not exists(join("samples", tarPath)):
                 if not exists(join("samples", archivePath)):
-                    print("downloading %s" % url)
+                    print("downloading {0!s}".format(url))
                     try:
                         data = urlopen(url).read()
                     except IOError as details:
@@ -496,10 +496,10 @@ class W3CTestCase(unittest.TestCase):
                         return
                     archivePath = basename(url)
                     open(join("samples", archivePath), "wb").write(data)
-                print("unpacking %s" % archivePath)
+                print("unpacking {0!s}".format(archivePath))
                 tarData = gzip.open(join("samples", archivePath), "rb").read()    
                 open(join("samples", tarPath), "wb").write(tarData)
-            print("extracting into %s" % self.folderPath)
+            print("extracting into {0!s}".format(self.folderPath))
             os.mkdir(self.folderPath)
             tarFile = tarfile.TarFile(join("samples", tarPath))
             tarFile.extractall(self.folderPath)
@@ -514,12 +514,12 @@ class W3CTestCase(unittest.TestCase):
             "paint-stroke-06-t.svg",
         ]
         
-        paths = glob.glob("%s/svg/*.svg" % self.folderPath)
-        msg = "Destination folder '%s/svg' not found." % self.folderPath
+        paths = glob.glob("{0!s}/svg/*.svg".format(self.folderPath))
+        msg = "Destination folder '{0!s}/svg' not found.".format(self.folderPath)
         self.failUnless(len(paths) > 0, msg)
         
         for i, path in enumerate(paths):
-            print("working on [%d] %s" % (i, path))
+            print("working on [{0:d}] {1!s}".format(i, path))
 
             if basename(path) in excludeList:
                 print("excluded (to be tested later)")
@@ -529,7 +529,7 @@ class W3CTestCase(unittest.TestCase):
             try:
                 drawing = svglib.svg2rlg(path)
             except:
-                print("could not convert [%d] %s" % (i, path))
+                print("could not convert [{0:d}] {1!s}".format(i, path))
                 continue
 
             # save as PDF
@@ -537,7 +537,7 @@ class W3CTestCase(unittest.TestCase):
             try:
                 renderPDF.drawToFile(drawing, base, showBoundary=0)
             except:
-                print("could not save as PDF [%d] %s" % (i, path))
+                print("could not save as PDF [{0:d}] {1!s}".format(i, path))
 
             # save as PNG
             # (endless loop for file paint-stroke-06-t.svg)
@@ -545,7 +545,7 @@ class W3CTestCase(unittest.TestCase):
             try:
                 renderPM.drawToFile(drawing, base, 'PNG')
             except:
-                print("could not save as PNG [%d] %s" % (i, path))
+                print("could not save as PNG [{0:d}] {1!s}".format(i, path))
 
 
     # outcommented, because many SVG samples seem to generate errors
@@ -557,12 +557,12 @@ class W3CTestCase(unittest.TestCase):
             print("Uniconv not found, test skipped.")
             return
             
-        paths = glob.glob("%s/svg/*" % self.folderPath)
+        paths = glob.glob("{0!s}/svg/*".format(self.folderPath))
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = "uniconv '{0!s}' '{1!s}'".format(path, out)
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
