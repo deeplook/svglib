@@ -37,7 +37,7 @@ from svglib import svglib
 del sys.path[0]
 
 
-def testit(func, mapping):
+def _testit(func, mapping):
     "Call 'func' on input in mapping and return list of failed tests."
     
     failed = []
@@ -57,7 +57,7 @@ def testit(func, mapping):
 class NormBezierPathTestCase(unittest.TestCase):
     "Testing Bezier paths."
 
-    def test0(self):
+    def test_0(self):
         "Test path normalisation."
 
         mapping = (
@@ -111,14 +111,14 @@ class NormBezierPathTestCase(unittest.TestCase):
                  'z', []
                 ]),
         )
-        failed = testit(svglib.normaliseSvgPath, mapping)
+        failed = _testit(svglib.normaliseSvgPath, mapping)
         self.assertEqual(len(failed), 0)
 
 
 class ColorAttrConverterTestCase(unittest.TestCase):
     "Testing color attribute conversion."
 
-    def test0(self):
+    def test_0(self):
         "Test color attribute conversion."
 
         mapping = (
@@ -128,14 +128,14 @@ class ColorAttrConverterTestCase(unittest.TestCase):
             ("rgb(100%,0%,0%)", colors.red),
         )
         ac = svglib.Svg2RlgAttributeConverter()
-        failed = testit(ac.convertColor, mapping)
+        failed = _testit(ac.convertColor, mapping)
         self.assertEqual(len(failed), 0)
 
 
 class LengthAttrConverterTestCase(unittest.TestCase):
     "Testing length attribute conversion."
 
-    def test0(self):
+    def test_0(self):
         "Test length attribute conversion."
 
         mapping = (
@@ -151,11 +151,11 @@ class LengthAttrConverterTestCase(unittest.TestCase):
             ("-8e-2cm", (-8e-2)*cm),
         )
         ac = svglib.Svg2RlgAttributeConverter()
-        failed = testit(ac.convertLength, mapping)
+        failed = _testit(ac.convertLength, mapping)
         self.assertEqual(len(failed), 0)
 
 
-    def test1(self):
+    def test_1(self):
         "Test length attribute conversion."
 
         ac = svglib.Svg2RlgAttributeConverter()
@@ -168,7 +168,7 @@ class LengthAttrConverterTestCase(unittest.TestCase):
 class LengthListAttrConverterTestCase(unittest.TestCase):
     "Testing length attribute conversion."
 
-    def test0(self):
+    def test_0(self):
         "Test length list attribute conversion."
 
         mapping = (
@@ -176,14 +176,14 @@ class LengthListAttrConverterTestCase(unittest.TestCase):
             (" 5, 5", [5, 5]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
-        failed = testit(ac.convertLengthList, mapping)
+        failed = _testit(ac.convertLengthList, mapping)
         self.assertEqual(len(failed), 0)
 
 
 class TransformAttrConverterTestCase(unittest.TestCase):
     "Testing transform attribute conversion."
 
-    def test0(self):
+    def test_0(self):
         "Test transform attribute conversion."
 
         mapping = (
@@ -193,14 +193,14 @@ class TransformAttrConverterTestCase(unittest.TestCase):
                 [("scale", 2), ("translate", (10,20))]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
-        failed = testit(ac.convertTransform, mapping)
+        failed = _testit(ac.convertTransform, mapping)
         self.assertEqual(len(failed), 0)
 
 
 class AttrConverterTestCase(unittest.TestCase):
     "Testing multi-attribute conversion."
 
-    def test0(self):
+    def test_0(self):
         "Test multi-attribute conversion."
 
         mapping = (
@@ -208,14 +208,14 @@ class AttrConverterTestCase(unittest.TestCase):
                 {"fill":"black", "stroke":"yellow"}),
         )
         ac = svglib.Svg2RlgAttributeConverter()
-        failed = testit(ac.parseMultiAttributes, mapping)
+        failed = _testit(ac.parseMultiAttributes, mapping)
         self.assertEqual(len(failed), 0)
 
 
 class SVGSamplesTestCase(unittest.TestCase):
     "Tests on sample SVG files included in svglib test suite."
 
-    def test0(self):
+    def test_0(self):
         "Test sample SVG files included in svglib test suite."
 
         paths = glob.glob("samples/misc/*")
@@ -316,7 +316,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
                         fh.write(data)
 
 
-    def test0(self):
+    def test_0(self):
         "Test converting symbol SVG files to PDF using svglib."
 
         paths = glob.glob("%s/*" % self.folderPath)
@@ -455,7 +455,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
                 open(path, "w").write(flagSvg)
 
 
-    def test0(self):
+    def test_0(self):
         "Test converting flag SVG files to PDF using svglib."
 
         paths = glob.glob("%s/*" % self.folderPath)
@@ -529,7 +529,7 @@ class W3CTestCase(unittest.TestCase):
                 os.remove(join("samples", tarPath))
 
 
-    def test0(self):
+    def test_0(self):
         "Test converting W3C SVG files to PDF using svglib."
 
         excludeList = [
