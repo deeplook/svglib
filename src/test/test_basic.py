@@ -259,3 +259,23 @@ u'''<?xml version="1.0"?>
         assert len(drawing.contents[0].contents) == 2
         assert drawing.contents[0].contents[0].__class__.__name__ == 'Group'
         assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'
+
+    def test_use_node_properties(self):
+        """
+        Properties on the use node apply to the referenced item.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <path id="a" fill="#FF0000" d="M-15 37.57h60L-15 0v80h60l-60-60z"/>
+  <use stroke="#003893" stroke-width="5" xlink:href="#a"/>
+  <use stroke="#003893" stroke-width="2" xlink:href="#a"/>
+</svg>'''
+        ))
+        use_path1 = drawing.contents[0].contents[1].contents[0].contents[0]
+        use_path2 = drawing.contents[0].contents[2].contents[0].contents[0]
+        # Attribute from <path> node
+        assert use_path1.fillColor == colors.Color(1, 0, 0, 1)
+        # Attribute from <use> node
+        assert use_path1.strokeWidth == 5
+        assert use_path2.strokeWidth == 2

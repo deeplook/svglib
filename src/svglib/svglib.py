@@ -15,6 +15,7 @@ converting tool named sv2pdf (which should also handle SVG files com-
 pressed with gzip and extension .svgz).
 """
 
+import copy
 import sys
 import os
 import glob
@@ -628,7 +629,7 @@ class SvgRenderer:
             self.waiting_use_nodes[xlink_href[1:]].append((node, group))
             return group
 
-        item = self.definitions[xlink_href[1:]]
+        item = copy.deepcopy(self.definitions[xlink_href[1:]])
         group.add(item)
         getAttr = node.getAttribute
         transform = getAttr("transform")
@@ -637,7 +638,7 @@ class SvgRenderer:
             transform += " translate(%s, %s)" % (x or '0', y or '0')
         if transform:
             self.shapeConverter.applyTransformOnGroup(transform, group)
-        # TODO: apply other 'use' properties to the group
+        self.shapeConverter.applyStyleOnShape(item, node, only_explicit=True)
         return group
 
 
@@ -1064,8 +1065,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     print("Ignoring transform: %s %s" % (op, values))
 
 
-    def applyStyleOnShape(self, shape, *nodes):
-        "Apply styles from SVG elements to an RLG shape."
+    def applyStyleOnShape(self, shape, node, only_explicit=False):
+        """
+        Apply styles from an SVG element to an RLG shape.
+        If only_explicit is True, only attributes really present are applied.
+        """
 
         # RLG-specific: all RLG shapes
         "Apply style attributes of a sequence of nodes to an RL shape."
@@ -1085,20 +1089,30 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             ("text-anchor", "textAnchor", "id", "start"),
         )
 
+        if shape.__class__ == Group:
+            # Recursively apply style on Group subelements
+            for subshape in shape.contents:
+                self.applyStyleOnShape(subshape, node, only_explicit=only_explicit)
+            return
+
         ac = self.attrConverter
-        for node in nodes:
-            for mapping in (mappingN, mappingF):
-                if shape.__class__ != String and mapping == mappingF:
-                    continue
-                for (svgAttrName, rlgAttr, func, default) in mapping:
-                    try:
-                        svgAttrValue = ac.findAttr(node, svgAttrName) or default
-                        if svgAttrValue == "currentColor":
-                            svgAttrValue = ac.findAttr(node.parentNode, "color") or default
-                        meth = getattr(ac, func)
-                        setattr(shape, rlgAttr, meth(svgAttrValue))
-                    except:
-                        pass
+        for mapping in (mappingN, mappingF):
+            if shape.__class__ != String and mapping == mappingF:
+                continue
+            for (svgAttrName, rlgAttr, func, default) in mapping:
+                svgAttrValue = ac.findAttr(node, svgAttrName)
+                if svgAttrValue == '':
+                    if only_explicit:
+                        continue
+                    else:
+                        svgAttrValue = default
+                if svgAttrValue == "currentColor":
+                    svgAttrValue = ac.findAttr(node.parentNode, "color") or default
+                try:
+                    meth = getattr(ac, func)
+                    setattr(shape, rlgAttr, meth(svgAttrValue))
+                except Exception:
+                    pass
 
 
 def svg2rlg(path):
