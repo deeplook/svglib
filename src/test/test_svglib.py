@@ -242,7 +242,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
         req.putheader('Accept', 'text/svg')
         req.endheaders()
         r1 = req.getresponse()
-        data = r1.read()
+        data = r1.read().decode('utf-8')
         req.close()
         
         return data
@@ -283,7 +283,8 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
                     print("Check your internet connection and try again!")
                     break
                 if data:
-                    open(p, "w").write(data)
+                    with open(p, "w") as fh:
+                        fh.write(data)
 
 
     def test0(self):
@@ -296,19 +297,11 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
             print("working on [%d] %s" % (i, path))
 
             # convert
-            try:
-                drawing = svglib.svg2rlg(path)
-            except:
-                print("could not convert [%d] %s" % (i, path))
-                continue
+            drawing = svglib.svg2rlg(path)
 
             # save as PDF
             base = splitext(path)[0] + '-svglib.pdf'
-            try:
-                renderPDF.drawToFile(drawing, base, showBoundary=0)
-            except:
-                print("could not save as PDF [%d] %s" (i, path))
-
+            renderPDF.drawToFile(drawing, base, showBoundary=0)
 
     # outcommented
     def _test1(self):
