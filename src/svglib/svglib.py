@@ -106,6 +106,13 @@ def fixSvgPath(aList):
 
 
 def split_floats(op, min_num, value):
+    """Split `value`, a list of numbers as a string, to a list of float numbers.
+
+    Also optionally insert a `l` or `L` operation depending on the operation
+    and the length of values.
+    Example: with op='m' and value='10,20 30,40,' the returned value will be
+             ['m', [10.0, 20.0], 'l', [30.0, 40.0]]
+    """
     floats = [float(seq) for seq in re.findall('(-?\d*\.?\d*(?:e[+-]\d+)?)', value) if seq]
     res = []
     for i in range(0, len(floats), min_num):
@@ -976,9 +983,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         if ops[-1] == 3:
             shape1 = Path(pts, ops)
             self.applyStyleOnShape(shape1, node)
-            fc = self.attrConverter.findAttr(node, "fill")
-            if not fc:
-                shape1.fillColor = colors.black
             sc = self.attrConverter.findAttr(node, "stroke")
             if not sc:
                 shape1.strokeColor = None
@@ -987,9 +991,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             shape1 = Path(pts, ops+[3])
             self.applyStyleOnShape(shape1, node)
             shape1.strokeColor = None
-            fc = self.attrConverter.findAttr(node, "fill")
-            if not fc:
-                shape1.fillColor = colors.black
             gr.add(shape1)
         
             shape2 = Path(pts, ops)
@@ -1086,7 +1087,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         # tuple format: (svgAttr, rlgAttr, converter, default)
         mappingN = (
-            ("fill", "fillColor", "convertColor", "none"), 
+            ("fill", "fillColor", "convertColor", "black"),
             ("stroke", "strokeColor", "convertColor", "none"),
             ("stroke-width", "strokeWidth", "convertLength", "0"),
             ("stroke-linejoin", "strokeLineJoin", "convertLineJoin", "0"),
@@ -1114,17 +1115,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     except:
                         pass
 
-            if shape.__class__ == String:
-                svgAttr = ac.findAttr(node, "fill") or "black"
-                setattr(shape, "fillColor", ac.convertColor(svgAttr))
-
 
 def svg2rlg(path):
     "Convert an SVG file to an RLG Drawing object."
     
     # unzip .svgz file into .svg
     unzipped = False
-    if os.path.splitext(path)[1].lower() == ".svgz":
+    if  isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
         data = gzip.GzipFile(path, "rb").read()
         open(path[:-1], 'w').write(data)
         path = path[:-1]
