@@ -5,13 +5,11 @@
 This tests basic functionality. Run with one of these lines from
 inside the test directory:
 
-    python test_basic.py
     py.test -v -s test_basic.py
 """
 
 import sys
 import io
-import unittest
 
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -39,7 +37,7 @@ def _testit(func, mapping):
     return failed
     
 
-class NormBezierPathTestCase(unittest.TestCase):
+class TestNormBezierPathTestCase(object):
     "Testing Bezier paths."
 
     def test_0(self):
@@ -100,10 +98,10 @@ class NormBezierPathTestCase(unittest.TestCase):
                 ]),
         )
         failed = _testit(svglib.normaliseSvgPath, mapping)
-        self.assertEqual(len(failed), 0)
+        assert len(failed) == 0
 
 
-class ColorAttrConverterTestCase(unittest.TestCase):
+class TestColorAttrConverterTestCase(object):
     "Testing color attribute conversion."
 
     def test_0(self):
@@ -117,10 +115,10 @@ class ColorAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertColor, mapping)
-        self.assertEqual(len(failed), 0)
+        assert len(failed) == 0
 
 
-class LengthAttrConverterTestCase(unittest.TestCase):
+class TestLengthAttrConverterTestCase(object):
     "Testing length attribute conversion."
 
     def test_0(self):
@@ -140,7 +138,7 @@ class LengthAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLength, mapping)
-        self.assertEqual(len(failed), 0)
+        assert len(failed) == 0
 
 
     def test_1(self):
@@ -150,10 +148,10 @@ class LengthAttrConverterTestCase(unittest.TestCase):
         attr = "1e1%"
         expected = 1
         obj = ac.convertLength(attr, 10)
-        self.assertEqual(obj, expected)
+        assert obj == expected
 
 
-class LengthListAttrConverterTestCase(unittest.TestCase):
+class TestLengthListAttrConverterTestCase(object):
     "Testing length attribute conversion."
 
     def test_0(self):
@@ -165,10 +163,10 @@ class LengthListAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLengthList, mapping)
-        self.assertEqual(len(failed), 0)
+        assert len(failed) == 0
 
 
-class TransformAttrConverterTestCase(unittest.TestCase):
+class TestTransformAttrConverterTestCase(object):
     "Testing transform attribute conversion."
 
     def test_0(self):
@@ -182,10 +180,10 @@ class TransformAttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertTransform, mapping)
-        self.assertEqual(len(failed), 0)
+        assert len(failed) == 0
 
 
-class AttrConverterTestCase(unittest.TestCase):
+class TestAttrConverterTestCase(object):
     "Testing multi-attribute conversion."
 
     def test_0(self):
@@ -197,7 +195,7 @@ class AttrConverterTestCase(unittest.TestCase):
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.parseMultiAttributes, mapping)
-        self.assertEqual(len(failed), 0)
+        assert len(failed) == 0
 
     def test_no_fill_on_shape(self):
         """
@@ -209,8 +207,4 @@ u'''<?xml version="1.0" encoding="UTF-8"?>
 <rect y="10" width="36" height="4"/>
 </svg>'''
         ))
-        self.assertEqual(drawing.contents[0].contents[0].fillColor, colors.black)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert drawing.contents[0].contents[0].fillColor == colors.black

@@ -8,7 +8,6 @@ to convert SVG files into PDF for comparision with svglib.
 
 Run with one of these lines from inside the test directory:
 
-    python test_samples.py
     py.test -v -s test_samples.py
 """
 
@@ -21,7 +20,6 @@ import io
 import json
 import tarfile
 from os.path import splitext, exists, join, basename, getsize
-import unittest
 try:
     from httplib import HTTPSConnection  # PY2
 except ImportError:
@@ -43,7 +41,7 @@ from svglib import svglib
 del sys.path[0]
 
 
-class SVGSamplesTestCase(unittest.TestCase):
+class TestSVGSamplesTestCase(object):
     "Tests on sample SVG files included in svglib test suite."
 
     def test_0(self):
@@ -88,7 +86,7 @@ class SVGSamplesTestCase(unittest.TestCase):
                 os.remove(out)
 
 
-class WikipediaSymbolsTestCase(unittest.TestCase):
+class TestWikipediaSymbolsTestCase(object):
     "Tests on sample symbol SVG files from wikipedia.org."
 
     def fetchFile(self, server, path):
@@ -183,7 +181,7 @@ class WikipediaSymbolsTestCase(unittest.TestCase):
                 os.remove(out)            
 
 
-class WikipediaFlagsTestCase(unittest.TestCase):
+class TestWikipediaFlagsTestCase(object):
     "Tests using SVG flags from Wikipedia.org."
 
     def fetchFile(self, url):
@@ -323,7 +321,7 @@ class WikipediaFlagsTestCase(unittest.TestCase):
                 os.remove(out)            
 
 
-class W3CTestCase(unittest.TestCase):
+class TestW3CTestCase(object):
     "Tests using the official W3C SVG testsuite."
 
     def setUp(self):
@@ -385,7 +383,7 @@ class W3CTestCase(unittest.TestCase):
         
         paths = glob.glob("%s/svg/*.svg" % self.folderPath)
         msg = "Destination folder '%s/svg' not found." % self.folderPath
-        self.assertGreater(len(paths), 0, msg)
+        assert len(paths) > 0, msg
         
         for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
@@ -424,7 +422,3 @@ class W3CTestCase(unittest.TestCase):
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -4,7 +4,10 @@ This folder contains the testsuite for `svglib`. In order to run it
 open a terminal, change into this folder and execute the following 
 command::
  
-  $ python test_svglib.py
+  $ py.test -v
+
+This assumes you have installed ``pytest`` which is a simple
+``pip install pytest``. More information to come...
 
 This will run the entire testsuite and produce result files in PDF
 format in the subdirectories `samples`, `wikipedia/flags` and
