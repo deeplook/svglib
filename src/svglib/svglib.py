@@ -889,7 +889,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 ops.append(2)
             elif op == 'S':
                 x2, y2, xn, yn = nums
-                xp, yp, x0, y0 = pts[-4:]
+                if len(pts) < 4:
+                    xp, yp, x0, y0 = pts[-2:] * 2
+                else:
+                    xp, yp, x0, y0 = pts[-4:]
                 xi, yi = x0+(x0-xp), y0+(y0-yp)
                 # pts = pts + [xcp2, ycp2, x2, y2, xn, yn]
                 pts = pts + [xi, yi, x2, y2, xn, yn]
@@ -902,7 +905,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 pts = pts + [xp+x1, yp+y1, xp+x2, yp+y2, xp+xn, yp+yn]
                 ops.append(2)
             elif op == 's':
-                xp, yp, x0, y0 = pts[-4:]
+                if len(pts) < 4:
+                    xp, yp, x0, y0 = pts[-2:] * 2
+                else:
+                    xp, yp, x0, y0 = pts[-4:]
                 xi, yi = x0+(x0-xp), y0+(y0-yp)
                 x2, y2, xn, yn = nums
                 pts = pts + [xi, yi, x0+x2, y0+y2, x0+xn, y0+yn]
@@ -918,8 +924,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 pts = pts + [x1,y1, x2,y2, xn,yn]
                 ops.append(2)
             elif op == 'T':
-                xp, yp, x0, y0 = pts[-4:]
-                xi, yi = x0+(x0-xcp), y0+(y0-ycp)
+                if len(pts) < 4:
+                    xp, yp, x0, y0 = pts[-2:] * 2
+                else:
+                    xp, yp, x0, y0 = pts[-4:]
+                xi, yi = x0+(x0-xp), y0+(y0-yp)
                 xcp, ycp = xi, yi
                 xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
