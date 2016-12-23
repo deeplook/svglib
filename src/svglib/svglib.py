@@ -15,6 +15,7 @@ converting tool named sv2pdf (which should also handle SVG files com-
 pressed with gzip and extension .svgz).
 """
 
+import copy
 import sys
 import os
 import glob
@@ -23,6 +24,7 @@ import re
 import operator
 import gzip
 import xml.dom.minidom
+from collections import defaultdict
 from functools import reduce
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -450,7 +452,7 @@ class SvgRenderer:
         self.drawing = None
         self.mainGroup = Group()
         self.definitions = {}
-        self.doesProcessDefinitions = 0
+        self.waiting_use_nodes = defaultdict(list)
         self.verbose = 0
         self.level = 0
         self.path = path
@@ -472,9 +474,13 @@ class SvgRenderer:
             #else:
             #    self.logFile.write((format+"\n") % args)
 
+        n = NodeTracker(node)
+        nid = n.getAttribute("id")
+        ignored = False
+        item = None
+
         if name == "svg":
             self.level = self.level + 1
-            n = NodeTracker(node)
             drawing = self.renderSvg(n)
             children = n.childNodes
             for child in children:
@@ -482,63 +488,59 @@ class SvgRenderer:
                     continue
                 self.render(child, self.mainGroup)
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
         elif name == "defs":
-            self.doesProcessDefinitions = 1
-            n = NodeTracker(node)
             self.level = self.level + 1
-            parent.add(self.renderG(n))
+            item = self.renderG(n)
+            parent.add(item)
             self.level = self.level - 1
-            self.doesProcessDefinitions = 0
-            self.printUnusedAttributes(node, n)
         elif name == 'a':
             self.level = self.level + 1
-            n = NodeTracker(node)
             item = self.renderA(n)
             parent.add(item)
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
         elif name == 'g':
             self.level = self.level + 1
-            n = NodeTracker(node)
             display = n.getAttribute("display")
             if display != "none":
                 item = self.renderG(n)
                 parent.add(item)
-                if self.doesProcessDefinitions:
-                    id = n.getAttribute("id")
-                    self.definitions[id] = item
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
         elif name == "symbol":
             self.level = self.level + 1
-            n = NodeTracker(node)
             item = self.renderSymbol(n)
             # parent.add(item)
-            id = n.getAttribute("id")
-            if id:
-                self.definitions[id] = item
             self.level = self.level - 1
-            self.printUnusedAttributes(node, n)
+        elif name == "use":
+            self.level = self.level + 1
+            item = self.renderUse(n)
+            parent.add(item)
+            self.level = self.level - 1
         elif name in self.handledShapes:
             methodName = "convert"+name[0].upper()+name[1:]
-            n = NodeTracker(node)
-            shape = getattr(self.shapeConverter, methodName)(n)
-            if shape:
-                self.shapeConverter.applyStyleOnShape(shape, n)
+            item = getattr(self.shapeConverter, methodName)(n)
+            if item:
+                self.shapeConverter.applyStyleOnShape(item, n)
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
                 if transform and display != "none": 
                     gr = Group()
                     self.shapeConverter.applyTransformOnGroup(transform, gr)
-                    gr.add(shape)
+                    gr.add(item)
                     parent.add(gr)
+                    item = gr
                 elif display != "none":
-                    parent.add(shape)
-                self.printUnusedAttributes(node, n)
+                    parent.add(item)
         else:
+            ignored = True
             if LOGMESSAGES:
                 print("Ignoring node: %s" % name)
+        if not ignored:
+            if nid and item:
+                self.definitions[nid] = item
+            if nid in self.waiting_use_nodes.keys():
+                for use_node, group in self.waiting_use_nodes[nid]:
+                    self.renderUse(use_node, group)
+            self.printUnusedAttributes(node, n)
 
 
     def printUnusedAttributes(self, node, n):
@@ -615,23 +617,36 @@ class SvgRenderer:
         return self.renderG(node)
 
 
-    def renderUse(self, node):
-        xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
-        grp = Group()
-        try:
-            item = self.definitions[xlink_href[1:]]
-            grp.add(item)
-            transform = node.getAttribute("transform")
-            if transform:
-                self.shapeConverter.applyTransformOnGroup(transform, grp)
-        except KeyError:
-            if self.verbose and LOGMESSAGES:
-                print("Ignoring unavailable object width ID '%s'." % xlink_href)
+    def renderUse(self, node, group=None):
+        if group is None:
+            group = Group()
 
-        return grp
+        xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
+        if not xlink_href:
+            return
+        if xlink_href[1:] not in self.definitions:
+            # The missing definition should appear later in the file
+            self.waiting_use_nodes[xlink_href[1:]].append((node, group))
+            return group
+
+        item = copy.deepcopy(self.definitions[xlink_href[1:]])
+        group.add(item)
+        getAttr = node.getAttribute
+        transform = getAttr("transform")
+        x, y = map(getAttr, ("x", "y"))
+        if x or y:
+            transform += " translate(%s, %s)" % (x or '0', y or '0')
+        if transform:
+            self.shapeConverter.applyTransformOnGroup(transform, group)
+        self.shapeConverter.applyStyleOnShape(item, node, only_explicit=True)
+        return group
 
 
     def finish(self):
+        if self.verbose and LOGMESSAGES:
+            for xlink in self.waiting_use_nodes.keys():
+                print ("Ignoring unavailable object width ID '%s'." % xlink)
+
         height = self.drawing.height
         self.mainGroup.scale(1, -1)
         self.mainGroup.translate(0, -height)
@@ -1050,8 +1065,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     print("Ignoring transform: %s %s" % (op, values))
 
 
-    def applyStyleOnShape(self, shape, *nodes):
-        "Apply styles from SVG elements to an RLG shape."
+    def applyStyleOnShape(self, shape, node, only_explicit=False):
+        """
+        Apply styles from an SVG element to an RLG shape.
+        If only_explicit is True, only attributes really present are applied.
+        """
 
         # RLG-specific: all RLG shapes
         "Apply style attributes of a sequence of nodes to an RL shape."
@@ -1071,20 +1089,30 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             ("text-anchor", "textAnchor", "id", "start"),
         )
 
+        if shape.__class__ == Group:
+            # Recursively apply style on Group subelements
+            for subshape in shape.contents:
+                self.applyStyleOnShape(subshape, node, only_explicit=only_explicit)
+            return
+
         ac = self.attrConverter
-        for node in nodes:
-            for mapping in (mappingN, mappingF):
-                if shape.__class__ != String and mapping == mappingF:
-                    continue
-                for (svgAttrName, rlgAttr, func, default) in mapping:
-                    try:
-                        svgAttrValue = ac.findAttr(node, svgAttrName) or default
-                        if svgAttrValue == "currentColor":
-                            svgAttrValue = ac.findAttr(node.parentNode, "color") or default
-                        meth = getattr(ac, func)
-                        setattr(shape, rlgAttr, meth(svgAttrValue))
-                    except:
-                        pass
+        for mapping in (mappingN, mappingF):
+            if shape.__class__ != String and mapping == mappingF:
+                continue
+            for (svgAttrName, rlgAttr, func, default) in mapping:
+                svgAttrValue = ac.findAttr(node, svgAttrName)
+                if svgAttrValue == '':
+                    if only_explicit:
+                        continue
+                    else:
+                        svgAttrValue = default
+                if svgAttrValue == "currentColor":
+                    svgAttrValue = ac.findAttr(node.parentNode, "color") or default
+                try:
+                    meth = getattr(ac, func)
+                    setattr(shape, rlgAttr, meth(svgAttrValue))
+                except Exception:
+                    pass
 
 
 def svg2rlg(path):

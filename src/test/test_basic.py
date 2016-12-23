@@ -208,3 +208,74 @@ u'''<?xml version="1.0" encoding="UTF-8"?>
 </svg>'''
         ))
         assert drawing.contents[0].contents[0].fillColor == colors.black
+
+
+class TestUseNode(object):
+    def test_use(self):
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg width="10cm" height="3cm" viewBox="0 0 100 30" version="1.1"
+     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <rect id="MyRect" width="60" height="10"/>
+  </defs>
+  <rect x=".1" y=".1" width="99.8" height="29.8"
+        fill="none" stroke="blue" stroke-width=".2" />
+  <use x="20" y="10" xlink:href="#MyRect" />
+</svg>'''
+        ))
+        # First Rect
+        assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'
+        # Second Rect defined by the use node (inside a Group)
+        assert drawing.contents[0].contents[2].contents[0].__class__.__name__ ==  'Rect'
+
+    def test_transform_inherited_by_use(self):
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g id="c">
+    <path id="t" d="M 0,-100 V 0 H 50" transform="rotate(18 0,-100)"/>
+    <use xlink:href="#t" transform="scale(-1,1)"/>
+  </g>
+</svg>'''
+        ))
+        cgroup_node = drawing.contents[0].contents[0]
+        assert (
+            cgroup_node.contents[0].transform == cgroup_node.contents[1].contents[0].transform
+        ), "The transform of the original path is different from the transform of the reused path."
+
+    def test_use_forward_reference(self):
+        """
+        Sometimes, a node definition pointed to by xlink:href can appear after
+        it has been referenced. But the order should remain.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <use xlink:href="#back" x="-100"/>
+  <rect id="back" x="42" y="42" width="416" height="216" fill="#007a5e"/>
+</svg>'''
+        ))
+        assert len(drawing.contents[0].contents) == 2
+        assert drawing.contents[0].contents[0].__class__.__name__ == 'Group'
+        assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'
+
+    def test_use_node_properties(self):
+        """
+        Properties on the use node apply to the referenced item.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <path id="a" fill="#FF0000" d="M-15 37.57h60L-15 0v80h60l-60-60z"/>
+  <use stroke="#003893" stroke-width="5" xlink:href="#a"/>
+  <use stroke="#003893" stroke-width="2" xlink:href="#a"/>
+</svg>'''
+        ))
+        use_path1 = drawing.contents[0].contents[1].contents[0].contents[0]
+        use_path2 = drawing.contents[0].contents[2].contents[0].contents[0]
+        # Attribute from <path> node
+        assert use_path1.fillColor == colors.Color(1, 0, 0, 1)
+        # Attribute from <use> node
+        assert use_path1.strokeWidth == 5
+        assert use_path2.strokeWidth == 2
