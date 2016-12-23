@@ -23,11 +23,12 @@ import re
 import operator
 import gzip
 import xml.dom.minidom
+from functools import reduce
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, Circle, Drawing, Ellipse, Group, Line, Path, PolyLine, Polygon,
-    Rect, String,
+    _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
+    Polygon, Rect, String,
 )
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
@@ -291,6 +292,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         text = svgAttr
         if not text:
             return 0.0
+        if ' ' in text.replace(',', ' ').strip():
+            if LOGMESSAGES:
+                print("Only getting first value of %s" % text)
+            text = text.replace(',', ' ').split()[0]
 
         if text[-1] == '%':
             if LOGMESSAGES:
@@ -499,9 +504,9 @@ class SvgRenderer:
             if display != "none":
                 item = self.renderG(n)
                 parent.add(item)
-            if self.doesProcessDefinitions:
-                id = n.getAttribute("id")
-                self.definitions[id] = item
+                if self.doesProcessDefinitions:
+                    id = n.getAttribute("id")
+                    self.definitions[id] = item
             self.level = self.level - 1
             self.printUnusedAttributes(node, n)
         elif name == "symbol":
@@ -793,7 +798,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 tx = frags[-1]
             elif c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
                 frags.append(c.firstChild.nodeValue)
-                tx = ''.join([chr(ord(f)) for f in frags[-1]])
+                tx = frags[-1]
                 getAttr = c.getAttribute
                 y1 = getAttr('y')
                 y1 = attrConv.convertLength(y1)
@@ -1090,7 +1095,7 @@ def svg2rlg(path):
     try:
         doc = xml.dom.minidom.parse(path)
         svg = doc.documentElement
-    except:
+    except Exception:
         print("Failed to load input file!")
         return
 
