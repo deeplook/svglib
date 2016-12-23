@@ -11,6 +11,7 @@ inside the test directory:
 import sys
 import io
 
+from reportlab.graphics.shapes import Group
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 
@@ -221,6 +222,18 @@ u'''<?xml version="1.0"?>
 </svg>'''
         ))
         assert drawing.contents[0].contents[0].fillColor == colors.Color(0, 0, 0, 0)
+
+
+class TestApplyTransformOnGroup(object):
+    def test_translate_only_x(self):
+        """
+        When the second translate value is missing, 0 is assumed.
+        """
+        group = Group()
+        converter = svglib.Svg2RlgShapeConverter()
+        transform = "translate(10)"
+        converter.applyTransformOnGroup(transform, group)
+        assert group.transform == (1, 0, 0, 1, 10, 0)
 
 
 class TestUseNode(object):
