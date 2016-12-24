@@ -139,6 +139,7 @@ class TestLengthAttrConverterTestCase(object):
             ("1e1in", 10*inch),
             ("1e1%", 10),
             ("-8e-2cm", (-8e-2)*cm),
+            ("20pt", 20 * 1.25),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLength, mapping)
