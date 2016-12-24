@@ -114,6 +114,7 @@ class TestColorAttrConverterTestCase(object):
             ("#ff0000", colors.red),
             ("#f00", colors.red),
             ("rgb(100%,0%,0%)", colors.red),
+            ("rgb(255, 0, 0)", colors.red),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertColor, mapping)
@@ -177,8 +178,8 @@ class TestTransformAttrConverterTestCase(object):
         mapping = (
             ("", 
                 []),
-            ("scale(2) translate(10,20)", 
-                [("scale", 2), ("translate", (10,20))]),
+            ("scale(2) translate(10,-20.5)",
+                [("scale", 2.0), ("translate", (10.0, -20.5))]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertTransform, mapping)

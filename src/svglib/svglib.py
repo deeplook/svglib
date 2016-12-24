@@ -270,7 +270,10 @@ class AttributeConverter:
             subline = subline.strip()
             subline = subline.replace(',', ' ')
             subline = re.sub("[ ]+", ',', subline)
-            indices.append(eval(subline))
+            if ',' in subline:
+                indices.append(tuple(float(num) for num in subline.split(',')))
+            else:
+                indices.append(float(subline))
             ops = ops[:bi] + ' '*(bj-bi+1) + ops[bj+1:]
         ops = ops.split()
 
@@ -353,19 +356,15 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return colors.HexColor(text)
         elif len(text) == 4 and text[0] == '#':
             return colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3])
-        elif text[:3] == "rgb" and text.find('%') < 0:
-            t = text[:][3:]
-            t = t.replace('%', '')
-            tup = eval(t)
-            tup = [h[2:] for h in [hex(t) for t in tup]]
+        elif text.startswith('rgb') and '%' not in text:
+            t = text[3:].strip('()')
+            tup = [h[2:] for h in [hex(int(num)) for num in t.split(',')]]
             tup = [(2 - len(h)) * '0' + h for h in tup]
             col = "#%s%s%s" % tuple(tup)
             return colors.HexColor(col)
-        elif text[:3] == 'rgb' and text.find('%') >= 0:
-            t = text[:][3:]
-            t = t.replace('%', '')
-            tup = eval(t)
-            tup = [c/100.0 for c in tup]
+        elif text.startswith('rgb') and '%' in text:
+            t = text[3:].replace('%', '').strip('()')
+            tup = (int(val)/100.0 for val in t.split(','))
             return colors.Color(*tup)
 
         if LOGMESSAGES:
