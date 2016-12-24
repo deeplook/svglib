@@ -282,8 +282,8 @@ class TestWikipediaFlags(object):
     
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
-                svgPat = "//upload.wikimedia.org/wikipedia/commons"
-                p = "%s/.*?/%s" % (svgPat, quote(fn))
+                svg_pat = "//upload.wikimedia.org/wikipedia/commons"
+                p = "%s/.*?/%s" % (svg_pat, quote(fn))
                 print("check %s" % prefix + fn)
                 
                 flag_url = re.search(p, flag_html)

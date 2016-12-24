@@ -63,7 +63,7 @@ def convertQuadraticToCubicPath(Q0, Q1, Q2):
     return C0, C1, C2, C3
 
 
-def fixSvgPath(aList):
+def fixSvgPath(a_list):
     """Normalise certain "abnormalities" in SVG paths.
 
     Basically, this reduces adjacent number values for h and v
@@ -78,40 +78,40 @@ def fixSvgPath(aList):
     # for each coord. tuple of a tuple sequence... 
 
     hPos, vPos, HPos, VPos, numPos = [], [], [], [], []
-    for i in xrange(len(aList)):
-        hPos.append(aList[i]=='h')
-        vPos.append(aList[i]=='v')
-        HPos.append(aList[i]=='H')
-        VPos.append(aList[i]=='V')
-        numPos.append(type(aList[i])==type(1.0))
+    for i in xrange(len(a_list)):
+        hPos.append(a_list[i]=='h')
+        vPos.append(a_list[i]=='v')
+        HPos.append(a_list[i]=='H')
+        VPos.append(a_list[i]=='V')
+        numPos.append(type(a_list[i])==type(1.0))
 
-    fixedList = []
+    fixed_list = []
 
     i = 0
-    while i < len(aList):
+    while i < len(a_list):
         if hPos[i] + vPos[i] + HPos[i] + VPos[i] == 0:
-            fixedList.append(aList[i])
+            fixed_list.append(a_list[i])
         elif hPos[i] == 1 or vPos[i] == 1:
-            fixedList.append(aList[i])
+            fixed_list.append(a_list[i])
             sum = 0
             j = i+1
-            while j < len(aList) and numPos[j] == 1:
-                sum = sum + aList[j]
+            while j < len(a_list) and numPos[j] == 1:
+                sum = sum + a_list[j]
                 j = j+1
-            fixedList.append(sum)
+            fixed_list.append(sum)
             i = j-1
         elif HPos[i] == 1 or VPos[i] == 1:
-            fixedList.append(aList[i])
+            fixed_list.append(a_list[i])
             last = 0
             j = i+1
-            while j < len(aList) and numPos[j] == 1:
-                last = aList[j]
+            while j < len(a_list) and numPos[j] == 1:
+                last = a_list[j]
                 j = j+1
-            fixedList.append(last)
+            fixed_list.append(last)
             i = j-1
         i = i+1
 
-    return fixedList
+    return fixed_list
 
 
 def split_floats(op, min_num, value):
@@ -191,13 +191,13 @@ class AttributeConverter:
         attrs = [a.strip() for a in attrs]
         attrs = filter(lambda a:len(a)>0, attrs)
 
-        newAttrs = {}
+        new_attrs = {}
         for a in attrs:
             k, v = a.split(':')
             k, v = [s.strip() for s in (k, v)]
-            newAttrs[k] = v
+            new_attrs[k] = v
 
-        return newAttrs
+        return new_attrs
 
 
     def findAttr(self, svgNode, name):
@@ -210,10 +210,10 @@ class AttributeConverter:
 
         # This needs also to lookup values like "url(#SomeName)"...    
 
-        attrValue = svgNode.getAttribute(name).strip()
+        attr_value = svgNode.getAttribute(name).strip()
 
-        if attrValue and attrValue != "inherit":
-            return attrValue
+        if attr_value and attr_value != "inherit":
+            return attr_value
         elif svgNode.getAttribute("style"):
             dict = self.parseMultiAttributes(svgNode.getAttribute("style"))
             if name in dict:
