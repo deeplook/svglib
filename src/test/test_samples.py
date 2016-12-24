@@ -137,7 +137,9 @@ class TestWikipediaSymbols(object):
 /wikipedia/commons/a/a7/Olympic_flag.svg
 /wikipedia/commons/4/46/Ankh.svg
 /wikipedia/commons/5/5b/Star_of_life2.svg
-/wikipedia/commons/9/97/Tudor_rose.svg""".split()
+/wikipedia/commons/9/97/Tudor_rose.svg
+/wikipedia/commons/0/08/Flower-of-Life-small.svg
+""".strip().split()
 
         # convert
         for path in paths:
