@@ -39,11 +39,19 @@ except ImportError:
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.graphics import renderPDF, renderPM
+import pytest
 
 # import svglib from distribution
 sys.path.insert(0, "..")
 from svglib import svglib
 del sys.path[0]
+
+
+def found_uniconv():
+    "Do we have uniconv installed?"
+
+    res = os.popen("which uniconv").read().strip()
+    return len(res) > 0
 
 
 class TestSVGSamples(object):
@@ -82,15 +90,10 @@ class TestSVGSamples(object):
                 print("could not save as PDF [%d] %s" % (i, path))
 
 
-    def _test1(self):
+    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
+    def test_1(self):
         "Test converting W3C SVG files to PDF using uniconverter."
-        # outcommented, because some SVG samples seem to generate errors
 
-        # skip test, if uniconv tool not found
-        if not os.popen("which uniconv").read().strip():
-            print("Uniconv not found, test skipped.")
-            return
-            
         paths = glob.glob("samples/misc/*.svg")
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
@@ -184,14 +187,9 @@ class TestWikipediaSymbols(object):
             base = splitext(path)[0] + '-svglib.pdf'
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
-    # outcommented
-    def _test1(self):
+    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
+    def test_1(self):
         "Test converting symbol SVG files to PDF using uniconverter."
-
-        # skip test, if uniconv tool not found
-        if not os.popen("which uniconv").read().strip():
-            print("Uniconv not found, test skipped.")
-            return
 
         paths = glob.glob("%s/*" % self.folderPath)
         paths = [p for p in paths 
@@ -333,14 +331,9 @@ class TestWikipediaFlags(object):
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
 
-    # outcommented, because many SVG samples seem to generate errors
-    def _test1(self):
+    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
+    def test_1(self):
         "Test converting flag SVG files to PDF using uniconverer."
-
-        # skip test, if uniconv tool not found
-        if not os.popen("which uniconv").read().strip():
-            print("Uniconv not found, test skipped.")
-            return
 
         paths = glob.glob("%s/*" % self.folderPath)
         paths = [p for p in paths 
@@ -445,15 +438,10 @@ class TestW3CTestCase(object):
             base = splitext(path)[0] + '-svglib.png'
             renderPM.drawToFile(drawing, base, 'PNG')
 
-    # outcommented, because many SVG samples seem to generate errors
-    def _test1(self):
+    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
+    def test_1(self):
         "Test converting W3C SVG files to PDF using uniconverter."
 
-        # skip test, if uniconv tool not found
-        if not os.popen("which uniconv").read().strip():
-            print("Uniconv not found, test skipped.")
-            return
-            
         paths = glob.glob("%s/svg/*" % self.folderPath)
         paths = [p for p in paths 
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
