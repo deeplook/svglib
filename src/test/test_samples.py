@@ -266,9 +266,7 @@ class TestWikipediaFlags(object):
         if not exists(json_path):
             flag_url_map = []
             prefix = "https://en.wikipedia.org/wiki/File:"
-            for i in range(len(flag_names)):
-                fn = flag_names[i]
-
+            for i, fn in enumerate(flag_names):
                 # load single flag HTML page, like
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
                 flag_html = self.fetch_file(prefix + quote(fn))

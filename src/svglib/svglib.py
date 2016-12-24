@@ -265,8 +265,9 @@ class AttributeConverter:
         ops = line[:]
         brackets = []
         indices = []
-        for i in range(len(line)):
-           if line[i] in "()": brackets.append(i)
+        for i, lin in enumerate(line):
+            if lin in "()":
+                brackets.append(i)
         for i in range(0, len(brackets), 2):
             bi, bj = brackets[i], brackets[i+1]
             subline = line[bi+1:bj]
@@ -282,8 +283,8 @@ class AttributeConverter:
 
         assert len(ops) == len(indices)
         result = []
-        for i in range(len(ops)):
-            result.append((ops[i], indices[i]))
+        for i, op in enumerate(ops):
+            result.append((op, indices[i]))
 
         return result
 
