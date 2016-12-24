@@ -207,10 +207,7 @@ class AttributeConverter:
 
         # This needs also to lookup values like "url(#SomeName)"...    
 
-        try:
-            attrValue = svgNode.getAttribute(name)
-        except:
-            return ''
+        attrValue = svgNode.getAttribute(name).strip()
 
         if attrValue and attrValue != "inherit":
             return attrValue
@@ -218,9 +215,8 @@ class AttributeConverter:
             dict = self.parseMultiAttributes(svgNode.getAttribute("style"))
             if name in dict:
                 return dict[name]
-        else:
-            if svgNode.parentNode:
-                return self.findAttr(svgNode.parentNode, name)
+        elif svgNode.parentNode and svgNode.parentNode.nodeType != svgNode.DOCUMENT_NODE:
+            return self.findAttr(svgNode.parentNode, name)
 
         return ''
 
