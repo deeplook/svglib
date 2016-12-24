@@ -500,7 +500,6 @@ class SvgRenderer:
         elif name == "defs":
             self.level = self.level + 1
             item = self.renderG(n)
-            parent.add(item)
             self.level = self.level - 1
         elif name == 'a':
             self.level = self.level + 1
