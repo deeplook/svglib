@@ -76,18 +76,11 @@ class TestSVGSamples(object):
             print("working on [%d] %s" % (i, path))
 
             # convert
-            try:
-                drawing = svglib.svg2rlg(path)
-            except:
-                print("could not convert [%d]" % i, path)
-                continue
+            drawing = svglib.svg2rlg(path)
 
             # save as PDF
             base = splitext(path)[0] + '-svglib.pdf'
-            try:
-                renderPDF.drawToFile(drawing, base, showBoundary=0)
-            except:
-                print("could not save as PDF [%d] %s" % (i, path))
+            renderPDF.drawToFile(drawing, base, showBoundary=0)
 
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
@@ -346,7 +339,7 @@ class TestWikipediaFlags(object):
                 os.remove(out)
 
 
-class TestW3CTestCase(object):
+class TestW3C(object):
     "Tests using the official W3C SVG testsuite."
 
     def setup_method(self):
