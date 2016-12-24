@@ -457,6 +457,7 @@ class SvgRenderer:
         self.mainGroup = Group()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
+        self.origin = [0, 0]
         self.verbose = 0
         self.level = 0
         self.path = path
@@ -586,7 +587,8 @@ class SvgRenderer:
         viewBox = getAttr("viewBox")
         if viewBox:
             viewBox = self.attrConverter.convertLengthList(viewBox)
-            width, height = viewBox[2:4]
+            x, y, width, height = viewBox
+            self.origin = [x, y]
         self.drawing = Drawing(width, height)
         return self.drawing
 
@@ -653,7 +655,7 @@ class SvgRenderer:
 
         height = self.drawing.height
         self.mainGroup.scale(1, -1)
-        self.mainGroup.translate(0, -height)
+        self.mainGroup.translate(0 - self.origin[0], -height - self.origin[1])
         self.drawing.add(self.mainGroup)
         return self.drawing
 
