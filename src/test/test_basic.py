@@ -10,6 +10,7 @@ inside the test directory:
 
 import sys
 import io
+from xml.dom.minidom import parseString
 
 from reportlab.graphics.shapes import Group
 from reportlab.lib import colors
@@ -197,6 +198,14 @@ class TestAttrConverterTestCase(object):
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.parseMultiAttributes, mapping)
         assert len(failed) == 0
+
+    def test_findAttr(self):
+        """
+        Whitespace in attribute values shouldn't disturb parsing.
+        """
+        ac = svglib.Svg2RlgAttributeConverter()
+        node = parseString('<rect fill=" #00A1DE\n"/>').documentElement
+        assert ac.findAttr(node, 'fill') == "#00A1DE"
 
     def test_no_fill_on_shape(self):
         """
