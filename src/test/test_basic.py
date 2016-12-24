@@ -12,9 +12,10 @@ import sys
 import io
 from xml.dom.minidom import parseString
 
-from reportlab.graphics.shapes import Group
+from reportlab.graphics.shapes import Group, Polygon
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
+from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 # import svglib from distribution
 sys.path.insert(0, "..")
@@ -232,6 +233,13 @@ u'''<?xml version="1.0"?>
 </svg>'''
         ))
         assert drawing.contents[0].contents[0].fillColor == colors.Color(0, 0, 0, 0)
+
+    def test_fillrule(self):
+        converter = svglib.Svg2RlgShapeConverter()
+        node = parseString('<polygon fill-rule="evenodd"/>').documentElement
+        poly = Polygon()
+        converter.applyStyleOnShape(poly, node)
+        assert poly._fillRule == FILL_EVEN_ODD
 
 
 class TestApplyTransformOnGroup(object):
