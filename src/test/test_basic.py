@@ -305,3 +305,17 @@ u'''<?xml version="1.0"?>
         # Attribute from <use> node
         assert use_path1.strokeWidth == 5
         assert use_path2.strokeWidth == 2
+
+
+class TestViewBox(object):
+    def test_nonzero_origin(self):
+        drawing = svglib.svg2rlg(io.StringIO(
+u'''<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="-60 -40 120 80">
+<g fill="#E70013">
+    <rect x="-60" y="-40" width="120" height="80"/>
+</g>
+</svg>'''
+        ))
+        # Main group coordinates are translated to match the viewBox origin
+        assert drawing.contents[0].transform == (1, 0, 0, -1, 60.0, 40.0)
