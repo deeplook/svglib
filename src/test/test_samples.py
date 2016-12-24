@@ -265,20 +265,20 @@ class TestWikipediaFlags(object):
 
         # find all flag base filenames
         # ["Flag_of_Bhutan.svg", "Flag_of_Bhutan.svg", ...]
-        flagNames = re.findall("\:(Flag_of_.*?\.svg)", data)
-        flagNames = [unquote(fn) for fn in flagNames]
+        flag_names = re.findall("\:(Flag_of_.*?\.svg)", data)
+        flag_names = [unquote(fn) for fn in flag_names]
 
         # save flag URLs into a JSON file, if not already present
-        jsonPath = join(self.folder_path, "flags.json")
-        if not exists(jsonPath):
-            flagUrlMap = []
+        json_path = join(self.folder_path, "flags.json")
+        if not exists(json_path):
+            flag_url_map = []
             prefix = "https://en.wikipedia.org/wiki/File:"
-            for i in range(len(flagNames)):
-                fn = flagNames[i]
+            for i in range(len(flag_names)):
+                fn = flag_names[i]
                 
                 # load single flag HTML page, like  
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
-                flagHtml = self.fetch_file(prefix + quote(fn))
+                flag_html = self.fetch_file(prefix + quote(fn))
     
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
@@ -286,23 +286,23 @@ class TestWikipediaFlags(object):
                 p = "%s/.*?/%s" % (svgPat, quote(fn))
                 print("check %s" % prefix + fn)
                 
-                flagUrl = re.search(p, flagHtml)
-                if flagUrl:
-                    start, end = flagUrl.span()
-                    flagUrl = flagHtml[start:end]
-                    flagUrlMap.append((prefix + fn, flagUrl))
-            with open(jsonPath, "w") as fh:
-                json.dump(flagUrlMap, fh)
+                flag_url = re.search(p, flag_html)
+                if flag_url:
+                    start, end = flag_url.span()
+                    flag_url = flag_html[start:end]
+                    flag_url_map.append((prefix + fn, flag_url))
+            with open(json_path, "w") as fh:
+                json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
-        with open(jsonPath, "r") as fh:
-            flagUrlMap = json.load(fh)
-        for dummy, flagUrl in flagUrlMap:
-            path = join(self.folder_path, self.flag_url2filename(flagUrl))
+        with open(json_path, "r") as fh:
+            flag_url_map = json.load(fh)
+        for dummy, flag_url in flag_url_map:
+            path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
-                print("fetch %s" % flagUrl)
-                flagSvg = self.fetch_file(flagUrl)
-                open(path, "w").write(flagSvg)
+                print("fetch %s" % flag_url)
+                flag_svg = self.fetch_file(flag_url)
+                open(path, "w").write(flag_svg)
 
 
     def cleanup(self):
