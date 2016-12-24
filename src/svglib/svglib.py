@@ -4,12 +4,12 @@
 """An experimental library for reading and converting SVG.
 
 This is an experimental converter from SVG to RLG (ReportLab Graphics)
-drawings. It converts mainly basic shapes, paths and simple text. 
+drawings. It converts mainly basic shapes, paths and simple text.
 The current intended usage is either as module within other projects:
 
     from svglib.svglib import svg2rlg
     drawing = svg2rlg("foo.svg")
-  
+
 or from the command-line where right now it is usable as an SVG to PDF
 converting tool named sv2pdf (which should also handle SVG files com-
 pressed with gzip and extension .svgz).
@@ -75,7 +75,7 @@ def fixSvgPath(a_list):
     """
 
     # this could also modify the path to contain an op code
-    # for each coord. tuple of a tuple sequence... 
+    # for each coord. tuple of a tuple sequence...
 
     hPos, vPos, HPos, VPos, numPos = [], [], [], [], []
     for i in xrange(len(a_list)):
@@ -140,14 +140,14 @@ def normaliseSvgPath(attr):
     list as argument for Z and z only in order to make the resul-
     ting list easier to iterate over.
 
-    E.g. "M 10 20, M 20 20, L 30 40, 40 40, Z" 
+    E.g. "M 10 20, M 20 20, L 30 40, 40 40, Z"
       -> ['M', [10, 20], 'L', [20, 20], 'L', [30, 40], 'L', [40, 40], 'Z', []]
     """
 
-    # operator codes mapped to the minimum number of expected arguments 
+    # operator codes mapped to the minimum number of expected arguments
     ops = {'A':7, 'a':7,
-      'Q':4, 'q':4, 'T':2, 't':2, 'S':4, 's':4, 
-      'M':2, 'L':2, 'm':2, 'l':2, 'H':1, 'V':1,  
+      'Q':4, 'q':4, 'T':2, 't':2, 'S':4, 's':4,
+      'M':2, 'L':2, 'm':2, 'l':2, 'H':1, 'V':1,
       'h':1, 'v':1, 'C':6, 'c':6, 'Z':0, 'z':0}
     op_keys = ops.keys()
 
@@ -186,7 +186,7 @@ class AttributeConverter:
 
         Return a dictionary with single attributes in 'line'.
         """
-    
+
         attrs = line.split(';')
         attrs = [a.strip() for a in attrs]
         attrs = filter(lambda a:len(a)>0, attrs)
@@ -205,10 +205,10 @@ class AttributeConverter:
 
         First the node is searched, then its style attribute, then
         the search continues in the node's parent node. If no such
-        attribute is found, '' is returned. 
+        attribute is found, '' is returned.
         """
 
-        # This needs also to lookup values like "url(#SomeName)"...    
+        # This needs also to lookup values like "url(#SomeName)"...
 
         attr_value = svgNode.getAttribute(name).strip()
 
@@ -256,7 +256,7 @@ class AttributeConverter:
     def convertTransform(self, svgAttr):
         """Parse transform attribute string.
 
-        E.g. "scale(2) translate(10,20)" 
+        E.g. "scale(2) translate(10,20)"
              -> [("scale", 2), ("translate", (10,20))]
         """
 
@@ -351,7 +351,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         predefined = predefined + "olive orange purple red silver teal white yellow "
         predefined = predefined + "lawngreen indianred aquamarine lightgreen brown"
 
-        # This needs also to lookup values like "url(#SomeName)"...    
+        # This needs also to lookup values like "url(#SomeName)"...
 
         text = svgAttr
         if not text or text == "none":
@@ -402,8 +402,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
     def convertFontFamily(self, svgAttr):
         # very hackish
-        fontMapping = {"sans-serif":"Helvetica", 
-                       "serif":"Times-Roman", 
+        fontMapping = {"sans-serif":"Helvetica",
+                       "serif":"Times-Roman",
                        "monospace":"Courier"}
         fontName = svgAttr
         if not fontName:
@@ -439,7 +439,7 @@ class NodeTracker:
     # also getAttributeNS(uri, name)?
 
     def __getattr__(self, name):
-        # forward attribute access to wrapped object 
+        # forward attribute access to wrapped object
         return getattr(self.object, name)
 
 
@@ -531,7 +531,7 @@ class SvgRenderer:
                 self.shapeConverter.applyStyleOnShape(item, n)
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
-                if transform and display != "none": 
+                if transform and display != "none":
                     gr = Group()
                     self.shapeConverter.applyTransformOnGroup(transform, gr)
                     gr.add(item)
@@ -608,7 +608,7 @@ class SvgRenderer:
             if child.nodeType != 1:
                 continue
             item = self.render(child, parent=gr)
-            if item and display: 
+            if item and display:
                 gr.add(item)
 
         if transform:
@@ -668,7 +668,7 @@ class SvgShapeConverter:
     """An abstract SVG shape converter.
 
     Implement subclasses with methods named 'renderX(node)', where
-    'X' should be the capitalised name of an SVG node element for 
+    'X' should be the capitalised name of an SVG node element for
     shapes, like 'Rect', 'Circle', 'Line', etc.
 
     Each of these methods should return a shape object appropriate
@@ -869,7 +869,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         for i in xrange(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
- 
+
             # moveto absolute
             if op == 'M':
                 path.moveTo(*nums)
@@ -1149,7 +1149,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 def svg2rlg(path):
     "Convert an SVG file to an RLG Drawing object."
-    
+
     # unzip .svgz file into .svg
     unzipped = False
     if  isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
@@ -1174,7 +1174,7 @@ def svg2rlg(path):
     # remove unzipped .svgz file (.svg)
     if unzipped:
         os.remove(path)
-        
+
     return drawing
 
 

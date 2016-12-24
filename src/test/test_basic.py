@@ -25,7 +25,7 @@ del sys.path[0]
 
 def _testit(func, mapping):
     "Call 'func' on input in mapping and return list of failed tests."
-    
+
     failed = []
     for input, expected in mapping:
         result = func(input)
@@ -38,7 +38,7 @@ def _testit(func, mapping):
             print("  %s : %s != %s" % (repr(input), result, expected))
 
     return failed
-    
+
 
 class TestNormBezierPathTestCase(object):
     "Testing Bezier paths."
@@ -47,25 +47,25 @@ class TestNormBezierPathTestCase(object):
         "Test path normalisation."
 
         mapping = (
-            ("", 
+            ("",
                 []),
-                
-            ("M10 20, L 30 40 ", 
+
+            ("M10 20, L 30 40 ",
                 ["M", [10, 20], "L", [30, 40]]),
-                
+
             ("M10 20, L 40 40Z",
                 ["M", [10, 20], "L", [40, 40], "Z", []]),
-                
+
             ("M10 20, L 30 40 40 40Z",
                 ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", []]),
-                
+
             ("  M10 20,L30 40,40 40Z  ",
                 ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", []]),
-                
+
             ("  M 10 20, M 30 40, L 40 40, Z M 40 50, l 50 60, Z",
                 ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", [],
                  "M", [40, 50], "l", [50, 60], "Z", []]),
-                
+
             ("  m 10 20, m 30 40, l 40 40, z",
                 ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
 
@@ -178,7 +178,7 @@ class TestTransformAttrConverterTestCase(object):
         "Test transform attribute conversion."
 
         mapping = (
-            ("", 
+            ("",
                 []),
             ("scale(2) translate(10,-20.5)",
                 [("scale", 2.0), ("translate", (10.0, -20.5))]),
@@ -195,7 +195,7 @@ class TestAttrConverterTestCase(object):
         "Test multi-attribute conversion."
 
         mapping = (
-            ("fill: black; stroke: yellow", 
+            ("fill: black; stroke: yellow",
                 {"fill":"black", "stroke":"yellow"}),
         )
         ac = svglib.Svg2RlgAttributeConverter()
