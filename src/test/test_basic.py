@@ -269,10 +269,11 @@ u'''<?xml version="1.0"?>
   <use x="20" y="10" xlink:href="#MyRect" />
 </svg>'''
         ))
+        main_group = drawing.contents[0]
         # First Rect
-        assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'
+        assert main_group.contents[0].__class__.__name__ == 'Rect'
         # Second Rect defined by the use node (inside a Group)
-        assert drawing.contents[0].contents[2].contents[0].__class__.__name__ ==  'Rect'
+        assert main_group.contents[1].contents[0].__class__.__name__ ==  'Rect'
 
     def test_transform_inherited_by_use(self):
         drawing = svglib.svg2rlg(io.StringIO(
