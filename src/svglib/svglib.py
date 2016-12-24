@@ -300,22 +300,23 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                 print("Only getting first value of %s" % text)
             text = text.replace(',', ' ').split()[0]
 
-        if text[-1] == '%':
+        if text.endswith('%'):
             if LOGMESSAGES:
                 print("Fiddling length unit: %")
             return float(text[:-1]) / 100 * percentOf
-        elif text[-2:] == "pc":
+        elif text.endswith("pc"):
             return float(text[:-2]) * pica
+        elif text.endswith("pt"):
+            return float(text[:-2]) * 1.25
 
-        newSize = text[:]
-        for u in "em ex px".split():
-            if newSize.find(u) >= 0:
+        for unit in ("em", "ex", "px"):
+            if unit in text:
                 if LOGMESSAGES:
-                    print("Ignoring unit: %s" % u)
-                newSize = newSize.replace(u, '')
+                    print("Ignoring unit: %s" % unit)
+                text = text.replace(unit, '')
 
-        newSize = newSize.strip()
-        length = toLength(newSize)
+        text = text.strip()
+        length = toLength(text)
 
         return length
 
