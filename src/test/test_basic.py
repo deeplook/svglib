@@ -10,9 +10,10 @@ inside the test directory:
 
 import sys
 import io
+import textwrap
 from xml.dom.minidom import parseString
 
-from reportlab.graphics.shapes import Group, Polygon
+from reportlab.graphics.shapes import Group, Polygon, Rect
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
@@ -24,7 +25,7 @@ del sys.path[0]
 
 
 def _testit(func, mapping):
-    "Call 'func' on input in mapping and return list of failed tests."
+    "Call `func` on input in mapping and return list of failed tests."
 
     failed = []
     for input, expected in mapping:
@@ -40,7 +41,7 @@ def _testit(func, mapping):
     return failed
 
 
-class TestNormBezierPathTestCase(object):
+class TestNormBezierPath(object):
     "Testing Bezier paths."
 
     def test_0(self):
@@ -104,7 +105,7 @@ class TestNormBezierPathTestCase(object):
         assert len(failed) == 0
 
 
-class TestColorAttrConverterTestCase(object):
+class TestColorAttrConverter(object):
     "Testing color attribute conversion."
 
     def test_0(self):
@@ -122,7 +123,7 @@ class TestColorAttrConverterTestCase(object):
         assert len(failed) == 0
 
 
-class TestLengthAttrConverterTestCase(object):
+class TestLengthAttrConverter(object):
     "Testing length attribute conversion."
 
     def test_0(self):
@@ -156,7 +157,7 @@ class TestLengthAttrConverterTestCase(object):
         assert obj == expected
 
 
-class TestLengthListAttrConverterTestCase(object):
+class TestLengthListAttrConverter(object):
     "Testing length attribute conversion."
 
     def test_0(self):
@@ -171,7 +172,7 @@ class TestLengthListAttrConverterTestCase(object):
         assert len(failed) == 0
 
 
-class TestTransformAttrConverterTestCase(object):
+class TestTransformAttrConverter(object):
     "Testing transform attribute conversion."
 
     def test_0(self):
@@ -188,7 +189,7 @@ class TestTransformAttrConverterTestCase(object):
         assert len(failed) == 0
 
 
-class TestAttrConverterTestCase(object):
+class TestAttrConverter(object):
     "Testing multi-attribute conversion."
 
     def test_0(self):
@@ -214,25 +215,29 @@ class TestAttrConverterTestCase(object):
         """
         Any shape with no fill property should set black color in rlg syntax.
         """
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 36 24">
-<rect y="10" width="36" height="4"/>
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0" encoding="UTF-8"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="1200" height="800"
+                 viewBox="0 0 36 24">
+                <rect y="10" width="36" height="4"/>
+            </svg>
+        ''')))
         assert drawing.contents[0].contents[0].fillColor == colors.black
 
     def test_fillopacity(self):
         """
         The fill-opacity property set the alpha of the color.
         """
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="660" height="480">
-  <polygon id="triangle" points="0,-29.14 -25.23, 14.57 25.23, 14.57"
-      stroke="#0038b8" stroke-width="5.5" fill-opacity="0"/>
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 width="660" height="480">
+                <polygon id="triangle" points="0,-29.14 -25.23, 14.57 25.23, 14.57"
+                         stroke="#0038b8" stroke-width="5.5" fill-opacity="0"/>
+            </svg>
+        ''')))
         assert drawing.contents[0].contents[0].fillColor == colors.Color(0, 0, 0, 0)
 
     def test_fillrule(self):
@@ -257,34 +262,39 @@ class TestApplyTransformOnGroup(object):
 
 class TestUseNode(object):
     def test_use(self):
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0"?>
-<svg width="10cm" height="3cm" viewBox="0 0 100 30" version="1.1"
-     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <defs>
-    <rect id="MyRect" width="60" height="10"/>
-  </defs>
-  <rect x=".1" y=".1" width="99.8" height="29.8"
-        fill="none" stroke="blue" stroke-width=".2" />
-  <use x="20" y="10" xlink:href="#MyRect" />
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="10cm" height="3cm" viewBox="0 0 100 30">
+              <defs>
+                  <rect id="MyRect" width="60" height="10"/>
+              </defs>
+              <rect x=".1" y=".1" width="99.8" height="29.8"
+                    fill="none" stroke="blue" stroke-width=".2" />
+              <use x="20" y="10" xlink:href="#MyRect" />
+            </svg>
+        ''')))
         main_group = drawing.contents[0]
         # First Rect
-        assert main_group.contents[0].__class__.__name__ == 'Rect'
+        assert isinstance(main_group.contents[0], Rect)
         # Second Rect defined by the use node (inside a Group)
-        assert main_group.contents[1].contents[0].__class__.__name__ ==  'Rect'
+        assert isinstance(main_group.contents[1].contents[0], Rect)
 
     def test_transform_inherited_by_use(self):
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0"?>
-<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <g id="c">
-    <path id="t" d="M 0,-100 V 0 H 50" transform="rotate(18 0,-100)"/>
-    <use xlink:href="#t" transform="scale(-1,1)"/>
-  </g>
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg version="1.1"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="900" height="600">
+                <g id="c">
+                    <path id="t" d="M 0,-100 V 0 H 50"
+                          transform="rotate(18 0,-100)"/>
+                    <use xlink:href="#t" transform="scale(-1,1)"/>
+                </g>
+            </svg>
+        ''')))
         cgroup_node = drawing.contents[0].contents[0]
         assert (
             cgroup_node.contents[0].transform == cgroup_node.contents[1].contents[0].transform
@@ -295,29 +305,33 @@ u'''<?xml version="1.0"?>
         Sometimes, a node definition pointed to by xlink:href can appear after
         it has been referenced. But the order should remain.
         """
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0"?>
-<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <use xlink:href="#back" x="-100"/>
-  <rect id="back" x="42" y="42" width="416" height="216" fill="#007a5e"/>
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg version="1.1"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="900" height="600">
+                <use xlink:href="#back" x="-100"/>
+                <rect id="back" x="42" y="42" width="416" height="216" fill="#007a5e"/>
+            </svg>
+        ''')))
         assert len(drawing.contents[0].contents) == 2
-        assert drawing.contents[0].contents[0].__class__.__name__ == 'Group'
-        assert drawing.contents[0].contents[1].__class__.__name__ == 'Rect'
+        assert isinstance(drawing.contents[0].contents[0], Group)
+        assert isinstance(drawing.contents[0].contents[1], Rect)
 
     def test_use_node_properties(self):
         """
         Properties on the use node apply to the referenced item.
         """
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0"?>
-<svg version="1.1" width="900" height="600" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <path id="a" fill="#FF0000" d="M-15 37.57h60L-15 0v80h60l-60-60z"/>
-  <use stroke="#003893" stroke-width="5" xlink:href="#a"/>
-  <use stroke="#003893" stroke-width="2" xlink:href="#a"/>
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg version="1.1"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="900" height="600">
+                <path id="a" fill="#FF0000" d="M-15 37.57h60L-15 0v80h60l-60-60z"/>
+                <use stroke="#003893" stroke-width="5" xlink:href="#a"/>
+                <use stroke="#003893" stroke-width="2" xlink:href="#a"/>
+            </svg>
+        ''')))
         use_path1 = drawing.contents[0].contents[1].contents[0].contents[0]
         use_path2 = drawing.contents[0].contents[2].contents[0].contents[0]
         # Attribute from <path> node
@@ -329,13 +343,15 @@ u'''<?xml version="1.0"?>
 
 class TestViewBox(object):
     def test_nonzero_origin(self):
-        drawing = svglib.svg2rlg(io.StringIO(
-u'''<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="-60 -40 120 80">
-<g fill="#E70013">
-    <rect x="-60" y="-40" width="120" height="80"/>
-</g>
-</svg>'''
-        ))
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="1200" height="800"
+                 viewBox="-60 -40 120 80">
+                <g fill="#E70013">
+                    <rect x="-60" y="-40" width="120" height="80"/>
+                </g>
+            </svg>
+        ''')))
         # Main group coordinates are translated to match the viewBox origin
         assert drawing.contents[0].transform == (1, 0, 0, -1, 60.0, 40.0)
