@@ -29,12 +29,14 @@ from functools import reduce
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
+    _CLOSEPATH, ArcPath, Circle, Drawing, Ellipse, Group, Image, Line, PolyLine,
     Polygon, Rect, String,
 )
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
+
+from svg.path import Arc
 
 
 __version__ = "0.6.3"
@@ -859,7 +861,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def convertPath(self, node):
         d = node.getAttribute('d')
         normPath = normaliseSvgPath(d)
-        path = Path()
+        path = ArcPath()
 
         for i in xrange(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
@@ -960,11 +962,30 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     convertQuadraticToCubicPath((x0,y0), (xi,yi), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
 
-            # elliptic arc, unsupported (simplified to line)
+            # elliptical arc
             elif op in ('A', 'a'):
-                path.lineTo(*nums[-2:])
-                if LOGMESSAGES:
-                    print ("(Replaced with straight line)")
+                start = complex(*path.points[-2:])
+                radius = complex(*nums[:2])
+                if op == 'a':
+                    end = complex(path.points[-2] + nums[-2],
+                                  path.points[-1] + nums[-1])
+                else:
+                    end = complex(*nums[-2:])
+                arc = Arc(start, radius, nums[2], nums[3], nums[4], end)
+                # Convert from endpoint to center parameterization
+                arc._parameterize()
+                if arc.sweep:
+                    reverse = False
+                    start_angle = arc.theta
+                    end_angle = start_angle + arc.delta
+                else:
+                    reverse = True
+                    start_angle = arc.theta - 360
+                    end_angle = start_angle + arc.delta
+                    if arc.delta < 0:
+                        start_angle, end_angle = end_angle, start_angle
+                path.addArc(arc.center.real, arc.center.imag, arc.radius.real,
+                            start_angle, end_angle, yradius=arc.radius.imag, reverse=reverse)
 
             # close path
             elif op in ('Z', 'z'):

@@ -81,6 +81,7 @@ url = _baseURL
 download_url = _baseURL + "tmp/%s-%s.tar.gz" % (name, __version__)
 package_dir = {"svglib": "src/svglib"}
 packages = ["svglib"]
+install_requires = ["svg.path"],
 py_modules = []
 scripts = ["src/scripts/svg2pdf"]
 classifiers = [
