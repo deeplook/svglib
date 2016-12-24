@@ -28,6 +28,7 @@ from collections import defaultdict
 from functools import reduce
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.graphics.shapes import (
     _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
     Polygon, Rect, String,
@@ -334,6 +335,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertOpacity(self, svgAttr):
         return float(svgAttr)
 
+    def convertFillRule(self, svgAttr):
+        return {
+            'nonzero': FILL_NON_ZERO,
+            'evenodd': FILL_EVEN_ODD,
+        }.get(svgAttr, '')
 
     def convertColor(self, svgAttr):
         "Convert string to a RL color object."
@@ -1081,6 +1087,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         mappingN = (
             ("fill", "fillColor", "convertColor", "black"),
             ("fill-opacity", "fillOpacity", "convertOpacity", 1),
+            ("fill-rule", "_fillRule", "convertFillRule", "nonzero"),
             ("stroke", "strokeColor", "convertColor", "none"),
             ("stroke-width", "strokeWidth", "convertLength", "0"),
             ("stroke-linejoin", "strokeLineJoin", "convertLineJoin", "0"),
@@ -1150,3 +1157,35 @@ def svg2rlg(path):
         os.remove(path)
         
     return drawing
+
+
+def monkeypatch_reportlab():
+    """
+    https://bitbucket.org/rptlab/reportlab/issues/95/
+    ReportLab always use 'Even-Odd' filling mode for paths, this patch forces
+    RL to honor the path fill rule mode (possibly 'Non-Zero Winding') instead.
+    """
+    from reportlab.pdfgen.canvas import Canvas
+    from reportlab.graphics import shapes
+
+    original_renderPath = shapes._renderPath
+    def patchedRenderPath(path, drawFuncs):
+        # Patched method to transfer fillRule from Path to PDFPathObject
+        # Get back from bound method to instance
+        try:
+            drawFuncs[0].__self__.fillMode = path._fillRule
+        except AttributeError:
+            pass
+        return original_renderPath(path, drawFuncs)
+    shapes._renderPath = patchedRenderPath
+
+    original_drawPath = Canvas.drawPath
+    def patchedDrawPath(self, path, **kwargs):
+        current = self._fillMode
+        if hasattr(path, 'fillMode'):
+            self._fillMode = path.fillMode
+        original_drawPath(self, path, **kwargs)
+        self._fillMode = current
+    Canvas.drawPath = patchedDrawPath
+
+monkeypatch_reportlab()
