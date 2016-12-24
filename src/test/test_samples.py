@@ -24,6 +24,7 @@ import gzip
 import io
 import json
 import tarfile
+import textwrap
 from os.path import splitext, exists, join, basename, getsize
 try:
     from httplib import HTTPSConnection  # PY2
@@ -128,18 +129,18 @@ class TestWikipediaSymbols(object):
         # list sample files, found on:
         # http://en.wikipedia.org/wiki/List_of_symbols
         server = "upload.wikimedia.org"
-        paths = """\
-/wikipedia/commons/f/f7/Biohazard.svg
-/wikipedia/commons/1/11/No_smoking_symbol.svg
-/wikipedia/commons/b/b0/Dharma_wheel.svg
-/wikipedia/commons/a/a7/Eye_of_Horus_bw.svg
-/wikipedia/commons/1/17/Yin_yang.svg
-/wikipedia/commons/a/a7/Olympic_flag.svg
-/wikipedia/commons/4/46/Ankh.svg
-/wikipedia/commons/5/5b/Star_of_life2.svg
-/wikipedia/commons/9/97/Tudor_rose.svg
-/wikipedia/commons/0/08/Flower-of-Life-small.svg
-""".strip().split()
+        paths = textwrap.dedent("""\
+            /wikipedia/commons/f/f7/Biohazard.svg
+            /wikipedia/commons/1/11/No_smoking_symbol.svg
+            /wikipedia/commons/b/b0/Dharma_wheel.svg
+            /wikipedia/commons/a/a7/Eye_of_Horus_bw.svg
+            /wikipedia/commons/1/17/Yin_yang.svg
+            /wikipedia/commons/a/a7/Olympic_flag.svg
+            /wikipedia/commons/4/46/Ankh.svg
+            /wikipedia/commons/5/5b/Star_of_life2.svg
+            /wikipedia/commons/9/97/Tudor_rose.svg
+            /wikipedia/commons/0/08/Flower-of-Life-small.svg
+        """).strip().split()
 
         # convert
         for path in paths:
@@ -379,7 +380,8 @@ class TestW3C(object):
     def cleanup(self):
         "Remove generated files when running this test class."
 
-        paths = glob.glob(join(self.folder_path, 'svg/*.pdf'))
+        paths = glob.glob(join(self.folder_path, 'svg/*-svglib.pdf'))
+        paths += glob.glob(join(self.folder_path, 'svg/*-svglib.png'))
         for i, path in enumerate(paths):
             print("deleting [%d] %s" % (i, path))
             os.remove(path)
@@ -430,6 +432,7 @@ class TestW3C(object):
             # (endless loop for file paint-stroke-06-t.svg)
             base = splitext(path)[0] + '-svglib.png'
             renderPM.drawToFile(drawing, base, 'PNG')
+
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
     def test_1(self):
