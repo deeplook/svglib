@@ -3,7 +3,7 @@
 """Testsuite for svglib.
 
 This tests conversion of sample SVG files into PDF files.
-Some tests try using a tool called uniconv (if installed) 
+Some tests try using a tool called uniconv (if installed)
 to convert SVG files into PDF for comparision with svglib.
 
 Run with one of these lines from inside the test directory:
@@ -70,9 +70,9 @@ class TestSVGSamples(object):
         "Test sample SVG files included in svglib test suite."
 
         paths = glob.glob("samples/misc/*")
-        paths = [p for p in paths 
+        paths = [p for p in paths
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
-        for i, path in enumerate(paths):            
+        for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
             # convert
@@ -108,9 +108,9 @@ class TestWikipediaSymbols(object):
 
     def fetch_file(self, server, path):
         "Fetch file using httplib module."
-    
+
         print("downloading https://%s%s" % (server, path))
-            
+
         req = HTTPSConnection(server)
         req.putrequest('GET', path)
         req.putheader('Host', server)
@@ -119,7 +119,7 @@ class TestWikipediaSymbols(object):
         r1 = req.getresponse()
         data = r1.read().decode('utf-8')
         req.close()
-        
+
         return data
 
 
@@ -175,9 +175,9 @@ class TestWikipediaSymbols(object):
         "Test converting symbol SVG files to PDF using svglib."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths 
+        paths = [p for p in paths
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
-        for i, path in enumerate(paths):            
+        for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
             # convert
@@ -192,14 +192,14 @@ class TestWikipediaSymbols(object):
         "Test converting symbol SVG files to PDF using uniconverter."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths 
+        paths = [p for p in paths
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
             cmd = "uniconv '%s' '%s'" % (path, out)
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
-                os.remove(out)            
+                os.remove(out)
 
 
 class TestWikipediaFlags(object):
@@ -207,7 +207,7 @@ class TestWikipediaFlags(object):
 
     def fetch_file(self, url):
         "Get content with some given URL, uncompress if needed."
-    
+
         parsed = urlparse(url)
         conn = HTTPSConnection(parsed.netloc)
         conn.request("GET", parsed.path)
@@ -223,7 +223,7 @@ class TestWikipediaFlags(object):
         else:
             data = None
         conn.close()
-    
+
         return data
 
 
@@ -243,7 +243,7 @@ class TestWikipediaFlags(object):
 
         return path
 
-        
+
     def setup_method(self):
         "Check if files exists, else download."
 
@@ -275,17 +275,17 @@ class TestWikipediaFlags(object):
             prefix = "https://en.wikipedia.org/wiki/File:"
             for i in range(len(flag_names)):
                 fn = flag_names[i]
-                
-                # load single flag HTML page, like  
+
+                # load single flag HTML page, like
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
                 flag_html = self.fetch_file(prefix + quote(fn))
-    
+
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
                 svg_pat = "//upload.wikimedia.org/wikipedia/commons"
                 p = "%s/.*?/%s" % (svg_pat, quote(fn))
                 print("check %s" % prefix + fn)
-                
+
                 flag_url = re.search(p, flag_html)
                 if flag_url:
                     start, end = flag_url.span()
@@ -318,9 +318,9 @@ class TestWikipediaFlags(object):
         "Test converting flag SVG files to PDF using svglib."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths 
+        paths = [p for p in paths
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
-        for i, path in enumerate(paths):            
+        for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
             # convert
@@ -336,14 +336,14 @@ class TestWikipediaFlags(object):
         "Test converting flag SVG files to PDF using uniconverer."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths 
+        paths = [p for p in paths
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
             cmd = "uniconv '%s' '%s'" % (path, out)
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
-                os.remove(out)            
+                os.remove(out)
 
 
 class TestW3CTestCase(object):
@@ -359,7 +359,7 @@ class TestW3CTestCase(object):
         archive_path = basename(url)
         tar_path = splitext(archive_path)[0]
         self.folder_path = join("samples", splitext(tar_path)[0])
-        
+
         if not exists(self.folder_path):
             if not exists(join("samples", tar_path)):
                 if not exists(join("samples", archive_path)):
@@ -414,11 +414,11 @@ class TestW3CTestCase(object):
             "media-alevel-202-t.svg",
             "udom-event-207-t.svg",
         ]
-        
+
         paths = glob.glob("%s/svg/*.svg" % self.folder_path)
         msg = "Destination folder '%s/svg' not found." % self.folder_path
         assert len(paths) > 0, msg
-        
+
         for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
@@ -443,7 +443,7 @@ class TestW3CTestCase(object):
         "Test converting W3C SVG files to PDF using uniconverter."
 
         paths = glob.glob("%s/svg/*" % self.folder_path)
-        paths = [p for p in paths 
+        paths = [p for p in paths
             if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
