@@ -140,6 +140,8 @@ class TestWikipediaSymbols(object):
             /wikipedia/commons/5/5b/Star_of_life2.svg
             /wikipedia/commons/9/97/Tudor_rose.svg
             /wikipedia/commons/0/08/Flower-of-Life-small.svg
+            /wikipedia/commons/d/d0/Countries_by_Population_Density_in_2015.svg
+            /wikipedia/commons/8/84/CO2_responsibility_1950-2000.svg
         """).strip().split()
 
         # convert
