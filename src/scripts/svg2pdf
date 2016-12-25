@@ -3,122 +3,123 @@
 
 """A simple converter from SVG to PDF.
 
-For further information please look into the file README.txt!
+For further information please check the file README.txt!
 """
 
-import re
 import sys
-import getopt
-import os.path
+import argparse
+import textwrap
+from datetime import datetime
+from os.path import dirname, basename, splitext, exists
 
 from reportlab.graphics import renderPDF
 
 from svglib import svglib
 
 
-__version__ = "0.6.3"
-__license__ = "LGPL 3"
-__author__ = "Dinu Gherman"
-__date__ = "2010-03-01"
+__version__ = '0.6.3'
+__license__ = 'LGPL 3'
+__author__ = 'Dinu Gherman'
+__date__ = '2010-03-01'
 
 
 def svg2pdf(path, outputPat=None):
     "Convert an SVG file to a PDF one."
 
+    # derive output filename from output pattern
+    file_info = {
+        'dirname': dirname(path) or '.',
+        'basename': basename(path),
+        'base': basename(splitext(path)[0]),
+        'ext': splitext(path)[1],
+        'now': datetime.now(),
+    }
+    out_pattern = outputPat or '%(dirname)s/%(base)s.pdf'
+    # allow classic %%(name)s notation
+    out_path = out_pattern % file_info
+    # allow also newer {name} notation
+    out_path = out_path.format(**file_info)
+
     # generate a drawing from the SVG file
     try:
         drawing = svglib.svg2rlg(path)
     except:
-        print("Rendering failed.")
+        print('Rendering failed.')
         raise
-
-    # derive output filename from output pattern
-    if not outputPat:
-        outputPat = "%(dirname)s/%(base)s.pdf"
-    dirname = os.path.dirname(path) or "."
-    basename = os.path.basename(path)
-    base = os.path.basename(os.path.splitext(path)[0])
-    ext = os.path.splitext(path)[1]
-
-    aDict = {
-        "dirname":dirname, "basename":basename,
-        "base":base, "ext":ext
-    }
-    outPath = outputPat % aDict
 
     # save as PDF file
     if drawing:
-        renderPDF.drawToFile(drawing, outPath, showBoundary=0)
+        renderPDF.drawToFile(drawing, out_path, showBoundary=0)
 
 
 # command-line usage stuff
 
-def _showVersion():
-    "Print version message and terminate."
-
-    prog = os.path.basename(sys.argv[0])
-    print("%s %s" % (prog, __version__))
-    sys.exit()
-
-
-def _showUsage():
-    "Print usage message and terminate."
-
-    prog = os.path.basename(sys.argv[0])
-    copyrightYear = __date__[:__date__.find("-")]
-    args = (prog, __version__, __author__, copyrightYear, __license__)
-    print("%s v. %s, Copyleft by %s, %s (%s)" % args)
-    print("An experimental SVG to PDF converter (via ReportLab Graphics)")
-    print("USAGE: %s [options] file1.svg(z) [file2.svg(z)...]" % prog)
-    print("""\
-OPTIONS:
-  -h --help          Print this usage message and exits.
-  -v --version       Print version number and exits.
-  -o --output FILE   Set output path (incl. some patterns).
-
-EXAMPLES:
-  %(prog)s file1.svg file2.svgz # produce file1.pdf and file2.pdf
-  %(prog)s path/file.svg        # produce path/file.pdf
-  %(prog)s -o out.pdf file.svg  # produce out.pdf
-  %(prog)s -o "%%(basename)s.pdf" path/file*.svg
-                               # creates all output in local dir.
-
-COPYLEFT:
-  see http://www.gnu.org/copyleft/gpl.html
-""" % {"prog": prog})
-
-    sys.exit()
-
-
 def _main():
-    "Main for command-line usage."
+    args = dict(
+        prog=basename(sys.argv[0]),
+        version=__version__,
+        author=__author__,
+        license=__license__,
+        copyleft_year=__date__[:__date__.find('-')],
+        ts_pattern="{{dirname}}/out-{{now.hour}}-{{now.minute}}-{{now.second}}-%(base)s.pdf"
+    )
+    desc = '{prog} v. {version}\n'.format(**args)
+    desc += 'An experimental SVG to PDF converter (via ReportLab Graphics)\n'
+    epilog = textwrap.dedent('''\
+        examples:
+            # convert path/file.svg to path/file.pdf
+            {prog} path/file.svg
 
-    try:
-        longOpts = "help version output=".split()
-        opts, args = getopt.getopt(sys.argv[1:], "hvo:", longOpts)
-    except getopt.GetoptError:
-        print("ERROR")
-        _showUsage()
+            # convert file1.svg to file1.pdf and file2.svgz to file2.pdf
+            {prog} file1.svg file2.svgz
 
-    stopOptions = "-v --version -h --help"
-    stopOptions = [key for (key, val) in opts if key in stopOptions]
-    if len(args) == 0 and len(stopOptions) == 0:
-        _showUsage()
+            # convert file.svg to out.pdf
+            {prog} -o out.pdf file.svg
 
-    outputPat = None
-    for key, val in opts:
-        if key in ("-h", "--help"):
-            _showUsage()
-        elif key in ("-v", "--version"):
-            _showVersion()
-        elif key in ("-o", "--output"):
-            outputPat = val
+            # convert all SVG files in path/ to PDF files with names like:
+            # path/file1.svg -> file1.pdf
+            {prog} -o "%(base)s.pdf" path/file*.svg
 
-    # determine paths of input files
-    paths = [a for a in args if os.path.exists(a)]
+            # convert all SVG files in path/ to PDF files with names like:
+            # path/file1.svg -> path/out-12-58-36-file1.pdf
+            {prog} -o {ts_pattern} path/file*.svg
 
+        issues/pull requests:
+            https://github.com/deeplook/svglib
+
+        Copyleft by {author}, 2008-{copyleft_year} ({license}):
+            http://www.gnu.org/copyleft/gpl.html'''.format(**args))
+    p = argparse.ArgumentParser(
+        description=desc,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    p.add_argument('-v', '--version',
+        help='Print version number and exit.', 
+        action='store_true')
+
+    p.add_argument('-o', '--output',
+        metavar='PATH_PAT',
+        help='Set output path (incl. the placeholders: dirname, basename,'
+             'base, ext, now) in both, %%(name)s and {name} notations.'
+    )
+
+    line_filter_default = u''
+    p.add_argument('input',
+        metavar='PATH',
+        nargs='*',
+        help='Input SVG file path with extension .svg or .svgz.')
+
+    args = p.parse_args()
+
+    if args.version:
+        print(__version__)
+        sys.exit()
+
+    paths = [a for a in args.input if exists(a)]
     for path in paths:
-        svg2pdf(path, outputPat)
+        svg2pdf(path, outputPat=args.output)
 
 
 if __name__ == '__main__':
