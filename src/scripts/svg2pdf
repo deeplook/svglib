@@ -117,6 +117,10 @@ def _main():
         print(__version__)
         sys.exit()
 
+    if not args.input:
+        p.print_usage()
+        sys.exit()
+
     paths = [a for a in args.input if exists(a)]
     for path in paths:
         svg2pdf(path, outputPat=args.output)
