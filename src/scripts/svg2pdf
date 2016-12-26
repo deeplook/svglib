@@ -67,22 +67,22 @@ def _main():
     desc += 'An experimental SVG to PDF converter (via ReportLab Graphics)\n'
     epilog = textwrap.dedent('''\
         examples:
-            # convert path/file.svg to path/file.pdf
-            {prog} path/file.svg
+          # convert path/file.svg to path/file.pdf
+          {prog} path/file.svg
 
-            # convert file1.svg to file1.pdf and file2.svgz to file2.pdf
-            {prog} file1.svg file2.svgz
+          # convert file1.svg to file1.pdf and file2.svgz to file2.pdf
+          {prog} file1.svg file2.svgz
 
-            # convert file.svg to out.pdf
-            {prog} -o out.pdf file.svg
+          # convert file.svg to out.pdf
+          {prog} -o out.pdf file.svg
 
-            # convert all SVG files in path/ to PDF files with names like:
-            # path/file1.svg -> file1.pdf
-            {prog} -o "%(base)s.pdf" path/file*.svg
+          # convert all SVG files in path/ to PDF files with names like:
+          # path/file1.svg -> file1.pdf
+          {prog} -o "%(base)s.pdf" path/file*.svg
 
-            # like before but with timestamp in the PDF files:
-            # path/file1.svg -> path/out-12-58-36-file1.pdf
-            {prog} -o {ts_pattern} path/file*.svg
+          # like before but with timestamp in the PDF files:
+          # path/file1.svg -> path/out-12-58-36-file1.pdf
+          {prog} -o {ts_pattern} path/file*.svg
 
         issues/pull requests:
             https://github.com/deeplook/svglib
