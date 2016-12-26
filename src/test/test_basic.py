@@ -241,7 +241,7 @@ class TestAttrConverter(object):
         assert drawing.contents[0].contents[0].fillColor == colors.Color(0, 0, 0, 0)
 
     def test_fillrule(self):
-        converter = svglib.Svg2RlgShapeConverter()
+        converter = svglib.Svg2RlgShapeConverter(None)
         node = parseString('<polygon fill-rule="evenodd"/>').documentElement
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
@@ -254,7 +254,7 @@ class TestApplyTransformOnGroup(object):
         When the second translate value is missing, 0 is assumed.
         """
         group = Group()
-        converter = svglib.Svg2RlgShapeConverter()
+        converter = svglib.Svg2RlgShapeConverter(None)
         transform = "translate(10)"
         converter.applyTransformOnGroup(transform, group)
         assert group.transform == (1, 0, 0, 1, 10, 0)
