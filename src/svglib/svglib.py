@@ -16,13 +16,12 @@ pressed with gzip and extension .svgz).
 """
 
 import copy
-import sys
-import os
-import glob
-import types
-import re
-import operator
 import gzip
+import logging
+import operator
+import os
+import re
+import types
 import xml.dom.minidom
 from collections import defaultdict
 from functools import reduce
@@ -45,9 +44,7 @@ __license__ = "LGPL 3"
 __author__ = "Dinu Gherman"
 __date__ = "2010-03-01"
 
-
-pt = 1
-LOGMESSAGES = 0
+logger = logging.getLogger(__name__)
 
 
 ### helpers ###
@@ -299,13 +296,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if not text:
             return 0.0
         if ' ' in text.replace(',', ' ').strip():
-            if LOGMESSAGES:
-                print("Only getting first value of %s" % text)
+            logger.debug("Only getting first value of %s" % text)
             text = text.replace(',', ' ').split()[0]
 
         if text.endswith('%'):
-            if LOGMESSAGES:
-                print("Fiddling length unit: %")
+            logger.debug("Fiddling length unit: %")
             return float(text[:-1]) / 100 * percentOf
         elif text.endswith("pc"):
             return float(text[:-2]) * pica
@@ -314,8 +309,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
         for unit in ("em", "ex", "px"):
             if unit in text:
-                if LOGMESSAGES:
-                    print("Ignoring unit: %s" % unit)
+                logger.warn("Ignoring unit: %s" % unit)
                 text = text.replace(unit, '')
 
         text = text.strip()
@@ -377,8 +371,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             tup = (int(val)/100.0 for val in t.split(','))
             return colors.Color(*tup)
 
-        if LOGMESSAGES:
-            print("Can't handle color: %s" % text)
+        logger.warn("Can't handle color: %s" % text)
 
         return None
 
@@ -462,26 +455,12 @@ class SvgRenderer:
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
         self.origin = [0, 0]
-        self.verbose = 0
-        self.level = 0
         self.path = path
-        self.logFile = None
-        #if self.path:
-        #    logPath = os.path.splitext(self.path)[0] + ".log"
-        #    self.logFile = open(logPath, 'w')
-
 
     def render(self, node, parent=None):
         if parent is None:
             parent = self.mainGroup
         name = node.nodeName
-        if self.verbose:
-            format = "%s%s"
-            args = ('  '*self.level, name)
-            #if not self.logFile:
-            #    print format % args
-            #else:
-            #    self.logFile.write((format+"\n") % args)
 
         n = NodeTracker(node)
         nid = n.getAttribute("id")
@@ -489,40 +468,28 @@ class SvgRenderer:
         item = None
 
         if name == "svg":
-            self.level = self.level + 1
             drawing = self.renderSvg(n)
             children = n.childNodes
             for child in children:
                 if child.nodeType != 1:
                     continue
                 self.render(child, self.mainGroup)
-            self.level = self.level - 1
         elif name == "defs":
-            self.level = self.level + 1
             item = self.renderG(n)
-            self.level = self.level - 1
         elif name == 'a':
-            self.level = self.level + 1
             item = self.renderA(n)
             parent.add(item)
-            self.level = self.level - 1
         elif name == 'g':
-            self.level = self.level + 1
             display = n.getAttribute("display")
             if display != "none":
                 item = self.renderG(n)
                 parent.add(item)
-            self.level = self.level - 1
         elif name == "symbol":
-            self.level = self.level + 1
             item = self.renderSymbol(n)
             # parent.add(item)
-            self.level = self.level - 1
         elif name == "use":
-            self.level = self.level + 1
             item = self.renderUse(n)
             parent.add(item)
-            self.level = self.level - 1
         elif name in self.handled_shapes:
             method_name = "convert%s" % name.capitalize()
             item = getattr(self.shape_converter, method_name)(n)
@@ -540,37 +507,24 @@ class SvgRenderer:
                     parent.add(item)
         else:
             ignored = True
-            if LOGMESSAGES:
-                print("Ignoring node: %s" % name)
+            logger.debug("Ignoring node: %s" % name)
+
         if not ignored:
             if nid and item:
                 self.definitions[nid] = item
             if nid in self.waiting_use_nodes.keys():
                 for use_node, group in self.waiting_use_nodes[nid]:
                     self.renderUse(use_node, group)
-            self.printUnusedAttributes(node, n)
+            self.print_unused_attributes(node, n)
 
 
-    def printUnusedAttributes(self, node, n):
-        allAttrs = self.attrConverter.getAllAttributes(node).keys()
-        unusedAttrs = []
-
-        for a in allAttrs:
-            if a not in n.usedAttrs:
-                unusedAttrs.append(a)
-
-        if self.verbose and unusedAttrs:
-            format = "%s-Unused: %s"
-            args = ("  "*(self.level+1), unusedAttrs.join(", "))
-            #if not self.logFile:
-            #    print format % args
-            #else:
-            #    self.logFile.write((format+"\n") % args)
-
-        if LOGMESSAGES and unusedAttrs:
-            #print "Used attrs:", n.nodeName, n.usedAttrs
-            #print "All attrs:", n.nodeName, allAttrs
-            print("Unused attrs: %s %s" % (n.nodeName, unusedAttrs))
+    def print_unused_attributes(self, node, n):
+        if logger.level > logging.DEBUG:
+            return
+        all_attrs = self.attrConverter.getAllAttributes(node).keys()
+        unused_attrs = [attr for attr in all_attrs if attr not in n.usedAttrs]
+        if unused_attrs:
+            logger.debug("Unused attrs: %s %s" % (n.nodeName, unused_attrs))
 
 
     def renderTitle_(self, node):
@@ -652,9 +606,8 @@ class SvgRenderer:
 
 
     def finish(self):
-        if self.verbose and LOGMESSAGES:
-            for xlink in self.waiting_use_nodes.keys():
-                print ("Ignoring unavailable object width ID '%s'." % xlink)
+        for xlink in self.waiting_use_nodes.keys():
+            logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
 
         height = self.drawing.height
         self.mainGroup.scale(1, -1)
@@ -982,8 +935,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op in ('Z', 'z'):
                 path.closePath()
 
-            elif LOGMESSAGES:
-                print("Suspicious path operator: %s" % op)
+            logger.debug("Suspicious path operator: %s" % op)
 
         # hack because RLG has no "semi-closed" paths...
         gr = Group()
@@ -1011,8 +963,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
     def convertImage(self, node):
-        if LOGMESSAGES:
-            print("Adding box instead image.")
+        logger.warn("Adding box instead image.")
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
@@ -1076,8 +1027,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op == "matrix":
                 group.transform = values
             else:
-                if LOGMESSAGES:
-                    print("Ignoring transform: %s %s" % (op, values))
+                logger.debug("Ignoring transform: %s %s" % (op, values))
 
 
     def applyStyleOnShape(self, shape, node, only_explicit=False):
@@ -1150,7 +1100,7 @@ def svg2rlg(path):
         doc = xml.dom.minidom.parse(path)
         svg = doc.documentElement
     except Exception:
-        print("Failed to load input file!")
+        logger.error("Failed to load input file!")
         return
 
     # convert to a RLG drawing
