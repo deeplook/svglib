@@ -396,20 +396,22 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
     def convertFontFamily(self, svgAttr):
         # very hackish
-        fontMapping = {"sans-serif":"Helvetica",
-                       "serif":"Times-Roman",
-                       "monospace":"Courier"}
-        fontName = svgAttr
-        if not fontName:
+        font_mapping = {
+            "sans-serif":"Helvetica",
+            "serif":"Times-Roman",
+            "monospace":"Courier"
+        }
+        font_name = svgAttr
+        if not font_name:
             return ''
         try:
-            fontName = fontMapping[fontName]
+            font_name = font_mapping[font_name]
         except KeyError:
             pass
-        if fontName not in ("Helvetica", "Times-Roman", "Courier"):
-            fontName = "Helvetica"
+        if font_name not in ("Helvetica", "Times-Roman", "Courier"):
+            font_name = "Helvetica"
 
-        return fontName
+        return font_name
 
 
 class NodeTracker:
