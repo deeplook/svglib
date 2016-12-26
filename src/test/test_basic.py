@@ -303,6 +303,29 @@ class TestTextNode(object):
         # xml:space can be overriden per text node
         assert main_group.contents[1].contents[0].text == '  with   spaces '
 
+    def test_tspan_position(self):
+        """
+        The x/y positions of a tspan are either relative to the current text
+        position, or can be absoluted by specifying the x/y attributes.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+              <text x="10" style="fill:#000000; stroke:none; font-size:28;">
+                <tspan>TITLE 1</tspan>
+                <tspan>(after title)</tspan>
+                <tspan x="-10.75" y="33.487">Subtitle</tspan>
+              </text>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        assert main_group.contents[0].contents[0].x == 10
+        assert main_group.contents[0].contents[0].y == 0
+        assert main_group.contents[0].contents[1].x > 10
+        assert main_group.contents[0].contents[1].y == 0
+        assert main_group.contents[0].contents[2].x == -0.75  # 10 - 10.75
+        assert main_group.contents[0].contents[2].y == -33.487
+
 
 class TestUseNode(object):
     def test_use(self):
