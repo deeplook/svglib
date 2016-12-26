@@ -80,7 +80,7 @@ def _main():
             # path/file1.svg -> file1.pdf
             {prog} -o "%(base)s.pdf" path/file*.svg
 
-            # convert all SVG files in path/ to PDF files with names like:
+            # like before but with timestamp in the PDF files:
             # path/file1.svg -> path/out-12-58-36-file1.pdf
             {prog} -o {ts_pattern} path/file*.svg
 
