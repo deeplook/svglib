@@ -38,7 +38,7 @@ Tests include a vast amount of tests from the `W3C SVG test suite`_ plus
 ca. 190 `flags from Wikipedia`_ and some selected `symbols from Wikipedia`_
 for test purposes (some of them hinting at more work to be done).
 
-This release introduces a lot of contributions by Claude Poroz,
+This release introduces a lot of contributions by Claude Paroz,
 who stepped forward to give this project a long needed overhaul, for
 which I'm very grateful. Thanks, Claude!
  
@@ -161,7 +161,7 @@ following lines on the system command-line::
  
   $ tar xfz svglib-0.6.3.tar.gz
   $ cd svglib/src/test
-  $ python test_svglib.py
+  $ py.test -v -s
   ......
 
 
