@@ -455,9 +455,8 @@ class SvgRenderer:
 
     def __init__(self, path=None):
         self.attrConverter = Svg2RlgAttributeConverter()
-        self.shapeConverter = Svg2RlgShapeConverter()
-        self.shapeConverter.svgSourceFile = path
-        self.handledShapes = self.shapeConverter.getHandledShapes()
+        self.shape_converter = Svg2RlgShapeConverter(path)
+        self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.drawing = None
         self.mainGroup = Group()
         self.definitions = {}
@@ -524,16 +523,16 @@ class SvgRenderer:
             item = self.renderUse(n)
             parent.add(item)
             self.level = self.level - 1
-        elif name in self.handledShapes:
-            methodName = "convert"+name[0].upper()+name[1:]
-            item = getattr(self.shapeConverter, methodName)(n)
+        elif name in self.handled_shapes:
+            method_name = "convert%s" % name.capitalize()
+            item = getattr(self.shape_converter, method_name)(n)
             if item:
-                self.shapeConverter.applyStyleOnShape(item, n)
+                self.shape_converter.applyStyleOnShape(item, n)
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
                 if transform and display != "none":
                     gr = Group()
-                    self.shapeConverter.applyTransformOnGroup(transform, gr)
+                    self.shape_converter.applyTransformOnGroup(transform, gr)
                     gr.add(item)
                     parent.add(gr)
                     item = gr
@@ -612,7 +611,7 @@ class SvgRenderer:
                 gr.add(item)
 
         if transform:
-            self.shapeConverter.applyTransformOnGroup(transform, gr)
+            self.shape_converter.applyTransformOnGroup(transform, gr)
 
         return gr
 
@@ -647,8 +646,8 @@ class SvgRenderer:
         if x or y:
             transform += " translate(%s, %s)" % (x or '0', y or '0')
         if transform:
-            self.shapeConverter.applyTransformOnGroup(transform, group)
-        self.shapeConverter.applyStyleOnShape(item, node, only_explicit=True)
+            self.shape_converter.applyTransformOnGroup(transform, group)
+        self.shape_converter.applyStyleOnShape(item, node, only_explicit=True)
         return group
 
 
@@ -674,37 +673,25 @@ class SvgShapeConverter:
     Each of these methods should return a shape object appropriate
     for the target format.
     """
+    AttributeConverterClass = AttributeConverter
 
-    def __init__(self):
-        self.attrConverter = AttributeConverter()
-        self.svgSourceFile = ''
+    def __init__(self, path):
+        self.attrConverter = self.AttributeConverterClass()
+        self.svg_source_file = path
 
 
-    def getHandledShapes(self):
-        "Determine a list of handled shape elements."
-
-        items = dir(self)
-        items = self.__class__.__dict__.keys()
-        keys = []
-        for i in items:
-            keys.append(getattr(self, i))
-        keys = filter(lambda k:type(k) == types.MethodType, keys)
-        keys = map(lambda k:k.__name__, keys)
-        keys = filter(lambda k:k[:7] == "convert", keys)
-        keys = filter(lambda k:k != "convert", keys)
-        keys = map(lambda k:k[7:], keys)
-        shapeNames = [k.lower() for k in keys]
-
-        return shapeNames
+    @classmethod
+    def get_handled_shapes(cls):
+        """Dynamically determine a list of handled shape elements based on
+           convert<shape> method existence.
+        """
+        return [key[7:].lower() for key in dir(cls) if key.startswith('convert')]
 
 
 class Svg2RlgShapeConverter(SvgShapeConverter):
-    "Converterer from SVG shapes to RLG (ReportLab Graphics) shapes."
+    """Converter from SVG shapes to RLG (ReportLab Graphics) shapes."""
 
-    def __init__(self):
-        self.attrConverter = Svg2RlgAttributeConverter()
-        self.svgSourceFile = ''
-
+    AttributeConverterClass = Svg2RlgAttributeConverter
 
     def convertLine(self, node):
         getAttr = node.getAttribute
@@ -1030,7 +1017,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
         xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
-        xlink_href = os.path.join(os.path.dirname(self.svgSourceFile), xlink_href)
+        xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
         # print "***", x, y, width, height, xlink_href[:30]
 
         magic = "data:image/jpeg;base64"
@@ -1041,13 +1028,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             jpegData = base64.decodestring(xlink_href[len(magic):])
             hashVal = md5.new(jpegData).hexdigest()
             name = "images/img%s.%s" % (hashVal, ext)
-            path = os.path.join(dirname(self.svgSourceFile), name)
+            path = os.path.join(dirname(self.svg_source_file), name)
             open(path, "wb").write(jpegData)
             img = Image(x, y+height, width, -height, path)
             # this needs to be removed later, not here...
             # if exists(path): os.remove(path)
         else:
-            xlink_href = os.path.join(os.path.dirname(self.svgSourceFile), xlink_href)
+            xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
             img = Image(x, y+height, width, -height, xlink_href)
 
         return img
