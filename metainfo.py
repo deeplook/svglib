@@ -3,6 +3,7 @@
 
 "Project meta information"
 
+import sys
 
 __version__ = "0.6.3"
 __license__ = "LGPL 3"
@@ -81,7 +82,10 @@ url = _baseURL
 download_url = _baseURL + "tmp/%s-%s.tar.gz" % (name, __version__)
 package_dir = {"svglib": "src/svglib"}
 packages = ["svglib"]
-install_requires = ["svg.path"],
+install_requires = ["svg.path"]
+v = sys.version_info
+if (v.major, v.minor) < (2, 7):
+    install_requires.append('argparse')
 py_modules = []
 scripts = ["src/scripts/svg2pdf"]
 classifiers = [
@@ -106,3 +110,5 @@ classifiers = [
 
 # for setuptools, only:
 # install_requires = ["reportlab>2.0"],
+
+del sys, v
