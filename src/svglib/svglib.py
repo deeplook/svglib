@@ -277,7 +277,10 @@ class AttributeConverter:
             ops = ops[:bi] + ' '*(bj-bi+1) + ops[bj+1:]
         ops = ops.replace(',', ' ').split()
 
-        assert len(ops) == len(indices)
+        if len(ops) != len(indices):
+            logger.warn("Unable to parse transform expression '%s'" % svgAttr)
+            return []
+
         result = []
         for i, op in enumerate(ops):
             result.append((op, indices[i]))
