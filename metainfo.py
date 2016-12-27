@@ -87,7 +87,7 @@ v = sys.version_info
 if (v.major, v.minor) < (2, 7):
     install_requires.append('argparse')
 py_modules = []
-scripts = ["src/scripts/svg2pdf"]
+scripts = ["src/scripts/svg2pdf", "src/scripts/svg2ps", "src/scripts/svg2pm"]
 classifiers = [
     # see http://pypi.python.org/pypi?%3Aaction=list_classifiers
     "Development Status :: 4 - Beta",
