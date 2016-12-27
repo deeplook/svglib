@@ -8,7 +8,6 @@ inside the test directory:
     py.test -v -s test_basic.py
 """
 
-import sys
 import io
 import textwrap
 from xml.dom.minidom import parseString
@@ -18,10 +17,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
-# import svglib from distribution
-sys.path.insert(0, "..")
 from svglib import svglib
-del sys.path[0]
 
 
 def _testit(func, mapping):

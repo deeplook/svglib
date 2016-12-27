@@ -21,6 +21,7 @@ from svglib import svglib
 def convert_file(path, outputPat=None):
     "Convert an SVG file to one in another format."
 
+    _format = splitext(outputPat)[1][1:].lower()
     # derive output filename from output pattern
     file_info = {
         'dirname': dirname(path) or '.',
@@ -28,14 +29,13 @@ def convert_file(path, outputPat=None):
         'base': basename(splitext(path)[0]),
         'ext': splitext(path)[1],
         'now': datetime.now(),
-        'format': splitext(outputPat)[1][1:].lower()
+        'format': _format
     }
     out_pattern = outputPat or '%(dirname)s/%(base)s.%(format)s'
     # allow classic %%(name)s notation
     out_path = out_pattern % file_info
     # allow also newer {name} notation
     out_path = out_path.format(**file_info)
-    print(file_info)
 
     # generate a drawing from the SVG file
     try:
