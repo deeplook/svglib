@@ -728,25 +728,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         return shape
 
-
-    def convertText0(self, node):
-        getAttr = node.getAttribute
-        x, y = map(getAttr, ('x', 'y'))
-        if not x: x = '0'
-        if not y: y = '0'
-        text = ''
-        if node.firstChild.nodeValue:
-            text = node.firstChild.nodeValue
-        x, y = map(self.attrConv.convertLength, (x, y))
-        shape = String(x, y, text)
-        self.applyStyleOnShape(shape, node)
-        gr = Group()
-        gr.add(shape)
-        gr.scale(1, -1)
-        gr.translate(0, -2*y)
-
-        return gr
-
     def clean_text(self, text, preserve_space):
         """Text cleaning as per https://www.w3.org/TR/SVG/text.html#WhiteSpace
         """
