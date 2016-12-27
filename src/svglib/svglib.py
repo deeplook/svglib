@@ -275,7 +275,7 @@ class AttributeConverter:
             else:
                 indices.append(float(subline))
             ops = ops[:bi] + ' '*(bj-bi+1) + ops[bj+1:]
-        ops = ops.split()
+        ops = ops.replace(',', ' ').split()
 
         assert len(ops) == len(indices)
         result = []
