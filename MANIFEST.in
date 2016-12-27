@@ -1,9 +1,8 @@
 include metainfo.py
 include setup.py
 include MANIFEST.in
-include LICENSE.txt
-include README.rst
-include src/test/*.py
-include src/test/*.rst
-include src/test/samples/wikipedia/README.rst
-include src/test/samples/misc/*.svg
+include LICENSE.txt README.rst CONTRIBUTORS.rst
+include tests/*.py
+include tests/*.rst
+include tests/samples/wikipedia/README.rst
+include tests/samples/misc/*.svg
