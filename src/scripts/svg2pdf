@@ -17,12 +17,6 @@ from reportlab.graphics import renderPDF
 from svglib import svglib
 
 
-__version__ = '0.6.3'
-__license__ = 'LGPL 3'
-__author__ = 'Dinu Gherman'
-__date__ = '2010-03-01'
-
-
 def svg2pdf(path, outputPat=None):
     "Convert an SVG file to a PDF one."
 
@@ -33,8 +27,9 @@ def svg2pdf(path, outputPat=None):
         'base': basename(splitext(path)[0]),
         'ext': splitext(path)[1],
         'now': datetime.now(),
+        'format': 'pdf'
     }
-    out_pattern = outputPat or '%(dirname)s/%(base)s.pdf'
+    out_pattern = outputPat or '%(dirname)s/%(base)s.%(format)s'
     # allow classic %%(name)s notation
     out_path = out_pattern % file_info
     # allow also newer {name} notation
@@ -47,7 +42,7 @@ def svg2pdf(path, outputPat=None):
         print('Rendering failed.')
         raise
 
-    # save as PDF file
+    # save converted file
     if drawing:
         renderPDF.drawToFile(drawing, out_path, showBoundary=0)
 
@@ -55,33 +50,40 @@ def svg2pdf(path, outputPat=None):
 # command-line usage stuff
 
 def _main():
+    ext = 'pdf'
+    ext_caps = ext.upper()
     args = dict(
         prog=basename(sys.argv[0]),
-        version=__version__,
-        author=__author__,
-        license=__license__,
-        copyleft_year=__date__[:__date__.find('-')],
-        ts_pattern="{{dirname}}/out-{{now.hour}}-{{now.minute}}-{{now.second}}-%(base)s.pdf"
+        version=svglib.__version__,
+        author=svglib.__author__,
+        license=svglib.__license__,
+        copyleft_year=svglib.__date__[:svglib.__date__.find('-')],
+        ts_pattern="{{dirname}}/out-"\
+                   "{{now.hour}}-{{now.minute}}-{{now.second}}-"\
+                   "%(base)s",
+        ext=ext,
+        ext_caps=ext_caps
     )
+    args['ts_pattern'] += ('.%s' % args['ext'])
     desc = '{prog} v. {version}\n'.format(**args)
-    desc += 'An experimental SVG to PDF converter (via ReportLab Graphics)\n'
+    desc += 'An converter from SVG to {} (via ReportLab Graphics)\n'.format(ext_caps)
     epilog = textwrap.dedent('''\
         examples:
-          # convert path/file.svg to path/file.pdf
+          # convert path/file.svg to path/file.{ext}
           {prog} path/file.svg
 
-          # convert file1.svg to file1.pdf and file2.svgz to file2.pdf
+          # convert file1.svg to file1.{ext} and file2.svgz to file2.{ext}
           {prog} file1.svg file2.svgz
 
-          # convert file.svg to out.pdf
-          {prog} -o out.pdf file.svg
+          # convert file.svg to out.{ext}
+          {prog} -o out.{ext} file.svg
 
           # convert all SVG files in path/ to PDF files with names like:
-          # path/file1.svg -> file1.pdf
-          {prog} -o "%(base)s.pdf" path/file*.svg
+          # path/file1.svg -> file1.{ext}
+          {prog} -o "%(base)s.{ext}" path/file*.svg
 
           # like before but with timestamp in the PDF files:
-          # path/file1.svg -> path/out-12-58-36-file1.pdf
+          # path/file1.svg -> path/out-12-58-36-file1.{ext}
           {prog} -o {ts_pattern} path/file*.svg
 
         issues/pull requests:
@@ -114,7 +116,7 @@ def _main():
     args = p.parse_args()
 
     if args.version:
-        print(__version__)
+        print(svglib.__version__)
         sys.exit()
 
     if not args.input:
