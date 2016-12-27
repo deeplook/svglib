@@ -944,9 +944,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         gr = Group()
         if path.operators[-1] == _CLOSEPATH:
             self.applyStyleOnShape(path, node)
-            sc = self.attrConverter.findAttr(node, "stroke")
-            if not sc:
-                path.strokeColor = None
             gr.add(path)
         else:
             closed_path = path.copy()
@@ -957,9 +954,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             self.applyStyleOnShape(path, node)
             path.fillColor = None
-            sc = self.attrConverter.findAttr(node, "stroke")
-            if not sc:
-                path.strokeColor = None
             gr.add(path)
 
         return gr
