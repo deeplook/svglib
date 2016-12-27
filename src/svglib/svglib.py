@@ -498,12 +498,12 @@ class SvgRenderer:
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
                 if transform and display != "none":
-                    gr = Group()
-                    self.shape_converter.applyTransformOnGroup(transform, gr)
-                    gr.add(item)
-                    parent.add(gr)
-                    item = gr
-                elif display != "none":
+                    if not isinstance(item, Group):
+                        gr = Group()
+                        gr.add(item)
+                        item = gr
+                    self.shape_converter.applyTransformOnGroup(transform, item)
+                if display != "none":
                     parent.add(item)
         else:
             ignored = True
