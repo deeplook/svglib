@@ -937,7 +937,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op in ('Z', 'z'):
                 path.closePath()
 
-            logger.debug("Suspicious path operator: %s" % op)
+            else:
+                logger.debug("Suspicious path operator: %s" % op)
 
         # hack because RLG has no "semi-closed" paths...
         gr = Group()
