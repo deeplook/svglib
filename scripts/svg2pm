@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+# _*_ coding: UTF-8 _*_
+
+"""
+A simple converter from SVG to PM (pixelmap a.k.a. bitmap).
+
+For further information please check the file README.txt!
+"""
+
+from svglib.utils import cli_main
+
+if __name__ == '__main__':
+    cli_main()
