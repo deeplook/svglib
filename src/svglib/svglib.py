@@ -24,7 +24,6 @@ import re
 import types
 import xml.dom.minidom
 from collections import defaultdict
-from functools import reduce
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
@@ -498,7 +497,9 @@ class SvgRenderer:
             method_name = "convert%s" % name.capitalize()
             item = getattr(self.shape_converter, method_name)(n)
             if item:
-                self.shape_converter.applyStyleOnShape(item, n)
+                if name != 'text':
+                    # Style is already applied in convertText
+                    self.shape_converter.applyStyleOnShape(item, n)
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
                 if transform and display != "none":
@@ -728,25 +729,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         return shape
 
-
-    def convertText0(self, node):
-        getAttr = node.getAttribute
-        x, y = map(getAttr, ('x', 'y'))
-        if not x: x = '0'
-        if not y: y = '0'
-        text = ''
-        if node.firstChild.nodeValue:
-            text = node.firstChild.nodeValue
-        x, y = map(self.attrConv.convertLength, (x, y))
-        shape = String(x, y, text)
-        self.applyStyleOnShape(shape, node)
-        gr = Group()
-        gr.add(shape)
-        gr.scale(1, -1)
-        gr.translate(0, -2*y)
-
-        return gr
-
     def clean_text(self, text, preserve_space):
         """Text cleaning as per https://www.w3.org/TR/SVG/text.html#WhiteSpace
         """
@@ -761,10 +743,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertText(self, node):
         attrConv = self.attrConverter
-        getAttr = node.getAttribute
-        x, y = map(getAttr, ('x', 'y'))
+        x, y = map(node.getAttribute, ('x', 'y'))
         x, y = map(attrConv.convertLength, (x, y))
-        xml_space = getAttr('xml:space')
+        xml_space = node.getAttribute('xml:space')
         if xml_space:
             preserve_space = xml_space == 'preserve'
         else:
@@ -772,8 +753,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         gr = Group()
 
-        frags = []
-        fragLengths = []
+        frag_lengths = []
 
         dx0, dy0 = 0, 0
         x1, y1 = 0, 0
@@ -782,28 +762,23 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
         for c in node.childNodes:
+            has_x = False
             dx, dy = 0, 0
             baseLineShift = 0
             if c.nodeType == c.TEXT_NODE:
                 text = self.clean_text(c.nodeValue, preserve_space)
-                if text:
-                    frags.append(text)
-                else:
+                if not text:
                     continue
             elif c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
                 text = self.clean_text(c.firstChild.nodeValue, preserve_space)
-                if text:
-                    frags.append(text)
-                else:
+                if not text:
                     continue
-                getAttr = c.getAttribute
-                y1 = getAttr('y')
-                y1 = attrConv.convertLength(y1)
-                dx, dy = map(getAttr, ("dx", "dy"))
-                dx, dy = map(attrConv.convertLength, (dx, dy))
+                x1, y1, dx, dy = map(c.getAttribute, ("x", "y", "dx", "dy"))
+                has_x = x1 != ''
+                x1, y1, dx, dy = map(attrConv.convertLength, (x1, y1, dx, dy))
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
-                baseLineShift = getAttr("baseline-shift") or '0'
+                baseLineShift = c.getAttribute("baseline-shift") or '0'
                 if baseLineShift in ("sub", "super", "baseline"):
                     baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
                 else:
@@ -811,10 +786,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif c.nodeType == c.ELEMENT_NODE and c.nodeName != "tspan":
                 continue
 
-            fragLengths.append(stringWidth(frags[-1], ff, fs))
-            rl = reduce(operator.__add__, fragLengths[:-1], 0)
-            text = frags[-1]
-            shape = String(x+rl, y-y1-dy0+baseLineShift, text)
+            frag_lengths.append(stringWidth(text, ff, fs))
+            new_x = x1 if has_x else sum(frag_lengths[:-1])
+            shape = String(x + new_x, y - y1 - dy0 + baseLineShift, text)
             self.applyStyleOnShape(shape, node)
             if c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
                 self.applyStyleOnShape(shape, c)
