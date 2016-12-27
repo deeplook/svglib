@@ -406,9 +406,6 @@ class TestW3CSVG(object):
             "coords-constr-203-t.svg",
             "coords-constr-204-t.svg",
             # Errors to be investigated
-            "paint-grad-201-t.svg",
-            "media-alevel-201-t.svg",
-            "media-alevel-202-t.svg",
             "udom-event-207-t.svg",
         ]
 

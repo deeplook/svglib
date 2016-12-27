@@ -275,9 +275,12 @@ class AttributeConverter:
             else:
                 indices.append(float(subline))
             ops = ops[:bi] + ' '*(bj-bi+1) + ops[bj+1:]
-        ops = ops.split()
+        ops = ops.replace(',', ' ').split()
 
-        assert len(ops) == len(indices)
+        if len(ops) != len(indices):
+            logger.warn("Unable to parse transform expression '%s'" % svgAttr)
+            return []
+
         result = []
         for i, op in enumerate(ops):
             result.append((op, indices[i]))
@@ -934,7 +937,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op in ('Z', 'z'):
                 path.closePath()
 
-            logger.debug("Suspicious path operator: %s" % op)
+            else:
+                logger.debug("Suspicious path operator: %s" % op)
 
         # hack because RLG has no "semi-closed" paths...
         gr = Group()
