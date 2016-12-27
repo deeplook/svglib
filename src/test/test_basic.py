@@ -260,6 +260,50 @@ class TestApplyTransformOnGroup(object):
         assert group.transform == (1, 0, 0, 1, 10, 0)
 
 
+class TestTextNode(object):
+    def test_space_preservation(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+              <text style="fill:#000000; stroke:none; font-size:28;">
+                <tspan>TITLE 1</tspan>
+                <tspan x="-10.761" y="33.487">Subtitle</tspan>
+              </text>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        # By default, only two tspans produce String objects, the rest
+        # (spaces/newlines) is ignored.
+        assert len(main_group.contents[0].contents) == 2
+
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267" xml:space="preserve">
+              <text style="fill:#000000; stroke:none; font-size:28;">
+                <tspan>TITLE 1</tspan>
+                <tspan x="-10.761" y="33.487">Subtitle</tspan>
+              </text>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        assert len(main_group.contents[0].contents) == 5
+        assert main_group.contents[0].contents[0].text == '     '
+
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+              <text style="fill:#000000; stroke:none; font-size:28;">
+                <tspan>TITLE 1</tspan>
+                <tspan x="-10.761" y="33.487">Subtitle</tspan>
+              </text>
+              <text xml:space="preserve">  with   spaces </text>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        # xml:space can be overriden per text node
+        assert main_group.contents[1].contents[0].text == '  with   spaces '
+
+
 class TestUseNode(object):
     def test_use(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\

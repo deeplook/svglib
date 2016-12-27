@@ -470,6 +470,8 @@ class SvgRenderer:
         item = None
 
         if name == "svg":
+            if n.getAttribute("xml:space") == 'preserve':
+                self.shape_converter.preserve_space = True
             drawing = self.renderSvg(n)
             children = n.childNodes
             for child in children:
@@ -633,6 +635,7 @@ class SvgShapeConverter:
     def __init__(self, path):
         self.attrConverter = self.AttributeConverterClass()
         self.svg_source_file = path
+        self.preserve_space = False
 
 
     @classmethod
@@ -744,17 +747,31 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         return gr
 
+    def clean_text(self, text, preserve_space):
+        """Text cleaning as per https://www.w3.org/TR/SVG/text.html#WhiteSpace
+        """
+        if preserve_space:
+            text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\t', ' ')
+        else:
+            text = text.replace('\r\n', '').replace('\n', '').replace('\t', ' ')
+            text = text.strip()
+            while ('  ' in text):
+                text = text.replace('  ', ' ')
+        return text
 
     def convertText(self, node):
         attrConv = self.attrConverter
         getAttr = node.getAttribute
         x, y = map(getAttr, ('x', 'y'))
         x, y = map(attrConv.convertLength, (x, y))
+        xml_space = getAttr('xml:space')
+        if xml_space:
+            preserve_space = xml_space == 'preserve'
+        else:
+            preserve_space = self.preserve_space
 
         gr = Group()
 
-        text = ''
-        chNum = len(node.childNodes)
         frags = []
         fragLengths = []
 
@@ -768,11 +785,17 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             dx, dy = 0, 0
             baseLineShift = 0
             if c.nodeType == c.TEXT_NODE:
-                frags.append(c.nodeValue)
-                tx = frags[-1]
+                text = self.clean_text(c.nodeValue, preserve_space)
+                if text:
+                    frags.append(text)
+                else:
+                    continue
             elif c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
-                frags.append(c.firstChild.nodeValue)
-                tx = frags[-1]
+                text = self.clean_text(c.firstChild.nodeValue, preserve_space)
+                if text:
+                    frags.append(text)
+                else:
+                    continue
                 getAttr = c.getAttribute
                 y1 = getAttr('y')
                 y1 = attrConv.convertLength(y1)
@@ -788,7 +811,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif c.nodeType == c.ELEMENT_NODE and c.nodeName != "tspan":
                 continue
 
-            fragLengths.append(stringWidth(tx, ff, fs))
+            fragLengths.append(stringWidth(frags[-1], ff, fs))
             rl = reduce(operator.__add__, fragLengths[:-1], 0)
             text = frags[-1]
             shape = String(x+rl, y-y1-dy0+baseLineShift, text)
