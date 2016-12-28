@@ -25,6 +25,7 @@ import types
 import xml.dom.minidom
 from collections import defaultdict
 
+from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.graphics.shapes import (
@@ -985,7 +986,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         else:
             xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
             img = Image(x, y+height, width, -height, xlink_href)
-
+            try:
+                # This will catch unvalid image
+                PDFImage(xlink_href, 0, 0)
+            except IOError:
+                logger.error("Unable to read the image %s. Skipping..." % img.path)
+                return None
         return img
 
 
