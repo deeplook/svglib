@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-import sys
-sys.path.insert(0, "src")
+# import sys
+# sys.path.insert(0, "src")
 
 from setuptools import setup
 

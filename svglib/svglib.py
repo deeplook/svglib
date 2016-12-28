@@ -34,7 +34,6 @@ from reportlab.graphics.shapes import (
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
-
 from svg.path import Arc
 
 
@@ -334,11 +333,13 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertOpacity(self, svgAttr):
         return float(svgAttr)
 
+
     def convertFillRule(self, svgAttr):
         return {
             'nonzero': FILL_NON_ZERO,
             'evenodd': FILL_EVEN_ODD,
         }.get(svgAttr, '')
+
 
     def convertColor(self, svgAttr):
         "Convert string to a RL color object."
