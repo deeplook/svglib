@@ -967,25 +967,22 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
         xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
-        xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
-        # print "***", x, y, width, height, xlink_href[:30]
 
         magic = "data:image/jpeg;base64"
         if xlink_href[:len(magic)] == magic:
+            import base64, tempfile
             pat = "data:image/(\w+?);base64"
             ext = re.match(pat, magic).groups()[0]
-            import base64, md5
-            jpegData = base64.decodestring(xlink_href[len(magic):])
-            hashVal = md5.new(jpegData).hexdigest()
-            name = "images/img%s.%s" % (hashVal, ext)
-            path = os.path.join(dirname(self.svg_source_file), name)
-            open(path, "wb").write(jpegData)
-            img = Image(x, y+height, width, -height, path)
+            jpeg_data = base64.decodestring(xlink_href[len(magic):].encode('ascii'))
+            _, path = tempfile.mkstemp(suffix='.%s' % ext)
+            with open(path, 'wb') as fh:
+                fh.write(jpeg_data)
+            img = Image(int(x), int(y+height), int(width), int(-height), path)
             # this needs to be removed later, not here...
             # if exists(path): os.remove(path)
         else:
             xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
-            img = Image(x, y+height, width, -height, xlink_href)
+            img = Image(int(x), int(y+height), int(width), int(-height), xlink_href)
             try:
                 # This will catch unvalid image
                 PDFImage(xlink_href, 0, 0)
