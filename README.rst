@@ -15,12 +15,6 @@ Svglib
 A pure-Python library for reading and converting SVG
 ---------------------------------------------------------------------------
 
-:Author:     Dinu Gherman
-:Homepage:   https://github.com/deeplook/svglib
-:Version:    Version 0.6.3
-:Date:       2010-03-01
-:Copyright:  GNU Lesser General Public Licence v3 (LGPLv3)
-
 
 About
 -----
@@ -28,20 +22,25 @@ About
 ``Svglib`` is a pure-Python library for reading SVG_ files and converting
 them (to a reasonable degree) to other formats using the ReportLab_ Open
 Source toolkit.
+
 Used as a package you can read existing SVG files and convert them into
 ReportLab ``Drawing`` objects that can be used in a variety of contexts,
 e.g. as ReportLab Platypus ``Flowable`` objects or in RML_.
 As a command-line tool it converts SVG files into PDF ones (but adding
-other output formats like bitmap ones would be really simple).
+other output formats like bitmap or EPS is really easy and will be better
+supported, soon).
 
-Tests include a vast amount of tests from the `W3C SVG test suite`_ plus
-ca. 190 `flags from Wikipedia`_ and some selected `symbols from Wikipedia`_
-for test purposes (some of them hinting at more work to be done).
+Tests include a huge `W3C SVG test suite`_ plus ca. 200 `flags from
+Wikipedia`_ and some selected `symbols from Wikipedia`_ (with increasingly
+less pointing to missing features).
 
-This release introduces a lot of contributions by Claude Paroz,
-who stepped forward to give this project a long needed overhaul, for
-which I'm very grateful. Thanks, Claude!
- 
+This release introduces *many* contributions by Claude Paroz, who
+stepped forward to give this project a long needed overhaul after ca.
+six years of taking a nap, for which I'm really very grateful! Thanks,
+Claude!
+
+Previous versions were hosted at https://bitbucket.org/deeplook/svglib.
+
 
 Features
 --------
@@ -149,7 +148,10 @@ tool named ``svg2pdf`` in your ``bin`` directory, e.g. in
 Dependencies
 ------------
 
-``Svglib`` depends on the ``reportlab`` package... ``svg.path``...
+``Svglib`` depends mainly on the ``reportlab`` package, which provides
+the abstractions for building complex ``Drawings`` which it can render
+into different fileformats, including PDF, EPS, SVG and various bitmaps
+ones.
 
 
 Testing
@@ -160,7 +162,7 @@ in the file ``tests`` directory which can be run like shown in the
 following lines on the system command-line::
  
   $ tar xfz svglib-0.6.3.tar.gz
-  $ cd svglib/src/test
+  $ cd svglib-0.6.3
   $ py.test -v -s
   ......
 
@@ -176,9 +178,12 @@ Warning: there is no support for Windows, sorry for that!
 
 
 .. _SVG: http://www.w3.org/Graphics/SVG/
-.. _W3C SVG test suite: http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview
-.. _flags from Wikipedia: https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags
-.. _symbols from Wikipedia: http://en.wikipedia.org/wiki/List_of_symbols
+.. _W3C SVG test suite:
+      http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview
+.. _flags from Wikipedia:
+      https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags
+.. _symbols from Wikipedia:
+      http://en.wikipedia.org/wiki/List_of_symbols
 .. _ReportLab: http://www.reportlab.org
 .. _RML: http://www.reportlab.com/software/rml-reference/
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
