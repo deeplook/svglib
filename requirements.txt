@@ -1,2 +1,3 @@
 reportlab
+lxml
 svg.path
