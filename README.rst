@@ -113,6 +113,16 @@ the system command-line. Here is the output from ``svg2pdf -h``::
         http://www.gnu.org/copyleft/gpl.html
 
 
+Dependencies
+------------
+
+``Svglib`` depends mainly on the ``reportlab`` package, which provides
+the abstractions for building complex ``Drawings`` which it can render
+into different fileformats, including PDF, EPS, SVG and various bitmaps
+ones. Another dependancy is `lxml` which is used in the context of SVG
+CSS stylesheets.
+
+
 Installation
 ------------
 
@@ -143,15 +153,6 @@ This will install a Python package named ``svglib`` in the
 ``site-packages`` subfolder of your Python installation and a script 
 tool named ``svg2pdf`` in your ``bin`` directory, e.g. in 
 ``/usr/local/bin``.
-
-
-Dependencies
-------------
-
-``Svglib`` depends mainly on the ``reportlab`` package, which provides
-the abstractions for building complex ``Drawings`` which it can render
-into different fileformats, including PDF, EPS, SVG and various bitmaps
-ones.
 
 
 Testing
