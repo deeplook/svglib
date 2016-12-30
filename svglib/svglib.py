@@ -17,13 +17,14 @@ pressed with gzip and extension .svgz).
 
 import copy
 import gzip
+import itertools
 import logging
 import operator
 import os
 import re
 import types
-import xml.dom.minidom
 from collections import defaultdict
+from lxml import etree
 
 from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -42,6 +43,8 @@ __version__ = "0.6.3"
 __license__ = "LGPL 3"
 __author__ = "Dinu Gherman"
 __date__ = "2010-03-01"
+
+XML_NS = 'http://www.w3.org/XML/1998/namespace'
 
 logger = logging.getLogger(__name__)
 
@@ -206,16 +209,16 @@ class AttributeConverter:
 
         # This needs also to lookup values like "url(#SomeName)"...
 
-        attr_value = svgNode.getAttribute(name).strip()
+        attr_value = svgNode.attrib.get(name, '').strip()
 
         if attr_value and attr_value != "inherit":
             return attr_value
-        elif svgNode.getAttribute("style"):
-            dict = self.parseMultiAttributes(svgNode.getAttribute("style"))
+        elif svgNode.attrib.get("style"):
+            dict = self.parseMultiAttributes(svgNode.attrib.get("style"))
             if name in dict:
                 return dict[name]
-        elif svgNode.parentNode and svgNode.parentNode.nodeType != svgNode.DOCUMENT_NODE:
-            return self.findAttr(svgNode.parentNode, name)
+        elif svgNode.getparent() is not None:
+            return self.findAttr(svgNode.getparent(), name)
 
         return ''
 
@@ -225,20 +228,17 @@ class AttributeConverter:
 
         dict = {}
 
-        if svgNode.parentNode and svgNode.parentNode == 'g':
-            dict.update(self.getAllAttributes(svgNode.parentNode))
+        if node_name(svgNode.getparent()) == 'g':
+            dict.update(self.getAllAttributes(svgNode.getparent()))
 
-        if svgNode.nodeType == svgNode.ELEMENT_NODE:
-            style = svgNode.getAttribute("style")
-            if style:
-                d = self.parseMultiAttributes(style)
-                dict.update(d)
+        style = svgNode.attrib.get("style")
+        if style:
+            d = self.parseMultiAttributes(style)
+            dict.update(d)
 
-        attrs = svgNode.attributes
-        for i in xrange(attrs.length):
-            a = attrs.item(i)
-            if a.name != "style":
-                dict[a.name] = a.value
+        for key, value in svgNode.attrib.items():
+            if key != "style":
+                dict[key] = value
 
         return dict
 
@@ -434,9 +434,7 @@ class NodeTracker:
         if name not in self.usedAttrs:
             self.usedAttrs.append(name)
         # forward call to wrapped object
-        return self.object.getAttribute(name)
-
-    # also getAttributeNS(uri, name)?
+        return self.object.attrib.get(name, '')
 
     def __getattr__(self, name):
         # forward attribute access to wrapped object
@@ -466,7 +464,7 @@ class SvgRenderer:
     def render(self, node, parent=None):
         if parent is None:
             parent = self.mainGroup
-        name = node.nodeName
+        name = node_name(node)
 
         n = NodeTracker(node)
         nid = n.getAttribute("id")
@@ -474,13 +472,10 @@ class SvgRenderer:
         item = None
 
         if name == "svg":
-            if n.getAttribute("xml:space") == 'preserve':
+            if n.getAttribute("{%s}space" % XML_NS) == 'preserve':
                 self.shape_converter.preserve_space = True
             drawing = self.renderSvg(n)
-            children = n.childNodes
-            for child in children:
-                if child.nodeType != 1:
-                    continue
+            for child in n.getchildren():
                 self.render(child, self.mainGroup)
         elif name == "defs":
             item = self.renderG(n)
@@ -534,7 +529,7 @@ class SvgRenderer:
         all_attrs = self.attrConverter.getAllAttributes(node).keys()
         unused_attrs = [attr for attr in all_attrs if attr not in n.usedAttrs]
         if unused_attrs:
-            logger.debug("Unused attrs: %s %s" % (n.nodeName, unused_attrs))
+            logger.debug("Unused attrs: %s %s" % (node_name(n), unused_attrs))
 
 
     def renderTitle_(self, node):
@@ -563,13 +558,9 @@ class SvgRenderer:
     def renderG(self, node, display=1):
         getAttr = node.getAttribute
         id, style, transform = map(getAttr, ("id", "style", "transform"))
-        #sw = map(getAttr, ("stroke-width",))
         self.attrs = self.attrConverter.parseMultiAttributes(style)
         gr = Group()
-        children = node.childNodes
-        for child in children:
-            if child.nodeType != 1:
-                continue
+        for child in node.getchildren():
             item = self.render(child, parent=gr)
             if item and display:
                 gr.add(item)
@@ -594,7 +585,7 @@ class SvgRenderer:
         if group is None:
             group = Group()
 
-        xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
+        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
         if not xlink_href:
             return
         if xlink_href[1:] not in self.definitions:
@@ -737,6 +728,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def clean_text(self, text, preserve_space):
         """Text cleaning as per https://www.w3.org/TR/SVG/text.html#WhiteSpace
         """
+        if text is None:
+            return
         if preserve_space:
             text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\t', ' ')
         else:
@@ -750,7 +743,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         attrConv = self.attrConverter
         x, y = map(node.getAttribute, ('x', 'y'))
         x, y = map(attrConv.convertLength, (x, y))
-        xml_space = node.getAttribute('xml:space')
+        xml_space = node.getAttribute("{%s}space" % XML_NS)
         if xml_space:
             preserve_space = xml_space == 'preserve'
         else:
@@ -766,36 +759,36 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         ff = attrConv.convertFontFamily(ff)
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
-        for c in node.childNodes:
+        for c in itertools.chain([node], node.getchildren()):
             has_x = False
             dx, dy = 0, 0
             baseLineShift = 0
-            if c.nodeType == c.TEXT_NODE:
-                text = self.clean_text(c.nodeValue, preserve_space)
+            if node_name(c) == 'text':
+                text = self.clean_text(c.text, preserve_space)
                 if not text:
                     continue
-            elif c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
-                text = self.clean_text(c.firstChild.nodeValue, preserve_space)
+            elif node_name(c) == 'tspan':
+                text = self.clean_text(c.text, preserve_space)
                 if not text:
                     continue
-                x1, y1, dx, dy = map(c.getAttribute, ("x", "y", "dx", "dy"))
+                x1, y1, dx, dy = [c.attrib.get(name, '') for name in ("x", "y", "dx", "dy")]
                 has_x = x1 != ''
                 x1, y1, dx, dy = map(attrConv.convertLength, (x1, y1, dx, dy))
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
-                baseLineShift = c.getAttribute("baseline-shift") or '0'
+                baseLineShift = c.attrib.get("baseline-shift", '0')
                 if baseLineShift in ("sub", "super", "baseline"):
                     baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
                 else:
                     baseLineShift = attrConv.convertLength(baseLineShift, fs)
-            elif c.nodeType == c.ELEMENT_NODE and c.nodeName != "tspan":
+            else:
                 continue
 
             frag_lengths.append(stringWidth(text, ff, fs))
             new_x = x1 if has_x else sum(frag_lengths[:-1])
             shape = String(x + new_x, y - y1 - dy0 + baseLineShift, text)
             self.applyStyleOnShape(shape, node)
-            if c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
+            if node_name(c) == 'tspan':
                 self.applyStyleOnShape(shape, c)
 
             gr.add(shape)
@@ -966,7 +959,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
-        xlink_href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href")
+        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
 
         magic = "data:image/jpeg;base64"
         if xlink_href[:len(magic)] == magic:
@@ -1075,7 +1068,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     else:
                         svgAttrValue = default
                 if svgAttrValue == "currentColor":
-                    svgAttrValue = ac.findAttr(node.parentNode, "color") or default
+                    svgAttrValue = ac.findAttr(node.getparent(), "color") or default
                 try:
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(svgAttrValue))
@@ -1097,11 +1090,12 @@ def svg2rlg(path):
         unzipped = True
 
     # load SVG file
+    parser = etree.XMLParser(remove_comments=True, recover=True)
     try:
-        doc = xml.dom.minidom.parse(path)
-        svg = doc.documentElement
-    except Exception:
-        logger.error("Failed to load input file!")
+        doc = etree.parse(path, parser=parser)
+        svg = doc.getroot()
+    except Exception as exc:
+        logger.error("Failed to load input file! (%s)" % exc)
         return
 
     # convert to a RLG drawing
@@ -1114,6 +1108,14 @@ def svg2rlg(path):
         os.remove(path)
 
     return drawing
+
+
+def node_name(node):
+    """ lxml node name without the namespace prefix. """
+    try:
+        return node.tag.split('}')[-1]
+    except AttributeError:
+        pass
 
 
 def monkeypatch_reportlab():

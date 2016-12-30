@@ -395,18 +395,11 @@ class TestW3CSVG(object):
         exclude_list = [
             "paint-stroke-06-t.svg",
             "coords-trans-09-t.svg",  # renderPDF issue (div by 0)
-            # ExpatError while parsing due to the ev namespace
-            "interact-order-04-t.svg",
-            "interact-order-05-t.svg",
-            "media-video-220-t.svg",
-            "script-listener-201-t.svg",
             # Unsupported 'transform="ref(svg, ...)"' expression
             "coords-constr-201-t.svg",
             "coords-constr-202-t.svg",
             "coords-constr-203-t.svg",
             "coords-constr-204-t.svg",
-            # Errors to be investigated
-            "udom-event-207-t.svg",
         ]
 
         paths = glob.glob("%s/svg/*.svg" % self.folder_path)
