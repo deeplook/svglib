@@ -10,7 +10,7 @@ inside the test directory:
 
 import io
 import textwrap
-from xml.dom.minidom import parseString
+from lxml import etree
 
 from reportlab.graphics.shapes import Group, Polygon, Rect
 from reportlab.lib import colors
@@ -209,7 +209,7 @@ class TestAttrConverter(object):
         Whitespace in attribute values shouldn't disturb parsing.
         """
         ac = svglib.Svg2RlgAttributeConverter()
-        node = parseString('<rect fill=" #00A1DE\n"/>').documentElement
+        node = etree.XML('<rect fill=" #00A1DE\n"/>')
         assert ac.findAttr(node, 'fill') == "#00A1DE"
 
     def test_no_fill_on_shape(self):
@@ -217,7 +217,7 @@ class TestAttrConverter(object):
         Any shape with no fill property should set black color in rlg syntax.
         """
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
-            <?xml version="1.0" encoding="UTF-8"?>
+            <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  width="1200" height="800"
                  viewBox="0 0 36 24">
@@ -243,7 +243,7 @@ class TestAttrConverter(object):
 
     def test_fillrule(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = parseString('<polygon fill-rule="evenodd"/>').documentElement
+        node = etree.XML('<polygon fill-rule="evenodd"/>')
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
         assert poly._fillRule == FILL_EVEN_ODD
@@ -267,7 +267,7 @@ class TestTextNode(object):
             <?xml version="1.0"?>
             <svg width="777" height="267">
               <text style="fill:#000000; stroke:none; font-size:28;">
-                <tspan>TITLE 1</tspan>
+                <tspan>TITLE    1</tspan>
                 <tspan x="-10.761" y="33.487">Subtitle</tspan>
               </text>
             </svg>
@@ -276,25 +276,26 @@ class TestTextNode(object):
         # By default, only two tspans produce String objects, the rest
         # (spaces/newlines) is ignored.
         assert len(main_group.contents[0].contents) == 2
+        assert main_group.contents[0].contents[0].text == "TITLE 1"
 
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
             <svg width="777" height="267" xml:space="preserve">
               <text style="fill:#000000; stroke:none; font-size:28;">
-                <tspan>TITLE 1</tspan>
+                <tspan>TITLE    1</tspan>
                 <tspan x="-10.761" y="33.487">Subtitle</tspan>
               </text>
             </svg>
         ''')))
         main_group = drawing.contents[0]
-        assert len(main_group.contents[0].contents) == 5
         assert main_group.contents[0].contents[0].text == '     '
+        assert main_group.contents[0].contents[1].text == "TITLE    1"
 
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
               <text style="fill:#000000; stroke:none; font-size:28;">
-                <tspan>TITLE 1</tspan>
+                <tspan>TITLE    1</tspan>
                 <tspan x="-10.761" y="33.487">Subtitle</tspan>
               </text>
               <text xml:space="preserve">  with   spaces </text>
@@ -302,6 +303,7 @@ class TestTextNode(object):
         ''')))
         main_group = drawing.contents[0]
         # xml:space can be overriden per text node
+        assert main_group.contents[0].contents[0].text == "TITLE 1"
         assert main_group.contents[1].contents[0].text == '  with   spaces '
 
     def test_tspan_position(self):
@@ -314,7 +316,9 @@ class TestTextNode(object):
             <svg width="777" height="267">
               <text x="10" style="fill:#000000; stroke:none; font-size:28;">
                 <tspan>TITLE 1</tspan>
+                <!-- position relative to current text position-->
                 <tspan>(after title)</tspan>
+                <!-- absolute position from parent start -->
                 <tspan x="-10.75" y="33.487">Subtitle</tspan>
               </text>
             </svg>
