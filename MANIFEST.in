@@ -1,4 +1,4 @@
-include metainfo.py
+include requirements.txt
 include setup.py
 include MANIFEST.in
 include LICENSE.txt README.rst CONTRIBUTORS.rst
