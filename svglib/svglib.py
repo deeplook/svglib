@@ -497,8 +497,8 @@ class SvgRenderer:
             method_name = "convert%s" % name.capitalize()
             item = getattr(self.shape_converter, method_name)(n)
             if item:
-                if name != 'text':
-                    # Style is already applied in convertText
+                if name not in ('path', 'text'):
+                    # Style is already applied in convertPath/convertText
                     self.shape_converter.applyStyleOnShape(item, n)
                 transform = n.getAttribute("transform")
                 display = n.getAttribute("display")
@@ -803,9 +803,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         d = node.getAttribute('d')
         normPath = normaliseSvgPath(d)
         path = ArcPath()
+        # Track subpaths needing to be closed later
+        unclosed_subpath_pointers = []
 
         for i in xrange(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
+
+            if op in ('m', 'M') and i > 0 and path.operators[-1] != _CLOSEPATH:
+                unclosed_subpath_pointers.append(len(path.operators))
 
             # moveto absolute
             if op == 'M':
@@ -935,22 +940,25 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             else:
                 logger.debug("Suspicious path operator: %s" % op)
 
-        # hack because RLG has no "semi-closed" paths...
         gr = Group()
-        if path.operators[-1] == _CLOSEPATH:
-            self.applyStyleOnShape(path, node)
-            gr.add(path)
-        else:
-            closed_path = path.copy()
-            closed_path.closePath()
-            self.applyStyleOnShape(closed_path, node)
+        self.applyStyleOnShape(path, node)
+
+        if path.operators[-1] != _CLOSEPATH:
+            unclosed_subpath_pointers.append(len(path.operators))
+
+        if unclosed_subpath_pointers and path.fillColor is not None:
+            # ReportLab doesn't fill unclosed paths, so we are creating a copy
+            # of the path with all subpaths closed, but without stroke.
+            # https://bitbucket.org/rptlab/reportlab/issues/99/
+            closed_path = copy.deepcopy(path)
+            for pointer in reversed(unclosed_subpath_pointers):
+                closed_path.operators.insert(pointer, _CLOSEPATH)
             closed_path.strokeColor = None
+            closed_path.strokeWidth = 0
             gr.add(closed_path)
-
-            self.applyStyleOnShape(path, node)
             path.fillColor = None
-            gr.add(path)
 
+        gr.add(path)
         return gr
 
 

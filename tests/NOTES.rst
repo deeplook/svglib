@@ -15,49 +15,37 @@ wikipedia/flags
 
 Issues here are often very small and related to paths or fillings.
 
-- Algeria.svg
 - Andorra.svg
 - Argentina.svg
-- Australia_(converted).svg
-- Belize.svg
-- Bhutan.svg
+- Australia_(converted).svg (clipPath support)
+- Belize.svg (gradient support)
 - Bolivia_(state).svg
-- Ecuador.svg
+- Ecuador.svg (gradient support)
 - Egypt.svg
 - El_salvador.svg
-- Equatorial_guinea.svg
-- Georgia.svg
+- Georgia.svg (clipPath support)
 - Guatemala.svg
 - Haiti.svg
-- Iceland.svg
-- Kazakhstan.svg
 - Lesotho.svg
 - Mexico.svg
 - Moldova.svg
-- Mozambique.svg
-- Namibia.svg
-- New_zealand.svg
+- New_zealand.svg (clipPath support)
 - Nicaragua.svg
-- Oman.svg
 - Pakistan.svg
-- Paraguay.svg
-- Portugal.svg
 - Slovakia.svg
 - Slovenia.svg
-- South_africa.svg
+- South_africa.svg (clipPath support)
 - South_sudan.svg
 - Swaziland.svg
 - Tajikistan.svg
-- The_cook_islands.svg
+- The_cook_islands.svg (clipPath support)
 - The_dominican_republic.svg
 - The_republic_of_china.svg
 - The_vatican_city.svg
 - Transnistria_(state).svg
-- Turkey.svg
+- Turkey.svg (FILL_NON_ZERO on polygon?)
 - Turkmenistan.svg
-- Tuvalu.svg
-- Uruguay.svg
-- Zambia.svg
+- Tuvalu.svg (clipPath support)
 
 
 wikipedia/symbols
