@@ -12,7 +12,7 @@ import io
 import textwrap
 from lxml import etree
 
-from reportlab.graphics.shapes import Group, Polygon, Rect
+from reportlab.graphics.shapes import Group, Path, Polygon, Rect
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
@@ -247,6 +247,14 @@ class TestAttrConverter(object):
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
         assert poly._fillRule == FILL_EVEN_ODD
+
+    def test_stroke(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = etree.XML('<path d="m0,6.5h27m0,5H0" stroke="#FFF"/>')
+        path = Path()
+        converter.applyStyleOnShape(path, node)
+        assert path.strokeColor == colors.white
+        assert path.strokeWidth == 1
 
 
 class TestApplyTransformOnGroup(object):

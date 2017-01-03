@@ -1039,7 +1039,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             ("fill-opacity", "fillOpacity", "convertOpacity", 1),
             ("fill-rule", "_fillRule", "convertFillRule", "nonzero"),
             ("stroke", "strokeColor", "convertColor", "none"),
-            ("stroke-width", "strokeWidth", "convertLength", "0"),
+            ("stroke-width", "strokeWidth", "convertLength", "1"),
             ("stroke-linejoin", "strokeLineJoin", "convertLineJoin", "0"),
             ("stroke-linecap", "strokeLineCap", "convertLineCap", "0"),
             ("stroke-dasharray", "strokeDashArray", "convertDashArray", "none"),
