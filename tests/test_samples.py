@@ -389,8 +389,14 @@ class TestW3CSVG(object):
             os.remove(path)
 
 
-    def test_convert_pdf(self):
-        "Test converting W3C SVG files to PDF using svglib."
+    def test_convert_pdf_png(self):
+        """
+        Test converting W3C SVG files to PDF and PNG using svglib.
+
+        ``renderPM.drawToFile()`` used in this test is known to trigger an
+        error sometimes in reportlab which was fixed in reportlab 3.3.26.
+        See https://github.com/deeplook/svglib/issues/47
+        """
 
         exclude_list = [
             "paint-stroke-06-t.svg",
@@ -423,7 +429,12 @@ class TestW3CSVG(object):
             # save as PNG
             # (endless loop for file paint-stroke-06-t.svg)
             base = splitext(path)[0] + '-svglib.png'
-            renderPM.drawToFile(drawing, base, 'PNG')
+            try:
+                # Can trigger an error in reportlab < 3.3.26.
+                renderPM.drawToFile(drawing, base, 'PNG')
+            except TypeError:
+                print('Svglib: Consider upgrading reportlab to version >= 3.3.26!')
+                raise
 
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")

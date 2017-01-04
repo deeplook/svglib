@@ -27,3 +27,8 @@ conversion tool named `UniConvertor
 <http://sourceforge.net/projects/uniconvertor>`_ 
 (if installed) for producing PDFs for comparison with `svglib`.
 (This was not used for years, though, during development/testing.)
+
+Calling ``renderPM.drawToFile()`` in ``TestW3CSVG.test_convert_pdf_png()``
+is known to raise a ``TypeError`` sometimes in reportlab which was
+fixed in ``reportlab`` 3.3.26. See
+https://github.com/deeplook/svglib/issues/47.
