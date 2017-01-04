@@ -12,7 +12,9 @@ import io
 import textwrap
 from lxml import etree
 
-from reportlab.graphics.shapes import Group, Path, Polygon, Rect
+from reportlab.graphics.shapes import (
+    _CLOSEPATH, _LINETO, _MOVETO, Group, Path, Polygon, Rect,
+)
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
@@ -99,6 +101,19 @@ class TestNormBezierPath(object):
         )
         failed = _testit(svglib.normaliseSvgPath, mapping)
         assert len(failed) == 0
+
+    def test_unclosed_paths(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML('<path d="M0,0 4.5,3 0,6M4.5,3H9" id="W"/>'))
+        group = converter.convertPath(node)
+        assert len(group.contents) == 2
+        closed_path = group.contents[0]
+        unclosed_path = group.contents[1]
+        assert len(closed_path.points) == len(unclosed_path.points)
+        assert closed_path.operators == [
+            _MOVETO, _LINETO, _LINETO, _CLOSEPATH, _MOVETO, _LINETO, _CLOSEPATH]
+        assert unclosed_path.operators == [
+            _MOVETO, _LINETO, _LINETO, _MOVETO, _LINETO]
 
 
 class TestColorAttrConverter(object):
