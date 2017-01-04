@@ -30,10 +30,8 @@ Issues here are often very small and related to paths or fillings.
 - Guatemala.svg
 - Haiti.svg
 - Iceland.svg
-- Jamaica.svg
 - Kazakhstan.svg
 - Lesotho.svg
-- Macedonia.svg
 - Mexico.svg
 - Moldova.svg
 - Mozambique.svg
@@ -52,7 +50,6 @@ Issues here are often very small and related to paths or fillings.
 - Tajikistan.svg
 - The_cook_islands.svg
 - The_dominican_republic.svg
-- The_gambia.svg
 - The_republic_of_china.svg
 - The_vatican_city.svg
 - Transnistria_(state).svg
