@@ -54,6 +54,4 @@ wikipedia/symbols
 Issues here are often very small and related to paths or fillings. (The
 map examples should perhaps go into a seperate folder.)
 
-- CO2_responsibility_1950-2000.svg
-- Countries_by_Population_Density_in_2015.svg
-- Flower-of-Life-small.svg
+- CO2_responsibility_1950-2000.svg (text)
