@@ -703,8 +703,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         shape = getattr(self, method_name)(node)
         if not shape:
             return
-        if name not in ('path', 'text'):
-            # Style is already applied in convertPath/convertText
+        if name not in ('path', 'polyline', 'text'):
+            # Only apply style where the convert method did not apply it.
             self.applyStyleOnShape(shape, node)
         transform = node.getAttribute("transform")
         if not (transform or clipping):
@@ -768,18 +768,22 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # Odd number of coordinates or no coordinates, invalid polyline
             return None
 
-        # Need to use two shapes, because standard RLG polylines
-        # do not support filling...
-        gr = Group()
-        shape = Polygon(points)
-        self.applyStyleOnShape(shape, node)
-        shape.strokeColor = None
-        gr.add(shape)
-        shape = PolyLine(points)
-        self.applyStyleOnShape(shape, node)
-        gr.add(shape)
+        polyline = PolyLine(points)
+        self.applyStyleOnShape(polyline, node)
+        has_fill = self.attrConverter.findAttr(node, 'fill') not in ('', 'none')
 
-        return gr
+        if has_fill:
+            # ReportLab doesn't fill polylines, so we are creating a polygon
+            # polygon copy of the polyline, but without stroke.
+            group = Group()
+            polygon = Polygon(points)
+            self.applyStyleOnShape(polygon, node)
+            polygon.strokeColor = None
+            group.add(polygon)
+            group.add(polyline)
+            return group
+
+        return polyline
 
 
     def convertPolygon(self, node):

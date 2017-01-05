@@ -13,7 +13,7 @@ import textwrap
 from lxml import etree
 
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, Rect,
+    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -368,6 +368,27 @@ class TestTextNode(object):
         assert main_group.contents[0].contents[1].y == 0
         assert main_group.contents[0].contents[2].x == -0.75  # 10 - 10.75
         assert main_group.contents[0].contents[2].y == -33.487
+
+
+class TestPolylineNode(object):
+    def test_filling(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<polyline fill="none" stroke="#000000" '
+            'points="10,50,35,150,60,50,85,150,110,50,135,150" />'
+        ))
+        polyline = converter.convertPolyline(node)
+        assert isinstance(polyline, PolyLine)
+
+        # svglib simulates polyline filling by a fake polygon.
+        node = svglib.NodeTracker(etree.XML(
+            '<polyline fill="#fff" stroke="#000000" '
+            'points="10,50,35,150,60,50,85,150,110,50,135,150" />'
+        ))
+        group = converter.convertPolyline(node)
+        assert isinstance(group.contents[0], Polygon)
+        assert group.contents[0].fillColor == colors.white
+        assert isinstance(group.contents[1], PolyLine)
 
 
 class TestUseNode(object):
