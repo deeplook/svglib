@@ -450,6 +450,26 @@ class TestUseNode(object):
         assert use_path1.strokeWidth == 5
         assert use_path2.strokeWidth == 2
 
+    def test_use_node_with_unclosed_path(self):
+        """
+        When a <use> node references an unclosed path (which is a group with two
+        different paths for filling and stroking), the use properties shouldn't
+        affect the no-stroke property of the fake stroke-only path.
+        """
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="900" height="600" viewBox="0 0 9 6">
+                <defs>
+                    <path d="M0,0 4.5,3 0,6" id="X"/>
+                </defs>
+                <use xlink:href="#X" fill="#f00" stroke="#ffb612" stroke-width="2"/>
+            </svg>
+        ''')))
+        use_group = drawing.contents[0].contents[0].contents[0]
+        assert use_group.contents[0].getProperties()['strokeWidth'] == 0
+
 
 class TestViewBox(object):
     def test_nonzero_origin(self):
