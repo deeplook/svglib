@@ -405,6 +405,7 @@ class TestUseNode(object):
               <rect x=".1" y=".1" width="99.8" height="29.8"
                     fill="none" stroke="blue" stroke-width=".2" />
               <use x="20" y="10" xlink:href="#MyRect" />
+              <use x="30" y="20" xlink:href="#MyRect" fill="#f00" />
             </svg>
         ''')))
         main_group = drawing.contents[0]
@@ -412,6 +413,10 @@ class TestUseNode(object):
         assert isinstance(main_group.contents[0], Rect)
         # Second Rect defined by the use node (inside a Group)
         assert isinstance(main_group.contents[1].contents[0], Rect)
+        assert main_group.contents[1].contents[0].fillColor == colors.black  # default
+        # Attributes on the use node are applied to the referenced content
+        assert isinstance(main_group.contents[2].contents[0], Rect)
+        assert main_group.contents[2].contents[0].fillColor == colors.red
 
     def test_transform_inherited_by_use(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
