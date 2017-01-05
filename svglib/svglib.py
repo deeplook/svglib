@@ -1221,6 +1221,8 @@ def monkeypatch_reportlab():
         current = self._fillMode
         if hasattr(path, 'fillMode'):
             self._fillMode = path.fillMode
+        else:
+            self._fillMode = FILL_NON_ZERO
         original_drawPath(self, path, **kwargs)
         self._fillMode = current
     Canvas.drawPath = patchedDrawPath
