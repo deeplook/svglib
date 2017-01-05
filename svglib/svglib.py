@@ -805,6 +805,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         path = ArcPath()
         # Track subpaths needing to be closed later
         unclosed_subpath_pointers = []
+        lastop = ''
 
         for i in xrange(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
@@ -848,7 +849,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 path.curveTo(*nums)
             elif op == 'S':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4:
+                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
                     xp, yp, x0, y0 = path.points[-2:] * 2
                 else:
                     xp, yp, x0, y0 = path.points[-4:]
@@ -861,12 +862,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 x1, y1, x2, y2, xn, yn = nums
                 path.curveTo(xp + x1, yp + y1, xp + x2, yp + y2, xp + xn, yp + yn)
             elif op == 's':
-                if len(path.points) < 4:
+                x2, y2, xn, yn = nums
+                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
                     xp, yp, x0, y0 = path.points[-2:] * 2
                 else:
                     xp, yp, x0, y0 = path.points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
-                x2, y2, xn, yn = nums
                 path.curveTo(xi, yi, x0 + x2, y0 + y2, x0 + xn, y0 + yn)
 
             # quadratic bezier, absolute
@@ -939,6 +940,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             else:
                 logger.debug("Suspicious path operator: %s" % op)
+            lastop = op
 
         gr = Group()
         self.applyStyleOnShape(path, node)
