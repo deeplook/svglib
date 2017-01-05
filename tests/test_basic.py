@@ -13,7 +13,7 @@ import textwrap
 from lxml import etree
 
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, _LINETO, _MOVETO, Group, Path, Polygon, Rect,
+    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, Rect,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -39,10 +39,10 @@ def _testit(func, mapping):
     return failed
 
 
-class TestNormBezierPath(object):
+class TestBezierPaths(object):
     "Testing Bezier paths."
 
-    def test_0(self):
+    def test_path_normalisation(self):
         "Test path normalisation."
 
         mapping = (
@@ -101,6 +101,21 @@ class TestNormBezierPath(object):
         )
         failed = _testit(svglib.normaliseSvgPath, mapping)
         assert len(failed) == 0
+
+    def test_cubic_bezier_shorthand(self):
+        # If there is no previous command or if the previous command was not
+        # an C, c, S or s, assume the first control point is coincident with
+        # the current point.
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<path d="M3,4c-0.5-0.25-1.3-0.77-1.3-1.8h2.5s0.04,0.46,0.04,1.48z"/>'
+        ))
+        path = converter.convertPath(node).contents[0]
+        assert path.operators == [_MOVETO, _CURVETO, _LINETO, _CURVETO, _CLOSEPATH]
+        assert path.points == [
+            3.0, 4.0, 2.5, 3.75, 1.7, 3.23, 1.7, 2.2, 4.2, 2.2, 4.2, 2.2, 4.24, 2.66,
+            4.24, 3.68,
+        ]
 
     def test_unclosed_paths(self):
         converter = svglib.Svg2RlgShapeConverter(None)
