@@ -175,6 +175,25 @@ def normaliseSvgPath(attr):
     return result
 
 
+class NoStrokeArcPath(ArcPath):
+    """
+    This path object never gets a stroke width whatever the properties it's
+    getting assigned.
+    """
+    def __init__(self, *args, **kwargs):
+        copy_from = kwargs.pop('copy_from', None)
+        ArcPath.__init__(self, *args, **kwargs)  # we're old-style class on PY2
+        if copy_from:
+            self.__dict__.update(copy.deepcopy(copy_from.__dict__))
+
+    def getProperties(self, *args, **kwargs):
+        # __getattribute__ wouldn't suit, as RL is directly accessing self.__dict__
+        props = ArcPath.getProperties(self, *args, **kwargs)
+        if 'strokeWidth' in props:
+            props['strokeWidth'] = 0
+        return props
+
+
 ### attribute converters (from SVG to RLG)
 
 class AttributeConverter:
@@ -952,11 +971,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # ReportLab doesn't fill unclosed paths, so we are creating a copy
             # of the path with all subpaths closed, but without stroke.
             # https://bitbucket.org/rptlab/reportlab/issues/99/
-            closed_path = copy.deepcopy(path)
+            closed_path = NoStrokeArcPath(copy_from=path)
             for pointer in reversed(unclosed_subpath_pointers):
                 closed_path.operators.insert(pointer, _CLOSEPATH)
-            closed_path.strokeColor = None
-            closed_path.strokeWidth = 0
             gr.add(closed_path)
             path.fillColor = None
 
