@@ -56,6 +56,12 @@ Features
 - test selected SVG `symbols from Wikipedia`_ after pulling from the net
 - run on Python 2.7 and Python 3.5
 
+Known limitations
+-----------------
+
+- stylesheets are not supported (only the style attribute)
+- clipping is limited to single paths, no mask support
+- color gradients are not supported
 
 Examples
 --------

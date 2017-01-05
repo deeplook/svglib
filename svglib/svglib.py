@@ -194,6 +194,21 @@ class NoStrokeArcPath(ArcPath):
         return props
 
 
+class ClippingArcPath(ArcPath):
+    def __init__(self, *args, **kwargs):
+        copy_from = kwargs.pop('copy_from', None)
+        ArcPath.__init__(self, *args, **kwargs)
+        if copy_from:
+            self.__dict__.update(copy.deepcopy(copy_from.__dict__))
+        self.isClipPath = 1
+
+    def getProperties(self, *args, **kwargs):
+        props = ArcPath.getProperties(self, *args, **kwargs)
+        if 'fillColor' in props:
+            props['fillColor'] = None
+        return props
+
+
 ### attribute converters (from SVG to RLG)
 
 class AttributeConverter:
@@ -490,6 +505,7 @@ class SvgRenderer:
         ignored = False
         item = None
 
+        clipping = self.get_clippath(n)
         if name == "svg":
             if n.getAttribute("{%s}space" % XML_NS) == 'preserve':
                 self.shape_converter.preserve_space = True
@@ -503,32 +519,22 @@ class SvgRenderer:
             parent.add(item)
         elif name == 'g':
             display = n.getAttribute("display")
+            item = self.renderG(n, clipping=clipping)
             if display != "none":
-                item = self.renderG(n)
                 parent.add(item)
         elif name == "symbol":
             item = self.renderSymbol(n)
             # parent.add(item)
         elif name == "use":
-            item = self.renderUse(n)
+            item = self.renderUse(n, clipping=clipping)
             parent.add(item)
+        elif name == "clipPath":
+            item = self.renderG(n)
         elif name in self.handled_shapes:
-            method_name = "convert%s" % name.capitalize()
-            item = getattr(self.shape_converter, method_name)(n)
-            if item:
-                if name not in ('path', 'text'):
-                    # Style is already applied in convertPath/convertText
-                    self.shape_converter.applyStyleOnShape(item, n)
-                transform = n.getAttribute("transform")
-                display = n.getAttribute("display")
-                if transform and display != "none":
-                    gr = Group()
-                    self.shape_converter.applyTransformOnGroup(transform, gr)
-                    gr.add(item)
-                    parent.add(gr)
-                    item = gr
-                elif display != "none":
-                    parent.add(item)
+            display = n.getAttribute("display")
+            item = self.shape_converter.convertShape(name, n, clipping)
+            if item and display != "none":
+                parent.add(item)
         else:
             ignored = True
             logger.debug("Ignoring node: %s" % name)
@@ -538,9 +544,31 @@ class SvgRenderer:
                 self.definitions[nid] = item
             if nid in self.waiting_use_nodes.keys():
                 for use_node, group in self.waiting_use_nodes[nid]:
-                    self.renderUse(use_node, group)
+                    self.renderUse(use_node, group=group)
             self.print_unused_attributes(node, n)
 
+    def get_clippath(self, node):
+        """
+        Return the clipping Path object referenced by the node 'clip-path'
+        attribute, if any.
+        """
+        def get_path_from_group(group):
+            for item in group.contents:
+                if isinstance(item, ArcPath):
+                    return item
+                if hasattr(item, 'contents'):
+                    return get_path_from_group(item)
+
+        clip_path = node.getAttribute('clip-path')
+        if clip_path:
+            m = re.match(r'url\(#([^\)]*)\)', clip_path)
+            if m:
+                ref = m.groups()[0]
+                if ref in self.definitions:
+                    path = get_path_from_group(self.definitions[ref])
+                    if path:
+                        path = ClippingArcPath(copy_from=path)
+                        return path
 
     def print_unused_attributes(self, node, n):
         if logger.level > logging.DEBUG:
@@ -574,11 +602,13 @@ class SvgRenderer:
         return self.drawing
 
 
-    def renderG(self, node, display=1):
+    def renderG(self, node, clipping=None, display=1):
         getAttr = node.getAttribute
         id, style, transform = map(getAttr, ("id", "style", "transform"))
         self.attrs = self.attrConverter.parseMultiAttributes(style)
         gr = Group()
+        if clipping:
+            gr.add(clipping)
         for child in node.getchildren():
             item = self.render(child, parent=gr)
             if item and display:
@@ -600,7 +630,7 @@ class SvgRenderer:
         return self.renderG(node)
 
 
-    def renderUse(self, node, group=None):
+    def renderUse(self, node, group=None, clipping=None):
         if group is None:
             group = Group()
 
@@ -612,6 +642,8 @@ class SvgRenderer:
             self.waiting_use_nodes[xlink_href[1:]].append((node, group))
             return group
 
+        if clipping:
+            group.add(clipping)
         item = copy.deepcopy(self.definitions[xlink_href[1:]])
         group.add(item)
         getAttr = node.getAttribute
@@ -653,7 +685,6 @@ class SvgShapeConverter:
         self.svg_source_file = path
         self.preserve_space = False
 
-
     @classmethod
     def get_handled_shapes(cls):
         """Dynamically determine a list of handled shape elements based on
@@ -666,6 +697,26 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     """Converter from SVG shapes to RLG (ReportLab Graphics) shapes."""
 
     AttributeConverterClass = Svg2RlgAttributeConverter
+
+    def convertShape(self, name, node, clipping=None):
+        method_name = "convert%s" % name.capitalize()
+        shape = getattr(self, method_name)(node)
+        if not shape:
+            return
+        if name not in ('path', 'text'):
+            # Style is already applied in convertPath/convertText
+            self.applyStyleOnShape(shape, node)
+        transform = node.getAttribute("transform")
+        if not (transform or clipping):
+            return shape
+        else:
+            group = Group()
+            if transform:
+                self.applyTransformOnGroup(transform, group)
+            if clipping:
+                group.add(clipping)
+            group.add(shape)
+            return group
 
     def convertLine(self, node):
         getAttr = node.getAttribute
