@@ -56,6 +56,7 @@ Features
 - test selected SVG `symbols from Wikipedia`_ after pulling from the net
 - run on Python 2.7 and Python 3.5
 
+
 Known limitations
 -----------------
 
@@ -125,8 +126,9 @@ Dependencies
 ``Svglib`` depends mainly on the ``reportlab`` package, which provides
 the abstractions for building complex ``Drawings`` which it can render
 into different fileformats, including PDF, EPS, SVG and various bitmaps
-ones. Another dependancy is `lxml` which is used in the context of SVG
-CSS stylesheets.
+ones. Other dependancies are ``lxml`` which is used in the context of SVG
+CSS stylesheets and ``svg.path`` which provides a ready implementation
+for arcs.
 
 
 Installation
@@ -165,13 +167,22 @@ Testing
 -------
 
 The ``svglib`` tarball distribution contains a PyTest_ test suite 
-in the file ``tests`` directory which can be run like shown in the 
-following lines on the system command-line::
+in the ``tests`` directory. There, in ``tests/README.rst``, you can
+also read more about testing. You can run the testsuite e.g. like
+shown in the following lines on the command-line::
  
   $ tar xfz svglib-0.6.3.tar.gz
   $ cd svglib-0.6.3
-  $ py.test -v -s
-  ......
+  $ py.test
+  ======================== test session starts =========================
+  platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+  rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
+  collected 32 items
+
+  tests/test_basic.py ........................
+  tests/test_samples.py .s.s.s.s
+
+  =============== 28 passed, 4 skipped in 41.15 seconds ================
 
 
 Bug reports
