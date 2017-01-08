@@ -39,8 +39,8 @@ def _testit(func, mapping):
     return failed
 
 
-class TestBezierPaths(object):
-    "Testing Bezier paths."
+class TestPaths(object):
+    """Testing path-related code."""
 
     def test_path_normalisation(self):
         "Test path normalisation."
@@ -101,6 +101,19 @@ class TestBezierPaths(object):
         )
         failed = _testit(svglib.normaliseSvgPath, mapping)
         assert len(failed) == 0
+
+    def test_relative_move_after_closepath(self):
+        """
+        A relative subpath is relative to the point *after* the previous
+        closePath op (which is not recorded in path.points).
+        """
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<path d="M0 0,0 1,1 1z m-1-1 0 1 1 0z"/>'
+        ))
+        # last point of this path should be 0 0
+        path = converter.convertPath(node).contents[0]
+        assert path.points[-2:] == [0, 0]
 
     def test_cubic_bezier_shorthand(self):
         # If there is no previous command or if the previous command was not
