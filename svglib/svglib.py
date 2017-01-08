@@ -191,6 +191,8 @@ class NoStrokeArcPath(ArcPath):
         props = ArcPath.getProperties(self, *args, **kwargs)
         if 'strokeWidth' in props:
             props['strokeWidth'] = 0
+        if 'strokeColor' in props:
+            props['strokeColor'] = None
         return props
 
 
