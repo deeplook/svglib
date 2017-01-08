@@ -495,6 +495,7 @@ class TestUseNode(object):
         ''')))
         use_group = drawing.contents[0].contents[0].contents[0]
         assert use_group.contents[0].getProperties()['strokeWidth'] == 0
+        assert use_group.contents[0].getProperties()['strokeColor'] is None
 
 
 class TestViewBox(object):
