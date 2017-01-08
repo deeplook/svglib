@@ -541,9 +541,10 @@ class SvgRenderer:
 
         if not ignored:
             if nid and item:
-                self.definitions[nid] = item
+                self.definitions[nid] = node
             if nid in self.waiting_use_nodes.keys():
-                for use_node, group in self.waiting_use_nodes[nid]:
+                to_render = self.waiting_use_nodes.pop(nid)
+                for use_node, group in to_render:
                     self.renderUse(use_node, group=group)
             self.print_unused_attributes(node, n)
 
@@ -552,12 +553,13 @@ class SvgRenderer:
         Return the clipping Path object referenced by the node 'clip-path'
         attribute, if any.
         """
-        def get_path_from_group(group):
-            for item in group.contents:
-                if isinstance(item, ArcPath):
-                    return item
-                if hasattr(item, 'contents'):
-                    return get_path_from_group(item)
+        def get_path_from_node(node):
+            for child in node.getchildren():
+                if node_name(child) == 'path':
+                    group = self.shape_converter.convertShape('path', NodeTracker(child))
+                    return group.contents[-1]
+                else:
+                    return get_path_from_node(child)
 
         clip_path = node.getAttribute('clip-path')
         if clip_path:
@@ -565,7 +567,7 @@ class SvgRenderer:
             if m:
                 ref = m.groups()[0]
                 if ref in self.definitions:
-                    path = get_path_from_group(self.definitions[ref])
+                    path = get_path_from_node(self.definitions[ref])
                     if path:
                         path = ClippingArcPath(copy_from=path)
                         return path
@@ -604,8 +606,7 @@ class SvgRenderer:
 
     def renderG(self, node, clipping=None, display=1):
         getAttr = node.getAttribute
-        id, style, transform = map(getAttr, ("id", "style", "transform"))
-        self.attrs = self.attrConverter.parseMultiAttributes(style)
+        id, transform = map(getAttr, ("id", "transform"))
         gr = Group()
         if clipping:
             gr.add(clipping)
@@ -644,8 +645,10 @@ class SvgRenderer:
 
         if clipping:
             group.add(clipping)
-        item = copy.deepcopy(self.definitions[xlink_href[1:]])
-        group.add(item)
+        if len(node.getchildren()) == 0:
+            # Append a copy of the referenced node as the <use> child (if not already done)
+            node.append(copy.deepcopy(self.definitions[xlink_href[1:]]))
+        self.render(node.getchildren()[-1], parent=group)
         getAttr = node.getAttribute
         transform = getAttr("transform")
         x, y = map(getAttr, ("x", "y"))
@@ -653,7 +656,6 @@ class SvgRenderer:
             transform += " translate(%s, %s)" % (x or '0', y or '0')
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
-        self.shape_converter.applyStyleOnShape(item, node, only_explicit=True)
         return group
 
 
@@ -1154,7 +1156,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 try:
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(svgAttrValue))
-                except Exception:
+                except (AttributeError, KeyError, ValueError):
                     pass
         if getattr(shape, 'fillOpacity', None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
