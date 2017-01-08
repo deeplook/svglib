@@ -883,6 +883,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         path = ArcPath()
         # Track subpaths needing to be closed later
         unclosed_subpath_pointers = []
+        subpath_start = []
         lastop = ''
 
         for i in xrange(0, len(normPath), 2):
@@ -894,6 +895,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # moveto absolute
             if op == 'M':
                 path.moveTo(*nums)
+                subpath_start = path.points[-2:]
             # lineto absolute
             elif op == 'L':
                 path.lineTo(*nums)
@@ -901,10 +903,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # moveto relative
             elif op == 'm':
                 if len(path.points) >= 2:
-                    xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]
+                    if lastop in ('Z', 'z'):
+                        starting_point = subpath_start
+                    else:
+                        starting_point = path.points[-2:]
+                    xn, yn = starting_point[0] + nums[0], starting_point[1] + nums[1]
                     path.moveTo(xn, yn)
                 else:
                     path.moveTo(*nums)
+                subpath_start = path.points[-2:]
             # lineto relative
             elif op == 'l':
                 xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]

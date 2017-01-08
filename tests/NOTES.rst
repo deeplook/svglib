@@ -21,13 +21,9 @@ Issues here are often very small and related to paths or fillings.
 - Ecuador.svg (gradient support)
 - Guatemala.svg (gradient support)
 - Mexico.svg (gradient support)
-- Moldova.svg
 - Nicaragua.svg (gradient support)
 - Slovenia.svg (svg inside svg)
 - The_republic_of_china.svg
-- The_vatican_city.svg
-- Transnistria_(state).svg
-- Turkmenistan.svg
 
 
 wikipedia/symbols
