@@ -23,7 +23,7 @@ import operator
 import os
 import re
 import types
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from lxml import etree
 
 from reportlab.pdfgen.pdfimages import PDFImage
@@ -50,6 +50,9 @@ logger = logging.getLogger(__name__)
 
 
 ### helpers ###
+
+Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
+
 
 def convertQuadraticToCubicPath(Q0, Q1, Q2):
     "Convert a quadratic Bezier curve through Q0, Q1, Q2 to a cubic one."
@@ -490,30 +493,34 @@ class SvgRenderer:
         self.attrConverter = Svg2RlgAttributeConverter()
         self.shape_converter = Svg2RlgShapeConverter(path)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
-        self.drawing = None
-        self.mainGroup = Group()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
-        self.origin = [0, 0]
-        self.path = path
+        self.box = Box(x=0, y=0, width=0, height=0)
 
-    def render(self, node, parent=None):
-        if parent is None:
-            parent = self.mainGroup
-        name = node_name(node)
+    def render(self, svg_node):
+        main_group = self.renderNode(svg_node)
+        for xlink in self.waiting_use_nodes.keys():
+            logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
 
+        main_group.scale(1, -1)
+        main_group.translate(0 - self.box.x, -self.box.height - self.box.y)
+        drawing = Drawing(self.box.width, self.box.height)
+        drawing.add(main_group)
+        return drawing
+
+    def renderNode(self, node, parent=None):
         n = NodeTracker(node)
         nid = n.getAttribute("id")
         ignored = False
         item = None
+        name = node_name(node)
 
         clipping = self.get_clippath(n)
         if name == "svg":
             if n.getAttribute("{%s}space" % XML_NS) == 'preserve':
                 self.shape_converter.preserve_space = True
-            drawing = self.renderSvg(n)
-            for child in n.getchildren():
-                self.render(child, self.mainGroup)
+            item = self.renderSvg(n)
+            return item
         elif name == "defs":
             item = self.renderG(n)
         elif name == 'a':
@@ -600,10 +607,13 @@ class SvgRenderer:
         viewBox = getAttr("viewBox")
         if viewBox:
             viewBox = self.attrConverter.convertLengthList(viewBox)
-            x, y, width, height = viewBox
-            self.origin = [x, y]
-        self.drawing = Drawing(width, height)
-        return self.drawing
+            self.box = Box(*viewBox)
+        else:
+            self.box = Box(0, 0, width, height)
+        group = Group()
+        for child in node.getchildren():
+            self.renderNode(child, group)
+        return group
 
 
     def renderG(self, node, clipping=None, display=1):
@@ -613,7 +623,7 @@ class SvgRenderer:
         if clipping:
             gr.add(clipping)
         for child in node.getchildren():
-            item = self.render(child, parent=gr)
+            item = self.renderNode(child, parent=gr)
             if item and display:
                 gr.add(item)
 
@@ -650,7 +660,7 @@ class SvgRenderer:
         if len(node.getchildren()) == 0:
             # Append a copy of the referenced node as the <use> child (if not already done)
             node.append(copy.deepcopy(self.definitions[xlink_href[1:]]))
-        self.render(node.getchildren()[-1], parent=group)
+        self.renderNode(node.getchildren()[-1], parent=group)
         getAttr = node.getAttribute
         transform = getAttr("transform")
         x, y = map(getAttr, ("x", "y"))
@@ -659,17 +669,6 @@ class SvgRenderer:
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
         return group
-
-
-    def finish(self):
-        for xlink in self.waiting_use_nodes.keys():
-            logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
-
-        height = self.drawing.height
-        self.mainGroup.scale(1, -1)
-        self.mainGroup.translate(0 - self.origin[0], -height - self.origin[1])
-        self.drawing.add(self.mainGroup)
-        return self.drawing
 
 
 class SvgShapeConverter:
@@ -1193,8 +1192,7 @@ def svg2rlg(path):
 
     # convert to a RLG drawing
     svgRenderer = SvgRenderer(path)
-    svgRenderer.render(svg)
-    drawing = svgRenderer.finish()
+    drawing = svgRenderer.render(svg)
 
     # remove unzipped .svgz file (.svg)
     if unzipped:
