@@ -24,7 +24,6 @@ import os
 import re
 import types
 from collections import defaultdict, namedtuple
-from lxml import etree
 
 from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -37,6 +36,7 @@ from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
 from svg.path import Arc
+from lxml import etree
 
 
 __version__ = "0.6.3"
@@ -1202,7 +1202,8 @@ def svg2rlg(path):
 
 
 def node_name(node):
-    """ lxml node name without the namespace prefix. """
+    """Return lxml node name without the namespace prefix."""
+
     try:
         return node.tag.split('}')[-1]
     except AttributeError:
