@@ -71,10 +71,11 @@ You can use ``svglib`` as a Python package e.g. like in the following
 interactive Python session::
 
     >>> from svglib.svglib import svg2rlg
-    >>> from reportlab.graphics import renderPDF
+    >>> from reportlab.graphics import renderPDF, renderPM
     >>>
     >>> drawing = svg2rlg("file.svg")
     >>> renderPDF.drawToFile(drawing, "file.pdf")
+    >>> renderPM.drawToFile(drawing, "file.png")
 
 In addition a script named ``svg2pdf`` can be used more easily from 
 the system command-line. Here is the output from ``svg2pdf -h``::
