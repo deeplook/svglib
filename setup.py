@@ -1,5 +1,5 @@
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup
 import distutils.core
 
 __version__ = '0.6.3'
@@ -23,17 +23,13 @@ setup(
     platforms = ['Posix', 'Windows'],
     keywords='SVG, PDF, reportlab, conversion, graphics',
     url='https://github.com/deeplook/svglib',
-    # packages=find_packages(exclude='test'),
     install_requires=install_requires,
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     package_dir = {'svglib': 'svglib'},
     packages = ['svglib'],
-    # entry_points={
-    #     'console_scripts': ['vbbvg=vbbvg.__main__:main']
-    # },
     py_modules = [],
-    scripts = ['scripts/svg2pdf', 'scripts/svg2ps', 'scripts/svg2pm'],
+    scripts = ['scripts/svg2pdf'],
     classifiers=[
         # see http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 4 - Beta',
