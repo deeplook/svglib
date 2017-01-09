@@ -6,14 +6,7 @@ This tests conversion of sample SVG files into PDF files.
 Some tests try using a tool called uniconv (if installed)
 to convert SVG files into PDF for comparision with svglib.
 
-Run with one of these lines from inside the test directory:
-
-    py.test -v -s test_samples.py
-
-The following needs pytest 3.0.5 and will run functions that
-are named `cleanup` only:
-
-    py.test -v -s --override-ini=python_functions=cleanup
+Read ``tests/README.rst`` for more information on testing!
 """
 
 import os
@@ -186,7 +179,7 @@ class TestWikipediaSymbols(object):
 
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
-    def test_convet_pdf_uniconv(self):
+    def test_convert_pdf_uniconv(self):
         "Test converting symbol SVG files to PDF using uniconverter."
 
         paths = glob.glob("%s/*" % self.folder_path)
