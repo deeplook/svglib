@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-"""An experimental library for reading and converting SVG.
+"""A library for reading and converting SVG.
 
-This is an experimental converter from SVG to RLG (ReportLab Graphics)
-drawings. It converts mainly basic shapes, paths and simple text.
-The current intended usage is either as module within other projects:
+This is a converter from SVG to RLG (ReportLab Graphics) drawings.
+It converts mainly basic shapes, paths and simple text. The intended
+usage is either as module within other projects:
 
     from svglib.svglib import svg2rlg
     drawing = svg2rlg("foo.svg")
 
-or from the command-line where right now it is usable as an SVG to PDF
-converting tool named sv2pdf (which should also handle SVG files com-
-pressed with gzip and extension .svgz).
+or from the command-line where it is usable as an SVG to PDF converting
+tool named sv2pdf (which should also handle SVG files compressed with
+gzip and extension .svgz).
 """
 
 import copy
