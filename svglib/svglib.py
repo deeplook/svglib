@@ -23,7 +23,7 @@ import operator
 import os
 import re
 import types
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from lxml import etree
 
 from reportlab.pdfgen.pdfimages import PDFImage
@@ -50,6 +50,9 @@ logger = logging.getLogger(__name__)
 
 
 ### helpers ###
+
+Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
+
 
 def convertQuadraticToCubicPath(Q0, Q1, Q2):
     "Convert a quadratic Bezier curve through Q0, Q1, Q2 to a cubic one."
@@ -494,7 +497,7 @@ class SvgRenderer:
         self.mainGroup = Group()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
-        self.origin = [0, 0]
+        self.box = Box(x=0, y=0, width=0, height=0)
         self.path = path
 
     def render(self, node, parent=None):
@@ -600,9 +603,10 @@ class SvgRenderer:
         viewBox = getAttr("viewBox")
         if viewBox:
             viewBox = self.attrConverter.convertLengthList(viewBox)
-            x, y, width, height = viewBox
-            self.origin = [x, y]
-        self.drawing = Drawing(width, height)
+            self.box = Box(*viewBox)
+        else:
+            self.box = Box(0, 0, width, height)
+        self.drawing = Drawing(self.box.width, self.box.height)
         return self.drawing
 
 
@@ -667,7 +671,7 @@ class SvgRenderer:
 
         height = self.drawing.height
         self.mainGroup.scale(1, -1)
-        self.mainGroup.translate(0 - self.origin[0], -height - self.origin[1])
+        self.mainGroup.translate(0 - self.box.x, -height - self.box.y)
         self.drawing.add(self.mainGroup)
         return self.drawing
 
