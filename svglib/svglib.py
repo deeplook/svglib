@@ -1358,35 +1358,38 @@ def node_name(node):
         pass
 
 
-def monkeypatch_reportlab():
-    """
-    https://bitbucket.org/rptlab/reportlab/issues/95/
-    ReportLab always use 'Even-Odd' filling mode for paths, this patch forces
-    RL to honor the path fill rule mode (possibly 'Non-Zero Winding') instead.
-    """
-    from reportlab.pdfgen.canvas import Canvas
-    from reportlab.graphics import shapes
+from distutils.version import LooseVersion
+import reportlab
+if LooseVersion(reportlab.__version__)<LooseVersion('3.3.28'):
+    def monkeypatch_reportlab():
+        """
+        https://bitbucket.org/rptlab/reportlab/issues/95/
+        ReportLab always use 'Even-Odd' filling mode for paths, this patch forces
+        RL to honor the path fill rule mode (possibly 'Non-Zero Winding') instead.
+        """
+        from reportlab.pdfgen.canvas import Canvas
+        from reportlab.graphics import shapes
 
-    original_renderPath = shapes._renderPath
-    def patchedRenderPath(path, drawFuncs):
-        # Patched method to transfer fillRule from Path to PDFPathObject
-        # Get back from bound method to instance
-        try:
-            drawFuncs[0].__self__.fillMode = path._fillRule
-        except AttributeError:
-            pass
-        return original_renderPath(path, drawFuncs)
-    shapes._renderPath = patchedRenderPath
+        original_renderPath = shapes._renderPath
+        def patchedRenderPath(path, drawFuncs):
+            # Patched method to transfer fillRule from Path to PDFPathObject
+            # Get back from bound method to instance
+            try:
+                drawFuncs[0].__self__.fillMode = path._fillRule
+            except AttributeError:
+                pass
+            return original_renderPath(path, drawFuncs)
+        shapes._renderPath = patchedRenderPath
 
-    original_drawPath = Canvas.drawPath
-    def patchedDrawPath(self, path, **kwargs):
-        current = self._fillMode
-        if hasattr(path, 'fillMode'):
-            self._fillMode = path.fillMode
-        else:
-            self._fillMode = FILL_NON_ZERO
-        original_drawPath(self, path, **kwargs)
-        self._fillMode = current
-    Canvas.drawPath = patchedDrawPath
+        original_drawPath = Canvas.drawPath
+        def patchedDrawPath(self, path, **kwargs):
+            current = self._fillMode
+            if hasattr(path, 'fillMode'):
+                self._fillMode = path.fillMode
+            else:
+                self._fillMode = FILL_NON_ZERO
+            original_drawPath(self, path, **kwargs)
+            self._fillMode = current
+        Canvas.drawPath = patchedDrawPath
 
-#monkeypatch_reportlab()
+    monkeypatch_reportlab()
