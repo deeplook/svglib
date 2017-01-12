@@ -30,12 +30,11 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.graphics.shapes import (
     _CLOSEPATH, ArcPath, Circle, Drawing, Ellipse, Group, Image, Line, PolyLine,
-    Polygon, Rect, String,
+    Polygon, Rect, String, mmult, rotate, translate, transformPoint
 )
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
-from svg.path import Arc
 from lxml import etree
 
 
@@ -63,6 +62,166 @@ def convertQuadraticToCubicPath(Q0, Q1, Q2):
     C3 = Q2
 
     return C0, C1, C2, C3
+
+from math import cos, sin, pi, sqrt, acos, ceil, copysign, fabs, hypot, degrees, radians
+def vectorAngle(u,v):
+    d = hypot(*u)*hypot(*v)
+    c = (u[0]*v[0]+u[1]*v[1])/d
+    if c<-1: c = -1
+    elif c>1: c = 1
+    s = u[0]*v[1]-u[1]*v[0]
+    return degrees(copysign(acos(c),s))
+
+def endPointToCenterParameters(x1,y1,x2,y2,fA,fS,rx,ry,phi=0):
+    '''
+    see http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes F.6.5
+    note that we reduce phi to zero outside this routine 
+    '''
+    rx = fabs(rx)
+    ry = fabs(ry)
+
+    #step 1
+    if phi:
+        phiRad = radians(phi)
+        sinPhi = sin(phiRad)
+        cosPhi = cos(phiRad)
+        tx = 0.5*(x1-x2)
+        ty = 0.5*(y1-y2)
+        x1d = cosPhi*tx - sinPhi*ty
+        y1d = sinPhi*tx + cosPhi*ty
+    else:
+        x1d = 0.5*(x1-x2)
+        y1d = 0.5*(y1-y2)
+
+    #step 2
+    #we need to calculate
+    # (rx*rx*ry*ry-rx*rx*y1d*y1d-ry*ry*x1d*x1d)
+    # -----------------------------------------
+    #     (rx*rx*y1d*y1d+ry*ry*x1d*x1d)
+    #
+    # that is equivalent to
+    # 
+    #          rx*rx*ry*ry 
+    # = -----------------------------  -    1
+    #   (rx*rx*y1d*y1d+ry*ry*x1d*x1d)
+    #
+    #              1
+    # = -------------------------------- - 1
+    #   x1d*x1d/(rx*rx) + y1d*y1d/(ry*ry)
+    #
+    # = 1/r - 1
+    #
+    # it turns out r is what they recommend checking
+    # for the negative radicand case
+    r = x1d*x1d/(rx*rx) + y1d*y1d/(ry*ry)
+    if r>1:
+        rr = sqrt(r)
+        rx *= rr
+        ry *= rr
+        r = x1d*x1d/(rx*rx) + y1d*y1d/(ry*ry)
+    r = 1/r - 1
+    if -1e-10<r<0: r = 0
+    r = sqrt(r)
+    if fA==fS: r = -r
+    cxd = (r*rx*y1d)/ry
+    cyd = -(r*ry*x1d)/rx
+
+    #step3
+    if phi:
+        cx = cosPhi*cxd - sinPhi*cyd + 0.5*(x1+x2)
+        cy = sinPhi*cxd + cosPhi*cyd + 0.5*(y1+y2)
+    else:
+        cx = cxd + 0.5*(x1+x2)
+        cy = cyd + 0.5*(y1+y2)
+
+    #step 4
+    theta1 = vectorAngle((1,0),((x1d-cxd)/rx,(y1d-cyd)/ry))
+    dtheta = vectorAngle(((x1d-cxd)/rx,(y1d-cyd)/ry),((-x1d-cxd)/rx,(-y1d-cyd)/ry)) % 360
+    if fS==0 and dtheta>0: dtheta -= 360
+    elif fS==1 and dtheta<0: dtheta += 360
+    return cx, cy, rx, ry, -theta1, -dtheta
+
+def bezierArcFromCentre(cx,cy, rx, ry, startAng=0, extent=90):
+    if abs(extent) <= 90:
+        arcList = [startAng]
+        fragAngle = float(extent)
+        Nfrag = 1
+    else:
+        arcList = []
+        Nfrag = int(ceil(abs(extent)/90.))
+        fragAngle = float(extent) / Nfrag
+
+    fragRad = radians(fragAngle)
+    halfRad = fragRad * 0.5
+    kappa = abs(4. / 3. * (1. - cos(halfRad)) / sin(halfRad))
+
+    if fragAngle < 0:
+        kappa = -kappa
+
+    pointList = []
+    pointList_append = pointList.append
+    theta1 = radians(startAng)
+    startRad = theta1 + fragRad
+
+    c1 = cos(theta1)
+    s1 = sin(theta1)
+    for i in xrange(Nfrag):
+        c0 = c1
+        s0 = s1
+        theta1 = startRad + i*fragRad
+        c1 = cos(theta1)
+        s1 = sin(theta1)
+        pointList_append((cx + rx * c0,
+                          cy - ry * s0,
+                          cx + rx * (c0 - kappa * s0),
+                          cy - ry * (s0 + kappa * c0),
+                          cx + rx * (c1 + kappa * s1),
+                          cy - ry * (s1 - kappa * c1),
+                          cx + rx * c1,
+                          cy - ry * s1))
+    return pointList
+
+def bezierArcFromBox(x1,y1, x2,y2, startAng=0, extent=90):
+    """bezierArcFromBox(x1,y1, x2,y2, startAng=0, extent=90) --> List of Bezier
+curve control points.
+
+(x1, y1) and (x2, y2) are the corners of the enclosing rectangle.  The
+coordinate system has coordinates that increase to the right and down.
+Angles, measured in degress, start with 0 to the right (the positive X
+axis) and increase counter-clockwise.  The arc extends from startAng
+to startAng+extent.  I.e. startAng=0 and extent=180 yields an openside-down
+semi-circle.
+
+The resulting coordinates are of the form (x1,y1, x2,y2, x3,y3, x4,y4)
+such that the curve goes from (x1, y1) to (x4, y4) with (x2, y2) and
+(x3, y3) as their respective Bezier control points.
+
+Contributed by Robert Kern.
+
+The algorithm is an elliptical generalization of the formulae in
+Jim Fitzsimmon's TeX tutorial <URL: http://www.tinaja.com/bezarc1.pdf>.
+"""
+    cx, cy, rx,ry = _bd2cr(x1,y1,x2,y2)
+    return bezierArcFromCentre(cx,cy, rx, ry, startAng, extent)
+
+def bezierArcFromEndPoints(x1,y1,rx,ry,phi,fA,fS,x2,y2):
+    if phi:
+        #our box bezier arcs can't handle rotations directly
+        #move to a well known point, eliminate phi and transform the other point
+        mx = mmult(rotate(-phi),translate(-x1,-y1))
+        tx2,ty2 = transformPoint(mx,(x2,y2))
+        #convert to box form in unrotated coords
+        cx, cy, rx, ry, startAng, extent = endPointToCenterParameters(0,0,tx2,ty2,fA,fS,rx,ry)
+        bp = bezierArcFromCentre(cx,cy, rx, ry, startAng, extent)
+        #re-rotate by the desired angle and add back the translation
+        mx = mmult(translate(x1,y1),rotate(phi))
+        res = []
+        for x1,y1,x2,y2,x3,y3,x4,y4 in bp:
+            res.append(transformPoint(mx,(x1,y1))+transformPoint(mx,(x2,y2))+transformPoint(mx,(x3,y3))+transformPoint(mx,(x4,y4)))
+        return res
+    else:
+        cx, cy, rx, ry, startAng, extent = endPointToCenterParameters(x1,y1,x2,y2,fA,fS,rx,ry)
+        return bezierArcFromCentre(cx,cy, rx, ry, startAng, extent)
 
 
 def fixSvgPath(a_list):
@@ -880,6 +1039,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         d = node.getAttribute('d')
         normPath = normaliseSvgPath(d)
         path = ArcPath()
+        pts = path.points
         # Track subpaths needing to be closed later
         unclosed_subpath_pointers = []
         subpath_start = []
@@ -894,78 +1054,78 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # moveto absolute
             if op == 'M':
                 path.moveTo(*nums)
-                subpath_start = path.points[-2:]
+                subpath_start = pts[-2:]
             # lineto absolute
             elif op == 'L':
                 path.lineTo(*nums)
 
             # moveto relative
             elif op == 'm':
-                if len(path.points) >= 2:
+                if len(pts) >= 2:
                     if lastop in ('Z', 'z'):
                         starting_point = subpath_start
                     else:
-                        starting_point = path.points[-2:]
+                        starting_point = pts[-2:]
                     xn, yn = starting_point[0] + nums[0], starting_point[1] + nums[1]
                     path.moveTo(xn, yn)
                 else:
                     path.moveTo(*nums)
-                subpath_start = path.points[-2:]
+                subpath_start = pts[-2:]
             # lineto relative
             elif op == 'l':
-                xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]
+                xn, yn = pts[-2] + nums[0], pts[-1] + nums[1]
                 path.lineTo(xn, yn)
 
             # horizontal/vertical line absolute
             elif op == 'H':
-                path.lineTo(nums[0], path.points[-1])
+                path.lineTo(nums[0], pts[-1])
             elif op == 'V':
-                path.lineTo(path.points[-2], nums[0])
+                path.lineTo(pts[-2], nums[0])
 
             # horizontal/vertical line relative
             elif op == 'h':
-                path.lineTo(path.points[-2] + nums[0], path.points[-1])
+                path.lineTo(pts[-2] + nums[0], pts[-1])
             elif op == 'v':
-                path.lineTo(path.points[-2], path.points[-1] + nums[0])
+                path.lineTo(pts[-2], pts[-1] + nums[0])
 
             # cubic bezier, absolute
             elif op == 'C':
                 path.curveTo(*nums)
             elif op == 'S':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(pts) < 4 or lastop not in {'c', 'C', 's', 'S'}:
+                    xp, yp, x0, y0 = pts[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = pts[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 path.curveTo(xi, yi, x2, y2, xn, yn)
 
             # cubic bezier, relative
             elif op == 'c':
-                xp, yp = path.points[-2:]
+                xp, yp = pts[-2:]
                 x1, y1, x2, y2, xn, yn = nums
                 path.curveTo(xp + x1, yp + y1, xp + x2, yp + y2, xp + xn, yp + yn)
             elif op == 's':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(pts) < 4 or lastop not in {'c', 'C', 's', 'S'}:
+                    xp, yp, x0, y0 = pts[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = pts[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 path.curveTo(xi, yi, x0 + x2, y0 + y2, x0 + xn, y0 + yn)
 
             # quadratic bezier, absolute
             elif op == 'Q':
-                x0, y0 = path.points[-2:]
+                x0, y0 = pts[-2:]
                 x1, y1, xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 'T':
-                if len(path.points) < 4:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(pts) < 4:
+                    xp, yp, x0, y0 = pts[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = pts[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
@@ -974,18 +1134,18 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             # quadratic bezier, relative
             elif op == 'q':
-                x0, y0 = path.points[-2:]
+                x0, y0 = pts[-2:]
                 x1, y1, xn, yn = nums
                 x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 't':
-                if len(path.points) < 4:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(pts) < 4:
+                    xp, yp, x0, y0 = pts[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
-                x0, y0 = path.points[-2:]
+                    xp, yp, x0, y0 = pts[-4:]
+                x0, y0 = pts[-2:]
                 xn, yn = nums
                 xn, yn = x0 + xn, y0 + yn
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
@@ -993,30 +1153,18 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     convertQuadraticToCubicPath((x0,y0), (xi,yi), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
 
-            # elliptical arc
-            elif op in ('A', 'a'):
-                start = complex(*path.points[-2:])
-                radius = complex(*nums[:2])
-                if op == 'a':
-                    end = complex(path.points[-2] + nums[-2],
-                                  path.points[-1] + nums[-1])
+            elif op in 'aA':
+                rx,ry,phi,fA,fS,x2,y2 = nums
+                if op=='a':
+                    x1, y1 = pts[-2:]
+                    x2 += x1
+                    y2 += y1
+                if abs(rx)<=1e-10 or abs(ry)<=1e-10:
+                    path.lineTo(x2,y2)
                 else:
-                    end = complex(*nums[-2:])
-                arc = Arc(start, radius, nums[2], nums[3], nums[4], end)
-                # Convert from endpoint to center parameterization
-                arc._parameterize()
-                if arc.sweep:
-                    reverse = False
-                    start_angle = arc.theta
-                    end_angle = start_angle + arc.delta
-                else:
-                    reverse = True
-                    start_angle = arc.theta - 360
-                    end_angle = start_angle + arc.delta
-                    if arc.delta < 0:
-                        start_angle, end_angle = end_angle, start_angle
-                path.addArc(arc.center.real, arc.center.imag, arc.radius.real,
-                            start_angle, end_angle, yradius=arc.radius.imag, reverse=reverse)
+                    bp = bezierArcFromEndPoints(x1,y1,rx,ry,phi,fA,fS,x2,y2)
+                    for _x,_y,x1,y1,x2,y2,xn,yn in bp:
+                        path.curveTo(x1,y1,x2,y2,xn,yn)
 
             # close path
             elif op in ('Z', 'z'):
@@ -1241,4 +1389,4 @@ def monkeypatch_reportlab():
         self._fillMode = current
     Canvas.drawPath = patchedDrawPath
 
-monkeypatch_reportlab()
+#monkeypatch_reportlab()
