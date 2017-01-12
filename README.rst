@@ -128,8 +128,7 @@ Dependencies
 the abstractions for building complex ``Drawings`` which it can render
 into different fileformats, including PDF, EPS, SVG and various bitmaps
 ones. Other dependancies are ``lxml`` which is used in the context of SVG
-CSS stylesheets and ``svg.path`` which provides a ready implementation
-for arcs.
+CSS stylesheets.
 
 
 Installation
