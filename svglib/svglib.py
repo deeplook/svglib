@@ -29,15 +29,15 @@ from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, ArcPath, Circle, Drawing, Ellipse, Group, Image, Line, PolyLine,
+    _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
     Polygon, Rect, String,
 )
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch, mm, pica, toLength
-from svg.path import Arc
 from lxml import etree
 
+from .utils import bezier_arc_from_end_points
 
 __version__ = "0.6.3"
 __license__ = "LGPL 3"
@@ -178,20 +178,20 @@ def normaliseSvgPath(attr):
     return result
 
 
-class NoStrokeArcPath(ArcPath):
+class NoStrokePath(Path):
     """
     This path object never gets a stroke width whatever the properties it's
     getting assigned.
     """
     def __init__(self, *args, **kwargs):
         copy_from = kwargs.pop('copy_from', None)
-        ArcPath.__init__(self, *args, **kwargs)  # we're old-style class on PY2
+        Path.__init__(self, *args, **kwargs)  # we're old-style class on PY2
         if copy_from:
             self.__dict__.update(copy.deepcopy(copy_from.__dict__))
 
     def getProperties(self, *args, **kwargs):
         # __getattribute__ wouldn't suit, as RL is directly accessing self.__dict__
-        props = ArcPath.getProperties(self, *args, **kwargs)
+        props = Path.getProperties(self, *args, **kwargs)
         if 'strokeWidth' in props:
             props['strokeWidth'] = 0
         if 'strokeColor' in props:
@@ -199,16 +199,16 @@ class NoStrokeArcPath(ArcPath):
         return props
 
 
-class ClippingArcPath(ArcPath):
+class ClippingPath(Path):
     def __init__(self, *args, **kwargs):
         copy_from = kwargs.pop('copy_from', None)
-        ArcPath.__init__(self, *args, **kwargs)
+        Path.__init__(self, *args, **kwargs)
         if copy_from:
             self.__dict__.update(copy.deepcopy(copy_from.__dict__))
         self.isClipPath = 1
 
     def getProperties(self, *args, **kwargs):
-        props = ArcPath.getProperties(self, *args, **kwargs)
+        props = Path.getProperties(self, *args, **kwargs)
         if 'fillColor' in props:
             props['fillColor'] = None
         return props
@@ -578,7 +578,7 @@ class SvgRenderer:
                 if ref in self.definitions:
                     path = get_path_from_node(self.definitions[ref])
                     if path:
-                        path = ClippingArcPath(copy_from=path)
+                        path = ClippingPath(copy_from=path)
                         return path
 
     def print_unused_attributes(self, node, n):
@@ -879,7 +879,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def convertPath(self, node):
         d = node.getAttribute('d')
         normPath = normaliseSvgPath(d)
-        path = ArcPath()
+        path = Path()
+        points = path.points
         # Track subpaths needing to be closed later
         unclosed_subpath_pointers = []
         subpath_start = []
@@ -894,78 +895,78 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # moveto absolute
             if op == 'M':
                 path.moveTo(*nums)
-                subpath_start = path.points[-2:]
+                subpath_start = points[-2:]
             # lineto absolute
             elif op == 'L':
                 path.lineTo(*nums)
 
             # moveto relative
             elif op == 'm':
-                if len(path.points) >= 2:
+                if len(points) >= 2:
                     if lastop in ('Z', 'z'):
                         starting_point = subpath_start
                     else:
-                        starting_point = path.points[-2:]
+                        starting_point = points[-2:]
                     xn, yn = starting_point[0] + nums[0], starting_point[1] + nums[1]
                     path.moveTo(xn, yn)
                 else:
                     path.moveTo(*nums)
-                subpath_start = path.points[-2:]
+                subpath_start = points[-2:]
             # lineto relative
             elif op == 'l':
-                xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]
+                xn, yn = points[-2] + nums[0], points[-1] + nums[1]
                 path.lineTo(xn, yn)
 
             # horizontal/vertical line absolute
             elif op == 'H':
-                path.lineTo(nums[0], path.points[-1])
+                path.lineTo(nums[0], points[-1])
             elif op == 'V':
-                path.lineTo(path.points[-2], nums[0])
+                path.lineTo(points[-2], nums[0])
 
             # horizontal/vertical line relative
             elif op == 'h':
-                path.lineTo(path.points[-2] + nums[0], path.points[-1])
+                path.lineTo(points[-2] + nums[0], points[-1])
             elif op == 'v':
-                path.lineTo(path.points[-2], path.points[-1] + nums[0])
+                path.lineTo(points[-2], points[-1] + nums[0])
 
             # cubic bezier, absolute
             elif op == 'C':
                 path.curveTo(*nums)
             elif op == 'S':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 path.curveTo(xi, yi, x2, y2, xn, yn)
 
             # cubic bezier, relative
             elif op == 'c':
-                xp, yp = path.points[-2:]
+                xp, yp = points[-2:]
                 x1, y1, x2, y2, xn, yn = nums
                 path.curveTo(xp + x1, yp + y1, xp + x2, yp + y2, xp + xn, yp + yn)
             elif op == 's':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 path.curveTo(xi, yi, x0 + x2, y0 + y2, x0 + xn, y0 + yn)
 
             # quadratic bezier, absolute
             elif op == 'Q':
-                x0, y0 = path.points[-2:]
+                x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 'T':
-                if len(path.points) < 4:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
@@ -974,18 +975,18 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             # quadratic bezier, relative
             elif op == 'q':
-                x0, y0 = path.points[-2:]
+                x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 't':
-                if len(path.points) < 4:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
-                x0, y0 = path.points[-2:]
+                    xp, yp, x0, y0 = points[-4:]
+                x0, y0 = points[-2:]
                 xn, yn = nums
                 xn, yn = x0 + xn, y0 + yn
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
@@ -995,28 +996,17 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             # elliptical arc
             elif op in ('A', 'a'):
-                start = complex(*path.points[-2:])
-                radius = complex(*nums[:2])
+                rx, ry, phi, fA, fS, x2, y2 = nums
+                x1, y1 = points[-2:]
                 if op == 'a':
-                    end = complex(path.points[-2] + nums[-2],
-                                  path.points[-1] + nums[-1])
+                    x2 += x1
+                    y2 += y1
+                if abs(rx) <= 1e-10 or abs(ry) <= 1e-10:
+                    path.lineTo(x2, y2)
                 else:
-                    end = complex(*nums[-2:])
-                arc = Arc(start, radius, nums[2], nums[3], nums[4], end)
-                # Convert from endpoint to center parameterization
-                arc._parameterize()
-                if arc.sweep:
-                    reverse = False
-                    start_angle = arc.theta
-                    end_angle = start_angle + arc.delta
-                else:
-                    reverse = True
-                    start_angle = arc.theta - 360
-                    end_angle = start_angle + arc.delta
-                    if arc.delta < 0:
-                        start_angle, end_angle = end_angle, start_angle
-                path.addArc(arc.center.real, arc.center.imag, arc.radius.real,
-                            start_angle, end_angle, yradius=arc.radius.imag, reverse=reverse)
+                    bp = bezier_arc_from_end_points(x1, y1, rx, ry, phi, fA, fS, x2, y2)
+                    for _, _, x1, y1, x2, y2, xn, yn in bp:
+                        path.curveTo(x1, y1, x2, y2, xn, yn)
 
             # close path
             elif op in ('Z', 'z'):
@@ -1036,7 +1026,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # ReportLab doesn't fill unclosed paths, so we are creating a copy
             # of the path with all subpaths closed, but without stroke.
             # https://bitbucket.org/rptlab/reportlab/issues/99/
-            closed_path = NoStrokeArcPath(copy_from=path)
+            closed_path = NoStrokePath(copy_from=path)
             for pointer in reversed(unclosed_subpath_pointers):
                 closed_path.operators.insert(pointer, _CLOSEPATH)
             gr.add(closed_path)
