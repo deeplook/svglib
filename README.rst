@@ -50,7 +50,7 @@ Features
 - allow patterns for output files on command-line
 - install a Python package named ``svglib``
 - install a Python command-line script named ``svg2pdf``
-- provide a PyTest_ test suite
+- provide a PyTest_ test suite with over 90% code coverage
 - test entire `W3C SVG test suite`_ after pulling from the internet
 - test all SVG `flags from Wikipedia`_ after pulling from the internet
 - test selected SVG `symbols from Wikipedia`_ after pulling from the net
@@ -83,7 +83,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
     svg2pdf v. 0.6.3
-    An experimental SVG to PDF converter (via ReportLab Graphics)
+    A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
       PATH                  Input SVG file path with extension .svg or .svgz.
