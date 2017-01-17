@@ -880,6 +880,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         d = node.getAttribute('d')
         normPath = normaliseSvgPath(d)
         path = Path()
+        points = path.points
         # Track subpaths needing to be closed later
         unclosed_subpath_pointers = []
         subpath_start = []
@@ -894,78 +895,78 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # moveto absolute
             if op == 'M':
                 path.moveTo(*nums)
-                subpath_start = path.points[-2:]
+                subpath_start = points[-2:]
             # lineto absolute
             elif op == 'L':
                 path.lineTo(*nums)
 
             # moveto relative
             elif op == 'm':
-                if len(path.points) >= 2:
+                if len(points) >= 2:
                     if lastop in ('Z', 'z'):
                         starting_point = subpath_start
                     else:
-                        starting_point = path.points[-2:]
+                        starting_point = points[-2:]
                     xn, yn = starting_point[0] + nums[0], starting_point[1] + nums[1]
                     path.moveTo(xn, yn)
                 else:
                     path.moveTo(*nums)
-                subpath_start = path.points[-2:]
+                subpath_start = points[-2:]
             # lineto relative
             elif op == 'l':
-                xn, yn = path.points[-2] + nums[0], path.points[-1] + nums[1]
+                xn, yn = points[-2] + nums[0], points[-1] + nums[1]
                 path.lineTo(xn, yn)
 
             # horizontal/vertical line absolute
             elif op == 'H':
-                path.lineTo(nums[0], path.points[-1])
+                path.lineTo(nums[0], points[-1])
             elif op == 'V':
-                path.lineTo(path.points[-2], nums[0])
+                path.lineTo(points[-2], nums[0])
 
             # horizontal/vertical line relative
             elif op == 'h':
-                path.lineTo(path.points[-2] + nums[0], path.points[-1])
+                path.lineTo(points[-2] + nums[0], points[-1])
             elif op == 'v':
-                path.lineTo(path.points[-2], path.points[-1] + nums[0])
+                path.lineTo(points[-2], points[-1] + nums[0])
 
             # cubic bezier, absolute
             elif op == 'C':
                 path.curveTo(*nums)
             elif op == 'S':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 path.curveTo(xi, yi, x2, y2, xn, yn)
 
             # cubic bezier, relative
             elif op == 'c':
-                xp, yp = path.points[-2:]
+                xp, yp = points[-2:]
                 x1, y1, x2, y2, xn, yn = nums
                 path.curveTo(xp + x1, yp + y1, xp + x2, yp + y2, xp + xn, yp + yn)
             elif op == 's':
                 x2, y2, xn, yn = nums
-                if len(path.points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4 or lastop not in {'c', 'C', 's', 'S'}:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 path.curveTo(xi, yi, x0 + x2, y0 + y2, x0 + xn, y0 + yn)
 
             # quadratic bezier, absolute
             elif op == 'Q':
-                x0, y0 = path.points[-2:]
+                x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 'T':
-                if len(path.points) < 4:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
+                    xp, yp, x0, y0 = points[-4:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 xn, yn = nums
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
@@ -974,18 +975,18 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             # quadratic bezier, relative
             elif op == 'q':
-                x0, y0 = path.points[-2:]
+                x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
                 (x0,y0), (x1,y1), (x2,y2), (xn,yn) = \
                     convertQuadraticToCubicPath((x0,y0), (x1,y1), (xn,yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == 't':
-                if len(path.points) < 4:
-                    xp, yp, x0, y0 = path.points[-2:] * 2
+                if len(points) < 4:
+                    xp, yp, x0, y0 = points[-2:] * 2
                 else:
-                    xp, yp, x0, y0 = path.points[-4:]
-                x0, y0 = path.points[-2:]
+                    xp, yp, x0, y0 = points[-4:]
+                x0, y0 = points[-2:]
                 xn, yn = nums
                 xn, yn = x0 + xn, y0 + yn
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
@@ -996,7 +997,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # elliptical arc
             elif op in ('A', 'a'):
                 rx, ry, phi, fA, fS, x2, y2 = nums
-                x1, y1 = path.points[-2:]
+                x1, y1 = points[-2:]
                 if op == 'a':
                     x2 += x1
                     y2 += y1
