@@ -23,6 +23,8 @@ import operator
 import os
 import re
 import types
+import base64
+import tempfile
 from collections import defaultdict, namedtuple
 
 from reportlab.pdfgen.pdfimages import PDFImage
@@ -1037,7 +1039,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
     def convertImage(self, node):
-        logger.warn("Adding box instead image.")
+        logger.warn("Adding box instead of image.")
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
@@ -1045,7 +1047,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         magic = "data:image/jpeg;base64"
         if xlink_href[:len(magic)] == magic:
-            import base64, tempfile
             pat = "data:image/(\w+?);base64"
             ext = re.match(pat, magic).groups()[0]
             jpeg_data = base64.decodestring(xlink_href[len(magic):].encode('ascii'))
@@ -1059,7 +1060,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
             img = Image(int(x), int(y+height), int(width), int(-height), xlink_href)
             try:
-                # This will catch unvalid image
+                # this will catch invalid image
                 PDFImage(xlink_href, 0, 0)
             except IOError:
                 logger.error("Unable to read the image %s. Skipping..." % img.path)
