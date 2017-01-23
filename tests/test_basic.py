@@ -19,7 +19,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
-from svglib import svglib
+from svglib import svglib, utils
 
 
 def _testit(func, mapping):
@@ -99,7 +99,7 @@ class TestPaths(object):
                  'z', []
                 ]),
         )
-        failed = _testit(svglib.normaliseSvgPath, mapping)
+        failed = _testit(utils.normalise_svg_path, mapping)
         assert len(failed) == 0
 
     def test_relative_move_after_closepath(self):
