@@ -2,10 +2,10 @@ import sys
 from setuptools import setup
 import distutils.core
 
-__version__ = '0.6.3'
+__version__ = '0.8.0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2010-03-01'
+__date__ = '2017-01-23'
 
 install_requires = open('requirements.txt').read().strip().split()
 v = sys.version_info

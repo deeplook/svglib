@@ -4,13 +4,6 @@
 Svglib
 ========
 
-.. WARNING::
-      This repository was imported from https://bitbucket.org/deeplook/svglib
-      and is being worked on to incorporate pull requests from other forks
-      in order to bring it back in shape, apply some pending fixes and
-      support Python 2 and 3. There will be a new release like 0.7.0, really
-      soon... Please stay tuned!
-
 ---------------------------------------------------------------------------
 A pure-Python library for reading and converting SVG
 ---------------------------------------------------------------------------
@@ -64,6 +57,7 @@ Known limitations
 - clipping is limited to single paths, no mask support
 - color gradients are not supported
 
+
 Examples
 --------
 
@@ -82,7 +76,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.6.3
+    svg2pdf v. 0.8.0
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -117,7 +111,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
     issues/pull requests:
         https://github.com/deeplook/svglib
 
-    Copyleft by Dinu Gherman, 2008-2010 (LGPL 3):
+    Copyleft by Dinu Gherman, 2008-2017 (LGPL 3):
         http://www.gnu.org/copyleft/gpl.html
 
 
@@ -145,16 +139,22 @@ one command in a terminal::
 
   $ pip install svglib
 
+You can also use ``pip`` to install the very latest version of the
+repository from GitHub, but then you won't be able to conveniently
+run the test suite:
+
+  $ pip install git+https://github.com/deeplook/svglib
+
 
 2. Manual installation
 +++++++++++++++++++++++
 
 Alternatively, you can install the ``svglib`` tarball after downloading 
-a tar ball like ``svglib-0.6.3.tar.gz`` from the `svglib page on PyPI`_
+a tar ball like ``svglib-0.8.0.tar.gz`` from the `svglib page on PyPI`_
 and executing a sequence of commands like shown here::
 
-  $ tar xfz svglib-0.6.3.tar.gz
-  $ cs svglib-0.6.3
+  $ tar xfz svglib-0.8.0.tar.gz
+  $ cs svglib-0.8.0
   $ python setup.py install
   
 This will install a Python package named ``svglib`` in the
@@ -171,18 +171,19 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
  
-  $ tar xfz svglib-0.6.3.tar.gz
-  $ cd svglib-0.6.3
-  $ py.test
+  $ tar xfz svglib-0.8.0.tar.gz
+  $ cd svglib-0.8.0
+  $ PYTHONPATH=. py.test
   ======================== test session starts =========================
   platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
   rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-  collected 32 items
+  plugins: cov-2.4.0
+  collected 33 items
 
-  tests/test_basic.py ........................
+  tests/test_basic.py .........................
   tests/test_samples.py .s.s.s.s
 
-  =============== 28 passed, 4 skipped in 41.15 seconds ================
+  =============== 29 passed, 4 skipped in 40.25 seconds ================
 
 
 Bug reports

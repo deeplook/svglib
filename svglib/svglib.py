@@ -41,10 +41,10 @@ from .utils import (
     normalise_svg_path,
 )
 
-__version__ = "0.6.3"
-__license__ = "LGPL 3"
-__author__ = "Dinu Gherman"
-__date__ = "2010-03-01"
+__version__ = '0.8.0'
+__license__ = 'LGPL 3'
+__author__ = 'Dinu Gherman'
+__date__ = '2017-01-23'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 
