@@ -1,3 +1,7 @@
+"""
+This is a collection of utilities used by the ``svglib`` code module.
+"""
+
 import re
 from math import acos, ceil, copysign, cos, degrees, fabs, hypot, radians, sin, sqrt
 
