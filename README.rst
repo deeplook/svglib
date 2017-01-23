@@ -141,7 +141,7 @@ one command in a terminal::
 
 You can also use ``pip`` to install the very latest version of the
 repository from GitHub, but then you won't be able to conveniently
-run the test suite:
+run the test suite::
 
   $ pip install git+https://github.com/deeplook/svglib
 
