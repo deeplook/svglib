@@ -207,4 +207,4 @@ Warning: there is no support for Windows, sorry for that!
 .. _RML: http://www.reportlab.com/software/rml-reference/
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
 .. _PyTest: http://pytest.org
-.. _svglib page on PyPI: 
+.. _svglib page on PyPI: https://pypi.python.org/pypi/svglib
