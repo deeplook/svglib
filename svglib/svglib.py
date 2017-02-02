@@ -724,6 +724,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertPath(self, node):
         d = node.getAttribute('d')
+        if not d:
+            return None
         normPath = normalise_svg_path(d)
         path = Path()
         points = path.points
