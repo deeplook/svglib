@@ -143,6 +143,12 @@ class TestPaths(object):
         assert unclosed_path.operators == [
             _MOVETO, _LINETO, _LINETO, _MOVETO, _LINETO]
 
+    def test_empty_path(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML('<path id="W"/>'))
+        group = converter.convertPath(node)
+        assert group is None
+
 
 class TestColorAttrConverter(object):
     "Testing color attribute conversion."
