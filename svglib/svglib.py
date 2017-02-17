@@ -201,10 +201,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     "A concrete SVG to RLG attribute converter."
 
     def __init__(self,color_converter=None):
-        self.color_converter = color_converter or self.identitycolor_converter
+        self.color_converter = color_converter or self.identity_color_converter
 
     @staticmethod
-    def identitycolor_converter(c):
+    def identity_color_converter(c):
         return c
 
     def convertLength(self, svgAttr, percentOf=100):
