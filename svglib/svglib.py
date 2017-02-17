@@ -200,6 +200,13 @@ class AttributeConverter:
 class Svg2RlgAttributeConverter(AttributeConverter):
     "A concrete SVG to RLG attribute converter."
 
+    def __init__(self,color_converter=None):
+        self.color_converter = color_converter or self.identity_color_converter
+
+    @staticmethod
+    def identity_color_converter(c):
+        return c
+
     def convertLength(self, svgAttr, percentOf=100):
         "Convert length to points."
 
@@ -262,23 +269,23 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return None
 
         if text in predefined.split():
-            return getattr(colors, text)
+            return self.color_converter(getattr(colors, text))
         elif text == "currentColor":
             return "currentColor"
         elif len(text) == 7 and text[0] == '#':
-            return colors.HexColor(text)
+            return self.color_converter(colors.HexColor(text))
         elif len(text) == 4 and text[0] == '#':
-            return colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3])
+            return self.color_converter(colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3]))
         elif text.startswith('rgb') and '%' not in text:
             t = text[3:].strip('()')
             tup = [h[2:] for h in [hex(int(num)) for num in t.split(',')]]
             tup = [(2 - len(h)) * '0' + h for h in tup]
             col = "#%s%s%s" % tuple(tup)
-            return colors.HexColor(col)
+            return self.color_converter(colors.HexColor(col))
         elif text.startswith('rgb') and '%' in text:
             t = text[3:].replace('%', '').strip('()')
             tup = (int(val)/100.0 for val in t.split(','))
-            return colors.Color(*tup)
+            return self.color_converter(colors.Color(*tup))
 
         logger.warn("Can't handle color: %s" % text)
 
@@ -350,9 +357,9 @@ class SvgRenderer:
     transforming it into a ReportLab Drawing instance.
     """
 
-    def __init__(self, path=None):
-        self.attrConverter = Svg2RlgAttributeConverter()
-        self.shape_converter = Svg2RlgShapeConverter(path)
+    def __init__(self, path=None,color_converter=None):
+        self.attrConverter = Svg2RlgAttributeConverter(color_converter=color_converter)
+        self.shape_converter = Svg2RlgShapeConverter(path,self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
@@ -535,10 +542,8 @@ class SvgShapeConverter:
     Each of these methods should return a shape object appropriate
     for the target format.
     """
-    AttributeConverterClass = AttributeConverter
-
-    def __init__(self, path):
-        self.attrConverter = self.AttributeConverterClass()
+    def __init__(self, path, attrConverter=None):
+        self.attrConverter = attrConverter or Svg2RlgAttributeConverter()
         self.svg_source_file = path
         self.preserve_space = False
 
@@ -552,8 +557,6 @@ class SvgShapeConverter:
 
 class Svg2RlgShapeConverter(SvgShapeConverter):
     """Converter from SVG shapes to RLG (ReportLab Graphics) shapes."""
-
-    AttributeConverterClass = Svg2RlgAttributeConverter
 
     def convertShape(self, name, node, clipping=None):
         method_name = "convert%s" % name.capitalize()
@@ -1006,7 +1009,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             shape.fillColor.alpha = shape.fillOpacity
 
 
-def svg2rlg(path):
+def svg2rlg(path, **kwargs):
     "Convert an SVG file to an RLG Drawing object."
 
     # unzip .svgz file into .svg
@@ -1027,7 +1030,7 @@ def svg2rlg(path):
         return
 
     # convert to a RLG drawing
-    svgRenderer = SvgRenderer(path)
+    svgRenderer = SvgRenderer(path,**kwargs)
     drawing = svgRenderer.render(svg)
 
     # remove unzipped .svgz file (.svg)
