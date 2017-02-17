@@ -1009,7 +1009,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             shape.fillColor.alpha = shape.fillOpacity
 
 
-def svg2rlg(path,**kwargs):
+def svg2rlg(path, **kwargs):
     "Convert an SVG file to an RLG Drawing object."
 
     # unzip .svgz file into .svg
