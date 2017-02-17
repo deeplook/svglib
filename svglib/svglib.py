@@ -200,11 +200,11 @@ class AttributeConverter:
 class Svg2RlgAttributeConverter(AttributeConverter):
     "A concrete SVG to RLG attribute converter."
 
-    def __init__(self,colorConverter=None):
-        self.colorConverter = colorConverter or self.identityColorConverter
+    def __init__(self,color_converter=None):
+        self.color_converter = color_converter or self.identitycolor_converter
 
     @staticmethod
-    def identityColorConverter(c):
+    def identitycolor_converter(c):
         return c
 
     def convertLength(self, svgAttr, percentOf=100):
@@ -273,19 +273,19 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         elif text == "currentColor":
             return "currentColor"
         elif len(text) == 7 and text[0] == '#':
-            return self.colorConverter(colors.HexColor(text))
+            return self.color_converter(colors.HexColor(text))
         elif len(text) == 4 and text[0] == '#':
-            return self.colorConverter(colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3]))
+            return self.color_converter(colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3]))
         elif text.startswith('rgb') and '%' not in text:
             t = text[3:].strip('()')
             tup = [h[2:] for h in [hex(int(num)) for num in t.split(',')]]
             tup = [(2 - len(h)) * '0' + h for h in tup]
             col = "#%s%s%s" % tuple(tup)
-            return self.colorConverter(colors.HexColor(col))
+            return self.color_converter(colors.HexColor(col))
         elif text.startswith('rgb') and '%' in text:
             t = text[3:].replace('%', '').strip('()')
             tup = (int(val)/100.0 for val in t.split(','))
-            return self.colorConverter(colors.Color(*tup))
+            return self.color_converter(colors.Color(*tup))
 
         logger.warn("Can't handle color: %s" % text)
 
@@ -357,8 +357,8 @@ class SvgRenderer:
     transforming it into a ReportLab Drawing instance.
     """
 
-    def __init__(self, path=None,colorConverter=None):
-        self.attrConverter = Svg2RlgAttributeConverter(colorConverter=colorConverter)
+    def __init__(self, path=None,color_converter=None):
+        self.attrConverter = Svg2RlgAttributeConverter(color_converter=color_converter)
         self.shape_converter = Svg2RlgShapeConverter(path,self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions = {}
@@ -542,7 +542,7 @@ class SvgShapeConverter:
     Each of these methods should return a shape object appropriate
     for the target format.
     """
-    def __init__(self, path, attrConverter):
+    def __init__(self, path, attrConverter=None):
         self.attrConverter = attrConverter
         self.svg_source_file = path
         self.preserve_space = False
@@ -1009,7 +1009,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             shape.fillColor.alpha = shape.fillOpacity
 
 
-def svg2rlg(path,**kwds):
+def svg2rlg(path,**kwargs):
     "Convert an SVG file to an RLG Drawing object."
 
     # unzip .svgz file into .svg
@@ -1030,7 +1030,7 @@ def svg2rlg(path,**kwds):
         return
 
     # convert to a RLG drawing
-    svgRenderer = SvgRenderer(path,**kwds)
+    svgRenderer = SvgRenderer(path,**kwargs)
     drawing = svgRenderer.render(svg)
 
     # remove unzipped .svgz file (.svg)
