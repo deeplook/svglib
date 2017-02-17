@@ -269,7 +269,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return None
 
         if text in predefined.split():
-            return getattr(colors, text)
+            return self.color_converter(getattr(colors, text))
         elif text == "currentColor":
             return "currentColor"
         elif len(text) == 7 and text[0] == '#':
@@ -543,7 +543,7 @@ class SvgShapeConverter:
     for the target format.
     """
     def __init__(self, path, attrConverter=None):
-        self.attrConverter = attrConverter
+        self.attrConverter = attrConverter or Svg2RlgAttributeConverter()
         self.svg_source_file = path
         self.preserve_space = False
 

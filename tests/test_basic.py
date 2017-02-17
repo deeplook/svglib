@@ -149,6 +149,9 @@ class TestPaths(object):
         group = converter.convertPath(node)
         assert group is None
 
+def force_cmyk(rgb):
+    c, m, y, k = colors.rgb2cmyk(rgb.red,rgb.green,rgb.blue)
+    return colors.CMYKColor(c,m,y,k,alpha=rgb.alpha)
 
 class TestColorAttrConverter(object):
     "Testing color attribute conversion."
@@ -164,6 +167,22 @@ class TestColorAttrConverter(object):
             ("rgb(255, 0, 0)", colors.red),
         )
         ac = svglib.Svg2RlgAttributeConverter()
+        failed = _testit(ac.convertColor, mapping)
+        assert len(failed) == 0
+
+    def test_1(self):
+        "Test color attribute conversion to CMYK"
+
+        mapping = (
+            ("red", force_cmyk(colors.red)),
+            ("#ff0000", force_cmyk(colors.red)),
+            ("#f00", force_cmyk(colors.red)),
+            ("rgb(100%,0%,0%)", force_cmyk(colors.red)),
+            ("rgb(255, 0, 0)", force_cmyk(colors.red)),
+            ("rgb(0,255, 0)", force_cmyk(colors.Color(0,1,0))),
+            ("rgb(0, 0, 255)", force_cmyk(colors.Color(0,0,1))),
+        )
+        ac = svglib.Svg2RlgAttributeConverter(color_converter=force_cmyk)
         failed = _testit(ac.convertColor, mapping)
         assert len(failed) == 0
 
