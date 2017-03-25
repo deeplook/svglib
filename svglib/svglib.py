@@ -1059,14 +1059,14 @@ def monkeypatch_reportlab():
     from reportlab.graphics import shapes
 
     original_renderPath = shapes._renderPath
-    def patchedRenderPath(path, drawFuncs):
+    def patchedRenderPath(path, drawFuncs, **kwargs):
         # Patched method to transfer fillRule from Path to PDFPathObject
         # Get back from bound method to instance
         try:
             drawFuncs[0].__self__.fillMode = path._fillRule
         except AttributeError:
             pass
-        return original_renderPath(path, drawFuncs)
+        return original_renderPath(path, drawFuncs, **kwargs)
     shapes._renderPath = patchedRenderPath
 
     original_drawPath = Canvas.drawPath
