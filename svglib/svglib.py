@@ -401,7 +401,7 @@ class SvgRenderer:
                 parent.add(item)
         elif name == "symbol":
             item = self.renderSymbol(n)
-            # parent.add(item)
+            parent.add(item)
         elif name == "use":
             item = self.renderUse(n, clipping=clipping)
             parent.add(item)

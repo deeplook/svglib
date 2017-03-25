@@ -536,6 +536,26 @@ class TestUseNode(object):
         assert use_group.contents[0].getProperties()['strokeColor'] is None
 
 
+class TestSymbolNode(object):
+    def test_symbol_node(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="900" height="600" viewBox="0 0 100 100">
+                <defs>
+                    <symbol id="X">
+                        <path d="M 0,-100 V 0 H 50"/>
+                    </symbol>
+                </defs>
+                <use xlink:href="#X" fill="#f00"/>
+            </svg>
+        ''')))
+        use_group = drawing.contents[0].contents[0].contents[0]
+        assert isinstance(use_group.contents[0].contents[0], svglib.NoStrokePath)
+        assert isinstance(use_group.contents[0].contents[1], Path)
+
+
 class TestViewBox(object):
     def test_nonzero_origin(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
