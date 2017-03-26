@@ -225,7 +225,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         elif text.endswith("pt"):
             return float(text[:-2]) * 1.25
 
-        for unit in ("em", "ex", "px"):
+        for unit in ("em", "ex"):
             if unit in text:
                 logger.warn("Ignoring unit: %s" % unit)
                 text = text.replace(unit, '')
