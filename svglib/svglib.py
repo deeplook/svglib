@@ -224,6 +224,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * pica
         elif text.endswith("pt"):
             return float(text[:-2]) * 1.25
+        elif text.endswith("px"):
+            return float(text[:-2])
 
         for unit in ("em", "ex"):
             if unit in text:
