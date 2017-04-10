@@ -206,11 +206,12 @@ class TestLengthAttrConverter(object):
             ("-8e-2cm", (-8e-2)*cm),
             ("20px", 20),
             ("20pt", 20 * 1.25),
+            ("1.5em", 12 * 1.5),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLength, mapping)
         assert len(failed) == 0
-
+        assert ac.convertLength("1.5em", em_base=16.5) == 24.75
 
     def test_1(self):
         "Test length attribute conversion."
@@ -393,10 +394,13 @@ class TestTextNode(object):
             <svg width="777" height="267">
               <text x="10" y="20" style="fill:#000000; stroke:none; font-size:28;">
                 <tspan>TITLE 1</tspan>
-                <!-- position relative to current text position-->
-                <tspan>(after title)</tspan>
+                <!-- x position relative to current text position
+                     y position offset in em -->
+                <tspan dy="1.3em">(after title)</tspan>
                 <!-- absolute position -->
                 <tspan x="16.75" y="33.487">Subtitle</tspan>
+                <!-- absolute position + shifting -->
+                <tspan x="10" y="20" dx="3em" dy="1.5em">Complete</tspan>
               </text>
             </svg>
         ''')))
@@ -404,9 +408,11 @@ class TestTextNode(object):
         assert main_group.contents[0].contents[0].x == 10
         assert main_group.contents[0].contents[0].y == -20
         assert main_group.contents[0].contents[1].x > 10
-        assert main_group.contents[0].contents[1].y == -20
+        assert main_group.contents[0].contents[1].y == -20 - (1.3 * 28)
         assert main_group.contents[0].contents[2].x == 16.75
         assert main_group.contents[0].contents[2].y == -33.487
+        assert main_group.contents[0].contents[3].x == 10 + (3 * 28)
+        assert main_group.contents[0].contents[3].y == -20 - (1.5 * 28)
 
 
 class TestPolylineNode(object):
