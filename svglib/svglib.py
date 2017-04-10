@@ -224,8 +224,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * pica
         elif text.endswith("pt"):
             return float(text[:-2]) * 1.25
+        elif text.endswith("px"):
+            return float(text[:-2])
 
-        for unit in ("em", "ex", "px"):
+        for unit in ("em", "ex"):
             if unit in text:
                 logger.warn("Ignoring unit: %s" % unit)
                 text = text.replace(unit, '')
@@ -689,7 +691,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
         for c in itertools.chain([node], node.getchildren()):
-            has_x = False
+            has_x, has_y = False, False
             dx, dy = 0, 0
             baseLineShift = 0
             if node_name(c) == 'text':
@@ -701,7 +703,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 if not text:
                     continue
                 x1, y1, dx, dy = [c.attrib.get(name, '') for name in ("x", "y", "dx", "dy")]
-                has_x = x1 != ''
+                has_x, has_y = (x1 != '', y1 != '')
                 x1, y1, dx, dy = map(attrConv.convertLength, (x1, y1, dx, dy))
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
@@ -714,8 +716,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 continue
 
             frag_lengths.append(stringWidth(text, ff, fs))
-            new_x = x1 if has_x else sum(frag_lengths[:-1])
-            shape = String(x + new_x, y - y1 - dy0 + baseLineShift, text)
+            new_x = x1 if has_x else (x + sum(frag_lengths[:-1]))
+            new_y = y1 if has_y else y
+            shape = String(new_x, -(new_y + dy0 - baseLineShift), text)
             self.applyStyleOnShape(shape, node)
             if node_name(c) == 'tspan':
                 self.applyStyleOnShape(shape, c)
@@ -723,7 +726,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             gr.add(shape)
 
         gr.scale(1, -1)
-        gr.translate(0, -2*y)
 
         return gr
 

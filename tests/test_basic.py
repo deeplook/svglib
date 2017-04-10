@@ -204,6 +204,7 @@ class TestLengthAttrConverter(object):
             ("1e1in", 10*inch),
             ("1e1%", 10),
             ("-8e-2cm", (-8e-2)*cm),
+            ("20px", 20),
             ("20pt", 20 * 1.25),
         )
         ac = svglib.Svg2RlgAttributeConverter()
@@ -390,21 +391,21 @@ class TestTextNode(object):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
-              <text x="10" style="fill:#000000; stroke:none; font-size:28;">
+              <text x="10" y="20" style="fill:#000000; stroke:none; font-size:28;">
                 <tspan>TITLE 1</tspan>
                 <!-- position relative to current text position-->
                 <tspan>(after title)</tspan>
-                <!-- absolute position from parent start -->
-                <tspan x="-10.75" y="33.487">Subtitle</tspan>
+                <!-- absolute position -->
+                <tspan x="16.75" y="33.487">Subtitle</tspan>
               </text>
             </svg>
         ''')))
         main_group = drawing.contents[0]
         assert main_group.contents[0].contents[0].x == 10
-        assert main_group.contents[0].contents[0].y == 0
+        assert main_group.contents[0].contents[0].y == -20
         assert main_group.contents[0].contents[1].x > 10
-        assert main_group.contents[0].contents[1].y == 0
-        assert main_group.contents[0].contents[2].x == -0.75  # 10 - 10.75
+        assert main_group.contents[0].contents[1].y == -20
+        assert main_group.contents[0].contents[2].x == 16.75
         assert main_group.contents[0].contents[2].y == -33.487
 
 
