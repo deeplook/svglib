@@ -24,6 +24,7 @@ import re
 import base64
 import tempfile
 from collections import defaultdict, namedtuple
+from functools import partial
 
 from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -207,7 +208,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def identity_color_converter(c):
         return c
 
-    def convertLength(self, svgAttr, percentOf=100):
+    def convertLength(self, svgAttr, percentOf=100, em_base=12):
         "Convert length to points."
 
         text = svgAttr
@@ -224,13 +225,14 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * pica
         elif text.endswith("pt"):
             return float(text[:-2]) * 1.25
+        elif text.endswith("em"):
+            return float(text[:-2]) * em_base
         elif text.endswith("px"):
             return float(text[:-2])
 
-        for unit in ("em", "ex"):
-            if unit in text:
-                logger.warn("Ignoring unit: %s" % unit)
-                text = text.replace(unit, '')
+        if "ex" in text:
+            logger.warn("Ignoring unit ex")
+            text = text.replace("ex", '')
 
         text = text.strip()
         length = toLength(text)
@@ -672,8 +674,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertText(self, node):
         attrConv = self.attrConverter
-        x, y = map(node.getAttribute, ('x', 'y'))
-        x, y = map(attrConv.convertLength, (x, y))
         xml_space = node.getAttribute("{%s}space" % XML_NS)
         if xml_space:
             preserve_space = xml_space == 'preserve'
@@ -690,6 +690,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         ff = attrConv.convertFontFamily(ff)
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
+        convertLength = partial(attrConv.convertLength, em_base=fs)
+        x, y = map(node.getAttribute, ('x', 'y'))
+        x, y = map(convertLength, (x, y))
         for c in itertools.chain([node], node.getchildren()):
             has_x, has_y = False, False
             dx, dy = 0, 0
@@ -704,21 +707,21 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     continue
                 x1, y1, dx, dy = [c.attrib.get(name, '') for name in ("x", "y", "dx", "dy")]
                 has_x, has_y = (x1 != '', y1 != '')
-                x1, y1, dx, dy = map(attrConv.convertLength, (x1, y1, dx, dy))
+                x1, y1, dx, dy = map(convertLength, (x1, y1, dx, dy))
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
                 baseLineShift = c.attrib.get("baseline-shift", '0')
                 if baseLineShift in ("sub", "super", "baseline"):
                     baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
                 else:
-                    baseLineShift = attrConv.convertLength(baseLineShift, fs)
+                    baseLineShift = convertLength(baseLineShift, fs)
             else:
                 continue
 
             frag_lengths.append(stringWidth(text, ff, fs))
-            new_x = x1 if has_x else (x + sum(frag_lengths[:-1]))
-            new_y = y1 if has_y else y
-            shape = String(new_x, -(new_y + dy0 - baseLineShift), text)
+            new_x = (x1 + dx) if has_x else (x + dx0 + sum(frag_lengths[:-1]))
+            new_y = (y1 + dy) if has_y else (y + dy0)
+            shape = String(new_x, -(new_y - baseLineShift), text)
             self.applyStyleOnShape(shape, node)
             if node_name(c) == 'tspan':
                 self.applyStyleOnShape(shape, c)
