@@ -320,10 +320,11 @@ class TestAttrConverter(object):
 
     def test_stroke(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = etree.XML('<path d="m0,6.5h27m0,5H0" stroke="#FFF"/>')
+        node = etree.XML('<path d="m0,6.5h27m0,5H0" stroke="#FFF" stroke-opacity="0.5"/>')
         path = Path()
         converter.applyStyleOnShape(path, node)
         assert path.strokeColor == colors.white
+        assert path.strokeOpacity == 0.5
         assert path.strokeWidth == 1
 
 
