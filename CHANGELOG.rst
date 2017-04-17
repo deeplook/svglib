@@ -22,3 +22,9 @@ Sadly, no condensed changelog exists prior to version 0.6.3.
 - added a few more sample SVG files
 - migrated test suite from unittest to pytest
 - improved test documentation
+
+0.8.1:
+
+- added support for the ``stroke-opacity`` property
+- added basic em unit support for text placement
+- added respecting absolute coordinates for tspan

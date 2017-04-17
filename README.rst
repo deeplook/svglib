@@ -76,7 +76,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.8.0
+    svg2pdf v. 0.8.1
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -150,11 +150,11 @@ run the test suite::
 +++++++++++++++++++++++
 
 Alternatively, you can install the ``svglib`` tarball after downloading 
-a tar ball like ``svglib-0.8.0.tar.gz`` from the `svglib page on PyPI`_
+a tar ball like ``svglib-0.8.1.tar.gz`` from the `svglib page on PyPI`_
 and executing a sequence of commands like shown here::
 
-  $ tar xfz svglib-0.8.0.tar.gz
-  $ cs svglib-0.8.0
+  $ tar xfz svglib-0.8.1.tar.gz
+  $ cs svglib-0.8.1
   $ python setup.py install
   
 This will install a Python package named ``svglib`` in the
@@ -171,19 +171,19 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
  
-  $ tar xfz svglib-0.8.0.tar.gz
-  $ cd svglib-0.8.0
+  $ tar xfz svglib-0.8.1.tar.gz
+  $ cd svglib-0.8.1
   $ PYTHONPATH=. py.test
   ======================== test session starts =========================
   platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
   rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
   plugins: cov-2.4.0
-  collected 33 items
+  collected 36 items
 
-  tests/test_basic.py .........................
+  tests/test_basic.py ............................
   tests/test_samples.py .s.s.s.s
 
-  =============== 29 passed, 4 skipped in 40.25 seconds ================
+  =============== 32 passed, 4 skipped in 49.18 seconds ================
 
 
 Bug reports
