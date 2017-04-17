@@ -28,3 +28,6 @@ Sadly, no condensed changelog exists prior to version 0.6.3.
 - added support for the ``stroke-opacity`` property
 - added basic em unit support for text placement
 - added respecting absolute coordinates for tspan
+- fixed crash with empty path definitions
+- symbol definitions are considered when referenced in nodes
+- fixed compatibility with recent ReportLab versions
