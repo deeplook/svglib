@@ -5,7 +5,7 @@ import distutils.core
 __version__ = '0.8.1'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2017-04-17'
+__date__ = '2017-04-22'
 
 install_requires = open('requirements.txt').read().strip().split()
 v = sys.version_info
@@ -39,7 +39,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
-        'Operating System :: Microsoft :: Windows',
         'Natural Language :: English',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',

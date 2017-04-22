@@ -45,7 +45,7 @@ from .utils import (
 __version__ = '0.8.1'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2017-04-17'
+__date__ = '2017-04-22'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 
