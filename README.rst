@@ -137,25 +137,26 @@ With the ``pip`` command on your system and a working internet
 connection you can install the newest version of ``svglib`` with only
 one command in a terminal::
 
-  $ pip install svglib
+    $ pip install svglib
 
 You can also use ``pip`` to install the very latest version of the
 repository from GitHub, but then you won't be able to conveniently
 run the test suite::
 
-  $ pip install git+https://github.com/deeplook/svglib
+    $ pip install git+https://github.com/deeplook/svglib
 
 
 2. Manual installation
 +++++++++++++++++++++++
 
-Alternatively, you can install the ``svglib`` tarball after downloading 
-a tar ball like ``svglib-0.8.1.tar.gz`` from the `svglib page on PyPI`_
-and executing a sequence of commands like shown here::
+Alternatively, you can install a tarball like ``svglib-0.8.1.tar.gz``
+after downloading it from the `svglib page on PyPI`_ or the
+`svglib releases page on GitHub`_ and executing a sequence of commands
+like shown here::
 
-  $ tar xfz svglib-0.8.1.tar.gz
-  $ cs svglib-0.8.1
-  $ python setup.py install
+    $ tar xfz svglib-0.8.1.tar.gz
+    $ cs svglib-0.8.1
+    $ python setup.py install
   
 This will install a Python package named ``svglib`` in the
 ``site-packages`` subfolder of your Python installation and a script 
@@ -171,29 +172,29 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
  
-  $ tar xfz svglib-0.8.1.tar.gz
-  $ cd svglib-0.8.1
-  $ PYTHONPATH=. py.test
-  ======================== test session starts =========================
-  platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
-  rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-  plugins: cov-2.4.0
-  collected 36 items
+    $ tar xfz svglib-0.8.1.tar.gz
+    $ cd svglib-0.8.1
+    $ PYTHONPATH=. py.test
+    ======================== test session starts =========================
+    platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+    rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
+    plugins: cov-2.4.0
+    collected 36 items
 
-  tests/test_basic.py ............................
-  tests/test_samples.py .s.s.s.s
+    tests/test_basic.py ............................
+    tests/test_samples.py .s.s.s.s
 
-  =============== 32 passed, 4 skipped in 49.18 seconds ================
+    =============== 32 passed, 4 skipped in 49.18 seconds ================
 
 
 Bug reports
 -----------
 
-Please report bugs and on the `svglib issue tracker`_ on GitHub (pull
+Please report bugs on the `svglib issue tracker`_ on GitHub (pull
 requests are also appreciated)!
 If necessary, please include information about the operating system, as
 well as the versions of ``svglib``, ReportLab and Python being used!
-Warning: there is no support for Windows, sorry for that!
+Warning: there is no `support for Windows`_, sorry for that!
 
 
 .. _SVG: http://www.w3.org/Graphics/SVG/
@@ -208,3 +209,5 @@ Warning: there is no support for Windows, sorry for that!
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
 .. _PyTest: http://pytest.org
 .. _svglib page on PyPI: https://pypi.python.org/pypi/svglib
+.. _svglib releases page on GitHub: https://github.com/deeplook/svglib/releases
+.. _support for Windows: https://github.com/deeplook/svglib/issues/70
