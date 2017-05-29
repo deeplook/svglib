@@ -148,7 +148,7 @@ class TestWikipediaSymbols(object):
                     print("Check your internet connection and try again!")
                     break
                 if data:
-                    with open(p, "w") as fh:
+                    with io.open(p, "w", encoding='UTF-8') as fh:
                         fh.write(data)
 
 
@@ -250,9 +250,11 @@ class TestWikipediaFlags(object):
             u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
             data = self.fetch_file(u)
             if data:
-                open(path, "w").write(data)
+                with io.open(path, "w", encoding='UTF-8') as f:
+                    f.write(data)
         else:
-            data = open(path).read()
+            with io.open(path, 'r', encoding='UTF-8') as f:
+                data = f.read()
 
         # find all flag base filenames
         # ["Flag_of_Bhutan.svg", "Flag_of_Bhutan.svg", ...]
@@ -280,18 +282,19 @@ class TestWikipediaFlags(object):
                     start, end = flag_url.span()
                     flag_url = flag_html[start:end]
                     flag_url_map.append((prefix + fn, flag_url))
-            with open(json_path, "w") as fh:
+            with io.open(json_path, "w", encoding='UTF-8') as fh:
                 json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
-        with open(json_path, "r") as fh:
+        with io.open(json_path, "r", encoding='UTF-8') as fh:
             flag_url_map = json.load(fh)
         for dummy, flag_url in flag_url_map:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print("fetch %s" % flag_url)
                 flag_svg = self.fetch_file(flag_url)
-                open(path, "w").write(flag_svg)
+                with io.open(path, "w", encoding='UTF-8') as f:
+                    f.write(flag_svg)
 
 
     def cleanup(self):
@@ -359,10 +362,12 @@ class TestW3CSVG(object):
                         print("Check your internet connection and try again!")
                         return
                     archive_path = basename(url)
-                    open(join(TEST_ROOT, "samples", archive_path), "wb").write(data)
+                    with open(join(TEST_ROOT, "samples", archive_path), "wb") as f:
+                        f.write(data)
                 print("unpacking %s" % archive_path)
                 tar_data = gzip.open(join(TEST_ROOT, "samples", archive_path), "rb").read()
-                open(join(TEST_ROOT, "samples", tar_path), "wb").write(tar_data)
+                with open(join(TEST_ROOT, "samples", tar_path), "wb") as f:
+                    f.write(tar_data)
             print("extracting into %s" % self.folder_path)
             os.mkdir(self.folder_path)
             tar_file = tarfile.TarFile(join(TEST_ROOT, "samples", tar_path))

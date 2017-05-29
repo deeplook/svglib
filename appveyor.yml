@@ -1,0 +1,13 @@
+environment:
+  matrix:
+  - TOXENV: "py27"
+  - TOXENV: "py35"
+  - TOXENV: "py36"
+
+install:
+  - C:\Python36\python -m pip install tox
+
+build: false  # Not a C# project
+
+test_script:
+  - C:\Python36\scripts\tox
