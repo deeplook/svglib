@@ -13,7 +13,7 @@ A pure-Python library for reading and converting SVG
 .. |ci| image:: http://img.shields.io/travis/deeplook/svglib.svg
   :target: https://travis-ci.org/deeplook/svglib
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/pid1t7iuwhkm9eh6/branch/master?svg=true
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/4guofbxkwgsu8537/branch/master?svg=true
   :target: https://ci.appveyor.com/project/deeplook/svglib
 
 
