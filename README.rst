@@ -136,7 +136,7 @@ CSS stylesheets.
 Installation
 ------------
 
-There are two ways to install ``svglib``.
+There are three ways to install ``svglib``.
 
 1. Using ``pip``
 ++++++++++++++++
@@ -154,7 +154,21 @@ run the test suite::
     $ pip install git+https://github.com/deeplook/svglib
 
 
-2. Manual installation
+2. Using ``conda``
+++++++++++++++++++
+
+If you use Anaconda_ or Miniconda_ you are surely using its respective package
+manager, Conda_, as well. In that case you can install ``svglib`` 0.8.1 or
+higher using these simple commands::
+
+    $ conda config --add channels conda-forge
+    $ conda install svglib
+
+``Svglib`` was kindly packaged for ``conda`` by nicoddemus_. See here more about
+`svglib with conda`_.
+
+
+3. Manual installation
 +++++++++++++++++++++++
 
 Alternatively, you can install a tarball like ``svglib-0.8.1.tar.gz``
@@ -219,3 +233,8 @@ Warning: there is no `support for Windows`_, sorry for that!
 .. _svglib page on PyPI: https://pypi.python.org/pypi/svglib
 .. _svglib releases page on GitHub: https://github.com/deeplook/svglib/releases
 .. _support for Windows: https://github.com/deeplook/svglib/issues/70
+.. _Anaconda: https://www.anaconda.com/download/
+.. _Miniconda: https://conda.io/miniconda.html
+.. _Conda: https://conda.io
+.. _svglib with conda: https://github.com/conda-forge/svglib-feedstock
+.. _nicoddemus: https://github.com/nicoddemus
