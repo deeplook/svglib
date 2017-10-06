@@ -951,33 +951,35 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         return gr
 
     def convertImage(self, node):
-        logger.warn("Adding box instead of image.")
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
         xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
 
-        magic = "data:image/jpeg;base64"
-        if xlink_href[:len(magic)] == magic:
-            pat = "data:image/(\w+?);base64"
-            ext = re.match(pat, magic).groups()[0]
-            jpeg_data = base64.decodestring(xlink_href[len(magic):].encode('ascii'))
-            _, path = tempfile.mkstemp(suffix='.%s' % ext)
+        magic_re = r"^data:image/(jpeg|png);base64"
+        match = re.match(magic_re, xlink_href)
+        if match:
+            img_format = match.groups()[0]
+            image_data = base64.decodestring(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
+            _, path = tempfile.mkstemp(suffix='.%s' % img_format)
             with open(path, 'wb') as fh:
-                fh.write(jpeg_data)
-            img = Image(int(x), int(y+height), int(width), int(-height), path)
+                fh.write(image_data)
+            img = Image(int(x), int(y + height), int(width), int(height), path)
             # this needs to be removed later, not here...
             # if exists(path): os.remove(path)
         else:
             xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
-            img = Image(int(x), int(y+height), int(width), int(-height), xlink_href)
+            img = Image(int(x), int(y + height), int(width), int(height), xlink_href)
             try:
                 # this will catch invalid image
                 PDFImage(xlink_href, 0, 0)
             except IOError:
                 logger.error("Unable to read the image %s. Skipping..." % img.path)
                 return None
-        return img
+        group = Group(img)
+        group.translate(0, (x + height) * 2)
+        group.scale(1, -1)
+        return group
 
     def applyTransformOnGroup(self, transform, group):
         """Apply an SVG transformation to a RL Group shape.
