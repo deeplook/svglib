@@ -450,3 +450,12 @@ class TestW3CSVG(object):
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
+
+
+class TestOtherFiles(object):
+    def test_png_in_svg(self):
+        path = join(TEST_ROOT, "samples", "others", "png_in_svg.svg")
+        drawing = svglib.svg2rlg(path)
+        result = renderPDF.drawToString(drawing)
+        # If the PNG image is really included, the size is over 10k.
+        assert len(result) > 10000
