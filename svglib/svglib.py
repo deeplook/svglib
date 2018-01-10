@@ -1022,7 +1022,10 @@ def svg2rlg(path, **kwargs):
     unzipped = False
     if isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
         data = gzip.GzipFile(path, "rb").read()
-        open(path[:-1], 'w').write(data)
+        if str is bytes:                    # this is Python2
+            open(path[:-1], 'w').write(data)
+        else:                               # this is Python3
+            open(path[:-1], 'wb').write(data)
         path = path[:-1]
         unzipped = True
 
