@@ -23,6 +23,7 @@ import os
 import re
 import base64
 import tempfile
+import shutil
 from collections import defaultdict, namedtuple
 from functools import partial
 
@@ -1021,11 +1022,8 @@ def svg2rlg(path, **kwargs):
     # unzip .svgz file into .svg
     unzipped = False
     if isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
-        data = gzip.GzipFile(path, "rb").read()
-        if str is bytes:                    # this is Python2
-            open(path[:-1], 'w').write(data)
-        else:                               # this is Python3
-            open(path[:-1], 'wb').write(data)
+        with gzip.open(path, 'rb') as f_in, open(path[:-1], 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
         path = path[:-1]
         unzipped = True
 
