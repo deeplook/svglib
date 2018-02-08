@@ -12,6 +12,9 @@ v = sys.version_info
 if (v.major, v.minor) < (2, 7):
     install_requires.append('argparse')
 
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+pytest_runner = ['pytest-runner'] if needs_pytest else []
+
 setup(
     name='svglib',
     version=__version__,
@@ -24,7 +27,7 @@ setup(
     keywords='SVG, PDF, reportlab, conversion, graphics',
     url='https://github.com/deeplook/svglib',
     install_requires=install_requires,
-    setup_requires=['pytest-runner'],
+    setup_requires=[] + pytest_runner,
     tests_require=['pytest'],
     package_dir = {'svglib': 'svglib'},
     packages = ['svglib'],
