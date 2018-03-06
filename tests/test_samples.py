@@ -15,6 +15,7 @@ import re
 import gzip
 import io
 import json
+import sys
 import tarfile
 import textwrap
 from os.path import dirname, splitext, exists, join, basename, getsize
@@ -267,6 +268,8 @@ class TestWikipediaFlags(object):
             flag_url_map = []
             prefix = "https://en.wikipedia.org/wiki/File:"
             for i, fn in enumerate(flag_names):
+                if "Ivoire" in fn and sys.version_info < (3, 0):
+                    continue
                 # load single flag HTML page, like
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
                 flag_html = self.fetch_file(prefix + quote(fn))
@@ -283,7 +286,9 @@ class TestWikipediaFlags(object):
                     flag_url = flag_html[start:end]
                     flag_url_map.append((prefix + fn, flag_url))
             with io.open(json_path, "w", encoding='UTF-8') as fh:
-                json.dump(flag_url_map, fh)
+                fh.write(json.dumps(flag_url_map, ensure_ascii=False))
+                # When Python 2 is dropped, we can simply:
+                #json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
         with io.open(json_path, "r", encoding='UTF-8') as fh:
@@ -372,6 +377,7 @@ class TestW3CSVG(object):
             os.mkdir(self.folder_path)
             tar_file = tarfile.TarFile(join(TEST_ROOT, "samples", tar_path))
             tar_file.extractall(self.folder_path)
+            tar_file.close()
             if exists(join(TEST_ROOT, "samples", tar_path)):
                 os.remove(join(TEST_ROOT, "samples", tar_path))
 
@@ -398,6 +404,7 @@ class TestW3CSVG(object):
 
         exclude_list = [
             "paint-stroke-06-t.svg",
+            "paint-stroke-207-t.svg",
             "coords-trans-09-t.svg",  # renderPDF issue (div by 0)
             # Unsupported 'transform="ref(svg, ...)"' expression
             "coords-constr-201-t.svg",
