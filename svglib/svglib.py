@@ -49,6 +49,12 @@ __author__ = 'Dinu Gherman'
 __date__ = '2017-04-22'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
+STANDARD_FONT_NAMES = (
+    'Times', 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
+    'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique',
+    'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique',
+    'Symbol', 'ZapfDingbats',
+)
 
 logger = logging.getLogger(__name__)
 
@@ -324,7 +330,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             font_name = font_mapping[font_name]
         except KeyError:
             pass
-        if font_name not in ("Helvetica", "Times-Roman", "Courier"):
+        if font_name not in STANDARD_FONT_NAMES:
             font_name = "Helvetica"
 
         return font_name

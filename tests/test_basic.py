@@ -341,6 +341,13 @@ class TestApplyTransformOnGroup(object):
 
 
 class TestTextNode(object):
+    def test_font_family(self):
+        converter = svglib.Svg2RlgAttributeConverter()
+        # Check PDF standard names are untouched
+        assert converter.convertFontFamily('ZapfDingbats') == 'ZapfDingbats'
+        # Unknown fonts are converted to Helvetica by default
+        assert converter.convertFontFamily('SomeFont') == 'Helvetica'
+
     def test_space_preservation(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
