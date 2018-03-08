@@ -9,6 +9,7 @@ inside the test directory:
 """
 
 import io
+import subprocess
 import textwrap
 from lxml import etree
 
@@ -342,11 +343,23 @@ class TestApplyTransformOnGroup(object):
 
 class TestTextNode(object):
     def test_font_family(self):
+        def font_config_available():
+            try:
+                subprocess.call(["fc-match"])
+            except OSError:
+                return False
+            return True
+
         converter = svglib.Svg2RlgAttributeConverter()
         # Check PDF standard names are untouched
         assert converter.convertFontFamily('ZapfDingbats') == 'ZapfDingbats'
-        # Unknown fonts are converted to Helvetica by default
-        assert converter.convertFontFamily('SomeFont') == 'Helvetica'
+        if font_config_available():
+            # Fontconfig will always provide at least a default font and register
+            # that font under the provided font name.
+            assert converter.convertFontFamily('SomeFont') == 'SomeFont'
+        else:
+            # Unknown fonts are converted to Helvetica by default.
+            assert converter.convertFontFamily('SomeFont') == 'Helvetica'
 
     def test_space_preservation(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\

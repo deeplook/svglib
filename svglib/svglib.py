@@ -24,12 +24,15 @@ import re
 import base64
 import tempfile
 import shutil
+import subprocess
+import sys
 from collections import defaultdict, namedtuple
 from functools import partial
 
-from reportlab.pdfgen.pdfimages import PDFImage
-from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfbase.pdfmetrics import registerFont, stringWidth
+from reportlab.pdfbase.ttfonts import TTFError, TTFont
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
+from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.graphics.shapes import (
     _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
     Polygon, Rect, String,
@@ -55,6 +58,8 @@ STANDARD_FONT_NAMES = (
     'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique',
     'Symbol', 'ZapfDingbats',
 )
+DEFAULT_FONT_NAME = "Helvetica"
+_registered_fonts = set()
 
 logger = logging.getLogger(__name__)
 
@@ -330,8 +335,31 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             font_name = font_mapping[font_name]
         except KeyError:
             pass
-        if font_name not in STANDARD_FONT_NAMES:
-            font_name = "Helvetica"
+        if font_name not in STANDARD_FONT_NAMES and font_name not in _registered_fonts:
+            try:
+                # Try first to register the font if it exists as ttf,
+                # based on ReportLab font search.
+                registerFont(TTFont(font_name, '%s.ttf' % font_name))
+                _registered_fonts.add(font_name)
+            except TTFError:
+                # Try searching with Fontconfig
+                try:
+                    pipe = subprocess.Popen(
+                        ['fc-match', '-s', '--format=%{file}\\n', font_name],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
+                    output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
+                    font_path = output.split('\n')[0]
+                except OSError:
+                    logger.warn("Unable to find a suitable font for '%s'" % font_name)
+                    return DEFAULT_FONT_NAME
+                try:
+                    registerFont(TTFont(font_name, font_path))
+                    _registered_fonts.add(font_name)
+                except TTFError:
+                    logger.warn("Unable to find a suitable font for '%s'" % font_name)
+                    return DEFAULT_FONT_NAME
 
         return font_name
 
@@ -693,7 +721,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         dx0, dy0 = 0, 0
         x1, y1 = 0, 0
-        ff = attrConv.findAttr(node, "font-family") or "Helvetica"
+        ff = attrConv.findAttr(node, "font-family") or DEFAULT_FONT_NAME
         ff = attrConv.convertFontFamily(ff)
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
@@ -989,7 +1017,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             ("stroke-dasharray", "strokeDashArray", "convertDashArray", "none"),
         )
         mappingF = (
-            ("font-family", "fontName", "convertFontFamily", "Helvetica"),
+            ("font-family", "fontName", "convertFontFamily", DEFAULT_FONT_NAME),
             ("font-size", "fontSize", "convertLength", "12"),
             ("text-anchor", "textAnchor", "id", "start"),
         )
