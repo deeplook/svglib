@@ -216,7 +216,6 @@ Please report bugs on the `svglib issue tracker`_ on GitHub (pull
 requests are also appreciated)!
 If necessary, please include information about the operating system, as
 well as the versions of ``svglib``, ReportLab and Python being used!
-Warning: there is no `support for Windows`_, sorry for that!
 
 
 .. _SVG: http://www.w3.org/Graphics/SVG/
@@ -232,7 +231,6 @@ Warning: there is no `support for Windows`_, sorry for that!
 .. _PyTest: http://pytest.org
 .. _svglib page on PyPI: https://pypi.python.org/pypi/svglib
 .. _svglib releases page on GitHub: https://github.com/deeplook/svglib/releases
-.. _support for Windows: https://github.com/deeplook/svglib/issues/70
 .. _Anaconda: https://www.anaconda.com/download/
 .. _Miniconda: https://conda.io/miniconda.html
 .. _Conda: https://conda.io
