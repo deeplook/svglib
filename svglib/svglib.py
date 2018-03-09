@@ -469,11 +469,26 @@ class SvgRenderer:
         Return the clipping Path object referenced by the node 'clip-path'
         attribute, if any.
         """
+
         def get_path_from_node(node):
             for child in node.getchildren():
                 if node_name(child) == 'path':
                     group = self.shape_converter.convertShape('path', NodeTracker(child))
                     return group.contents[-1]
+                elif node_name(child) == 'rect':
+                    # it is possible to use a rect as a clipping path in an svg, so we
+                    # need to convert it to a path for rlg.  if there is a better way...
+                    rect = self.shape_converter.convertRect(NodeTracker(child))
+                    x1, y1, x2, y2 = rect.getBounds()
+                    p = ClippingPath()
+                    p.moveTo(x1, y1)
+                    p.lineTo(x2, y1)
+                    p.lineTo(x2, y2)
+                    p.lineTo(x1, y2)
+                    p.closePath()
+                    # copy the styles from the rect to the clipping path
+                    self.shape_converter.applyStyleOnShape(p, child)
+                    return p
                 else:
                     return get_path_from_node(child)
 
