@@ -35,7 +35,7 @@ from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.graphics.shapes import (
     _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
-    Polygon, Rect, String,
+    Polygon, Rect, SolidShape, String,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
@@ -508,6 +508,9 @@ class NodeTracker(ElementWrapper):
         super(NodeTracker, self).__init__(obj)
         self.usedAttrs = []
 
+    def __repr__(self):
+        return '<NodeTracker for node %s>' % self.object
+
     def getAttribute(self, name):
         # add argument to the history, if not already present
         if name not in self.usedAttrs:
@@ -645,24 +648,54 @@ class SvgRenderer:
         Return the clipping Path object referenced by the node 'clip-path'
         attribute, if any.
         """
-        def get_path_from_node(node):
+        def get_shape_from_group(group):
+            for elem in group.contents:
+                if isinstance(elem, Group):
+                    return get_shape_from_group(elem)
+                elif isinstance(elem, SolidShape):
+                    return elem
+
+        def get_shape_from_node(node):
             for child in node.getchildren():
                 if node_name(child) == 'path':
                     group = self.shape_converter.convertShape('path', NodeTracker(child))
                     return group.contents[-1]
+                elif node_name(child) == 'use':
+                    grp = self.renderUse(NodeTracker(child))
+                    return get_shape_from_group(grp)
+                elif node_name(child) == 'rect':
+                    return self.shape_converter.convertRect(NodeTracker(child))
                 else:
-                    return get_path_from_node(child)
+                    return get_shape_from_node(child)
 
         clip_path = node.getAttribute('clip-path')
-        if clip_path:
-            m = re.match(r'url\(#([^\)]*)\)', clip_path)
-            if m:
-                ref = m.groups()[0]
-                if ref in self.definitions:
-                    path = get_path_from_node(self.definitions[ref])
-                    if path:
-                        path = ClippingPath(copy_from=path)
-                        return path
+        if not clip_path:
+            return
+        m = re.match(r'url\(#([^\)]*)\)', clip_path)
+        if not m:
+            return
+        ref = m.groups()[0]
+        if not ref in self.definitions:
+            return
+
+        shape = get_shape_from_node(self.definitions[ref])
+        if isinstance(shape, Rect):
+            # It is possible to use a rect as a clipping path in an svg, so we
+            # need to convert it to a path for rlg.
+            x1, y1, x2, y2 = shape.getBounds()
+            cp = ClippingPath()
+            cp.moveTo(x1, y1)
+            cp.lineTo(x2, y1)
+            cp.lineTo(x2, y2)
+            cp.lineTo(x1, y2)
+            cp.closePath()
+            # Copy the styles from the rect to the clipping path.
+            copy_shape_properties(shape, cp)
+            return cp
+        elif isinstance(shape, Path):
+            return ClippingPath(copy_from=shape)
+        elif shape:
+            logging.error("Unsupported shape type %s for clipping" % shape.__class__.__name__)
 
     def print_unused_attributes(self, node, n):
         if logger.level > logging.DEBUG:
@@ -1363,6 +1396,14 @@ def node_name(node):
         return node.tag.split('}')[-1]
     except AttributeError:
         pass
+
+
+def copy_shape_properties(source_shape, dest_shape):
+    for prop, val in source_shape.getProperties().items():
+        try:
+            setattr(dest_shape, prop, val)
+        except AttributeError:
+            pass
 
 
 def monkeypatch_reportlab():

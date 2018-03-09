@@ -162,6 +162,30 @@ class TestPaths(object):
         group = converter.convertPath(node)
         assert group is None
 
+    def test_clipped_path(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink" width="660" height="480">
+                <defs>
+                    <path id="my-clipping-path" d="M99,176 L 110 170 112 172Z"/>
+                    <rect id="my-clipping-rect" x="88.155" y="163" width="419.69" height="20.68"/>
+                </defs>
+                <clipPath id="my-clip-path">
+                    <use xlink:href="#my-clipping-path"/>
+                </clipPath>
+                <clipPath id="my-clip-rect">
+                    <use xlink:href="#my-clipping-rect"/>
+                </clipPath>
+                <path clip-path="url(#my-clip-path)" d="M99,176 L 110 170 112 172Z"/>
+                <path clip-path="url(#my-clip-rect)" d="M99,176 L 110 170 112 172Z"/>
+            </svg>
+        ''')))
+        assert isinstance(drawing.contents[0].contents[0].contents[0], svglib.ClippingPath)
+        # Clipping rect was converted to a path
+        assert isinstance(drawing.contents[0].contents[1].contents[0], svglib.ClippingPath)
+
+
 def force_cmyk(rgb):
     c, m, y, k = colors.rgb2cmyk(rgb.red,rgb.green,rgb.blue)
     return colors.CMYKColor(c,m,y,k,alpha=rgb.alpha)
