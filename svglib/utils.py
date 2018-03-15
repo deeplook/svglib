@@ -89,6 +89,8 @@ def convert_quadratic_to_cubic_path(q0, q1, q2):
 
 def vector_angle(u, v):
     d = hypot(*u) * hypot(*v)
+    if d == 0:
+        return 0
     c = (u[0] * v[0] + u[1] * v[1]) / d
     if c < -1:
         c = -1
@@ -145,7 +147,8 @@ def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
         rx *= rr
         ry *= rr
         r = x1d * x1d / (rx * rx) + y1d * y1d / (ry * ry)
-    r = 1 / r - 1
+    elif r != 0:
+        r = 1 / r - 1
     if -1e-10 < r < 0:
         r = 0
     r = sqrt(r)
@@ -182,6 +185,8 @@ def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
     else:
         nfrag = int(ceil(abs(extent) / 90.))
         frag_angle = float(extent) / nfrag
+    if frag_angle == 0:
+        return []
 
     frag_rad = radians(frag_angle)
     half_rad = frag_rad * 0.5
@@ -214,6 +219,11 @@ def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
 
 
 def bezier_arc_from_end_points(x1, y1, rx, ry, phi, fA, fS, x2, y2):
+    if (x1 == x2 and y1 == y2):
+        # From https://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes:
+        # If the endpoints (x1, y1) and (x2, y2) are identical, then this is
+        # equivalent to omitting the elliptical arc segment entirely.
+        return []
     if phi:
         # Our box bezier arcs can't handle rotations directly
         # move to a well known point, eliminate phi and transform the other point

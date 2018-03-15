@@ -131,6 +131,16 @@ class TestPaths(object):
             4.24, 3.68,
         ]
 
+    def test_elliptical_arc(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<path d="M334.500000 0.000000 A185.000000 185.000000 0 0 1 334.500000 0.000000 '
+            'L334.500000 185.000000 A0.000000 0.000000 0 0 0 334.500000 185.000000 z"/>'
+        ))
+        # First elliptical arc with identical start/end points, ignored
+        path = converter.convertPath(node).contents[0]
+        assert path.points == [334.5, 0.0, 334.5, 185.0, 334.5, 185.0]
+
     def test_unclosed_paths(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = svglib.NodeTracker(etree.XML('<path d="M0,0 4.5,3 0,6M4.5,3H9" id="W"/>'))
