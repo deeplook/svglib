@@ -143,7 +143,7 @@ class AttributeConverter:
             dict = self.parseMultiAttributes(svgNode.attrib.get("style"))
             if name in dict:
                 return dict[name]
-        elif svgNode.getparent() is not None:
+        if svgNode.getparent() is not None:
             return self.findAttr(svgNode.getparent(), name)
 
         return ''
