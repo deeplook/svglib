@@ -283,6 +283,14 @@ class TestAttrConverter(object):
         node = etree.XML('<rect fill=" #00A1DE\n"/>')
         assert ac.findAttr(node, 'fill') == "#00A1DE"
 
+    def test_findAttr_parents(self):
+        ac = svglib.Svg2RlgAttributeConverter()
+        rect_node = etree.XML(
+            '<g style="fill:#008000;stroke:#008000;"><rect style="fill:#ff0;"/></g>'
+        ).getchildren()[0]
+        assert ac.findAttr(rect_node, 'fill') == "#ff0"
+        assert ac.findAttr(rect_node, 'stroke') == "#008000"
+
     def test_no_fill_on_shape(self):
         """
         Any shape with no fill property should set black color in rlg syntax.
