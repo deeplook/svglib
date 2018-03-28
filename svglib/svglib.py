@@ -59,7 +59,7 @@ STANDARD_FONT_NAMES = (
     'Symbol', 'ZapfDingbats',
 )
 DEFAULT_FONT_NAME = "Helvetica"
-_registered_fonts = set()
+_registered_fonts = {}
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +67,19 @@ Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 
 
 def find_font(font_name):
-    if font_name in STANDARD_FONT_NAMES or font_name in _registered_fonts:
-        return font_name
+    """Return the font and a Boolean indicating if the match is exact."""
+    if font_name in STANDARD_FONT_NAMES:
+        return font_name, True
+    elif font_name in _registered_fonts:
+        return font_name, _registered_fonts[font_name]
+
+    NOT_FOUND = (None, False)
     try:
         # Try first to register the font if it exists as ttf,
         # based on ReportLab font search.
         registerFont(TTFont(font_name, '%s.ttf' % font_name))
-        _registered_fonts.add(font_name)
+        _registered_fonts[font_name] = True
+        return font_name, True
     except TTFError:
         # Try searching with Fontconfig
         try:
@@ -85,13 +91,15 @@ def find_font(font_name):
             output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
             font_path = output.split('\n')[0]
         except OSError:
-            return None
+            return NOT_FOUND
         try:
             registerFont(TTFont(font_name, font_path))
-            _registered_fonts.add(font_name)
-            return font_name
         except TTFError:
-             return None
+            return NOT_FOUND
+        # Fontconfig may return a default font totally unrelated with font_name
+        exact = font_name.lower() in os.path.basename(font_path).lower()
+        _registered_fonts[font_name] = exact
+        return font_name, exact
 
 
 class NoStrokePath(Path):
@@ -356,16 +364,22 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             "serif": "Times-Roman",
             "monospace": "Courier",
         }
-        font_name = svgAttr
-        try:
-            font_name = font_mapping[font_name]
-        except KeyError:
-            font_name = find_font(font_name)
-        if not font_name:
+        font_names = [
+            font_mapping.get(font_name.lower(), font_name)
+            for font_name in self.split_attr_list(svgAttr)
+        ]
+        non_exact_matches = []
+        for font_name in font_names:
+            font_name, exact = find_font(font_name)
+            if exact:
+                return font_name
+            elif font_name:
+                non_exact_matches.append(font_name)
+        if non_exact_matches:
+            return non_exact_matches[0]
+        else:
             logger.warn("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
             return DEFAULT_FONT_NAME
-
-        return font_name
 
 
 class NodeTracker:
