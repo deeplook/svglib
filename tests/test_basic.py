@@ -361,6 +361,9 @@ class TestTextNode(object):
         converter = svglib.Svg2RlgAttributeConverter()
         # Check PDF standard names are untouched
         assert converter.convertFontFamily('ZapfDingbats') == 'ZapfDingbats'
+        assert converter.convertFontFamily('bilbo ZapfDingbats') == 'ZapfDingbats'
+        assert converter.convertFontFamily(' bilbo    ZapfDingbats  ') == 'ZapfDingbats'
+        assert converter.convertFontFamily(' bilbo,    ZapfDingbats  ') == 'ZapfDingbats'
         if font_config_available():
             # Fontconfig will always provide at least a default font and register
             # that font under the provided font name.
