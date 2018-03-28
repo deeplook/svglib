@@ -53,7 +53,7 @@ __date__ = '2017-04-22'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 STANDARD_FONT_NAMES = (
-    'Times', 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
+    'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
     'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique',
     'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique',
     'Symbol', 'ZapfDingbats',
@@ -362,6 +362,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         font_mapping = {
             "sans-serif": "Helvetica",
             "serif": "Times-Roman",
+            "times": "Times-Roman",
             "monospace": "Courier",
         }
         font_names = [
