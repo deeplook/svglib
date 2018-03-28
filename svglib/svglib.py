@@ -248,6 +248,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def identity_color_converter(c):
         return c
 
+    @staticmethod
+    def split_attr_list(attr):
+        return re.split(r'\s+', attr.strip().replace(',', ' '))
+
     def convertLength(self, svgAttr, percentOf=100, em_base=12):
         "Convert length to points."
 
@@ -280,14 +284,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         return length
 
     def convertLengthList(self, svgAttr):
-        "Convert a list of lengths."
-
-        t = svgAttr.replace(',', ' ')
-        t = t.strip()
-        t = re.sub("[ ]+", ' ', t)
-        a = t.split(' ')
-
-        return [self.convertLength(a) for a in a]
+        """Convert a list of lengths."""
+        return [self.convertLength(a) for a in self.split_attr_list(svgAttr)]
 
     def convertOpacity(self, svgAttr):
         return float(svgAttr)
