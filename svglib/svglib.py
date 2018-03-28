@@ -61,6 +61,35 @@ STANDARD_FONT_NAMES = (
 DEFAULT_FONT_NAME = "Helvetica"
 _registered_fonts = set()
 
+def find_font(font_name):
+    if font_name in STANDARD_FONT_NAMES or font_name in _registered_fonts:
+        return font_name
+    try:
+        # Try first to register the font if it exists as ttf,
+        # based on ReportLab font search.
+        registerFont(TTFont(font_name, '%s.ttf' % font_name))
+        _registered_fonts.add(font_name)
+        return font_name
+    except TTFError:
+        # Try searching with Fontconfig
+        try:
+            pipe = subprocess.Popen(
+                ['fc-match', '-s', '--format=%{file}\\n', font_name],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
+            font_path = output.split('\n')[0]
+        except OSError:
+            return None
+        else:
+            try:
+                registerFont(TTFont(font_name, font_path))
+                _registered_fonts.add(font_name)
+                return font_name
+            except TTFError:
+                return None
+
 logger = logging.getLogger(__name__)
 
 Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
@@ -251,15 +280,14 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
         return length
 
+    _re_spaces = re.compile(r'\s+')
+    @classmethod
+    def listAttrSplit(cls,svgAttr):
+        return cls._re_spaces.split(svgAttr.strip().replace(',', ' '))
+
     def convertLengthList(self, svgAttr):
         "Convert a list of lengths."
-
-        t = svgAttr.replace(',', ' ')
-        t = t.strip()
-        t = re.sub("[ ]+", ' ', t)
-        a = t.split(' ')
-
-        return [self.convertLength(a) for a in a]
+        return [self.convertLength(a) for a in self.listAttrSplit(svgAttr)]
 
     def convertOpacity(self, svgAttr):
         return float(svgAttr)
@@ -328,40 +356,18 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             "serif":"Times-Roman",
             "monospace":"Courier"
         }
-        font_name = svgAttr
-        if not font_name:
-            return ''
-        try:
-            font_name = font_mapping[font_name]
-        except KeyError:
-            pass
-        if font_name not in STANDARD_FONT_NAMES and font_name not in _registered_fonts:
+        for font_name in filter(None,self.listAttrSplit(svgAttr)):
             try:
-                # Try first to register the font if it exists as ttf,
-                # based on ReportLab font search.
-                registerFont(TTFont(font_name, '%s.ttf' % font_name))
-                _registered_fonts.add(font_name)
-            except TTFError:
-                # Try searching with Fontconfig
-                try:
-                    pipe = subprocess.Popen(
-                        ['fc-match', '-s', '--format=%{file}\\n', font_name],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    )
-                    output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
-                    font_path = output.split('\n')[0]
-                except OSError:
-                    logger.warn("Unable to find a suitable font for '%s'" % font_name)
-                    return DEFAULT_FONT_NAME
-                try:
-                    registerFont(TTFont(font_name, font_path))
-                    _registered_fonts.add(font_name)
-                except TTFError:
-                    logger.warn("Unable to find a suitable font for '%s'" % font_name)
-                    return DEFAULT_FONT_NAME
+                font_name = font_mapping[font_name]
+            except KeyError:
+                pass
+            font_name = find_font(font_name)
+            if font_name:
+                return font_name
 
-        return font_name
+        logger.warn("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
+
+        return DEFAULT_FONT_NAME
 
 
 class NodeTracker:
