@@ -53,7 +53,7 @@ __date__ = '2017-04-22'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 STANDARD_FONT_NAMES = (
-    'Times', 'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
+    'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
     'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique',
     'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique',
     'Symbol', 'ZapfDingbats',
@@ -61,7 +61,12 @@ STANDARD_FONT_NAMES = (
 DEFAULT_FONT_NAME = "Helvetica"
 _registered_fonts = set()
 
-def find_font(font_name):
+logger = logging.getLogger(__name__)
+
+Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
+
+
+def find_font(font_name, exact=False):
     if font_name in STANDARD_FONT_NAMES or font_name in _registered_fonts:
         return font_name
     try:
@@ -71,6 +76,7 @@ def find_font(font_name):
         _registered_fonts.add(font_name)
         return font_name
     except TTFError:
+        if exact: return
         # Try searching with Fontconfig
         try:
             pipe = subprocess.Popen(
@@ -81,18 +87,13 @@ def find_font(font_name):
             output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
             font_path = output.split('\n')[0]
         except OSError:
+            return
+        try:
+            registerFont(TTFont(font_name, font_path))
+            _registered_fonts.add(font_name)
+            return font_name
+        except TTFError:
             return None
-        else:
-            try:
-                registerFont(TTFont(font_name, font_path))
-                _registered_fonts.add(font_name)
-                return font_name
-            except TTFError:
-                return None
-
-logger = logging.getLogger(__name__)
-
-Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 
 
 class NoStrokePath(Path):
@@ -352,22 +353,27 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertFontFamily(self, svgAttr):
         # very hackish
         font_mapping = {
-            "sans-serif":"Helvetica",
-            "serif":"Times-Roman",
-            "monospace":"Courier"
-        }
-        for font_name in filter(None,self.listAttrSplit(svgAttr)):
-            try:
-                font_name = font_mapping[font_name]
-            except KeyError:
-                pass
-            font_name = find_font(font_name)
+            "sans-serif": "Helvetica",
+            "serif": "Times-Roman",
+            "times": "Times-Roman",
+            "monospace": "Courier",
+            }
+        font_names = [font_mapping.get(font_name.lower(),font_name) for font_name in filter(None,self.listAttrSplit(svgAttr))]
+        if not font_names:
+            return ''
+        exact = len(font_names)!=1
+        for font_name in font_names:
+            font_name = find_font(font_name,exact)
             if font_name:
                 return font_name
 
-        logger.warn("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
+        font_name = find_font(font_names[0])
 
-        return DEFAULT_FONT_NAME
+        if not font_name:
+            logger.warn("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
+            return DEFAULT_FONT_NAME
+
+        return font_name
 
 
 class NodeTracker:
