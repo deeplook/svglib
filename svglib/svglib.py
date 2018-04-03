@@ -424,7 +424,7 @@ class SvgRenderer:
 
     def render(self, svg_node):
         node = NodeTracker(svg_node)
-        main_group = self.renderSvg(node)
+        main_group = self.renderSvg(node, outermost=True)
         for xlink in self.waiting_use_nodes.keys():
             logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
 
@@ -531,14 +531,23 @@ class SvgRenderer:
             width, height = map(self.attrConverter.convertLength, (width, height))
             return Box(0, 0, width, height)
 
-    def renderSvg(self, node):
+    def renderSvg(self, node, outermost=False):
         getAttr = node.getAttribute
-        if getAttr("{%s}space" % XML_NS) == 'preserve':
-            self.shape_converter.preserve_space = True
+
+        _saved_preserve_space = self.shape_converter.preserve_space
+        self.shape_converter.preserve_space = getAttr("{%s}space" % XML_NS) == 'preserve'
 
         group = Group()
         for child in node.getchildren():
             self.renderNode(child, group)
+        self.shape_converter.preserve_space = _saved_preserve_space
+
+        if not outermost:
+            x, y = map(getAttr, ("x", "y"))
+            x, y = map(self.attrConverter.convertLength, (x, y))
+            if x or y:
+                group.translate(x or 0, y or 0)
+
         return group
 
     def renderG(self, node, clipping=None, display=1):

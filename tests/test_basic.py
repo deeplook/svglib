@@ -609,3 +609,34 @@ class TestViewBox(object):
         ''')))
         # Main group coordinates are translated to match the viewBox origin
         assert drawing.contents[0].transform == (1, 0, 0, -1, 60.0, 40.0)
+
+
+class TestSVGEmbedded(object):
+    def test_svg_in_svg(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+                 viewBox="0 0 210 297" height="297mm" width="210mm">
+              <g>
+                <rect ry="5" y="15" x="11" height="85" width="90"
+                   style="fill:#b8393d;stroke:#dfd8c3;stroke-width:0.75;" />
+                <text id="text8866" y="32" x="25"
+                   style="font-size:10px;line-height:1.25;font-family:sans-serif;">
+                   <tspan x="25" y="31" style="stroke-width:0.2">Test 1,2,3</tspan></text>
+              </g>
+              <g>
+              <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+                 viewBox="0 0 210 50" x="0" y="100" height="25mm" width="105mm">
+                <g>
+                  <text y="30" x="5"
+                   style="line-height:1.25;font-family:sans-serif;">
+                   <tspan x="5" y="30"
+                     style="font-size:25px;stroke-width:0.2">TEST</tspan></text>
+                </g>
+              </svg>
+              </g>
+            </svg>
+        ''')))
+        embedded_svg_group = drawing.contents[0].contents[1].contents[0]
+        # x / y translation
+        assert embedded_svg_group.getProperties()['transform'][-2:] == (0, 100)
