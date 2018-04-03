@@ -424,16 +424,17 @@ class SvgRenderer:
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
-        self.box = Box(x=0, y=0, width=0, height=0)
 
     def render(self, svg_node):
-        main_group = self.renderNode(svg_node)
+        node = NodeTracker(svg_node)
+        main_group = self.renderSvg(node)
         for xlink in self.waiting_use_nodes.keys():
             logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
 
+        view_box = self.get_box(node, default_box=True)
         main_group.scale(1, -1)
-        main_group.translate(0 - self.box.x, -self.box.height - self.box.y)
-        drawing = Drawing(self.box.width, self.box.height)
+        main_group.translate(0 - view_box.x, -view_box.height - view_box.y)
+        drawing = Drawing(view_box.width, view_box.height)
         drawing.add(main_group)
         return drawing
 
@@ -446,10 +447,7 @@ class SvgRenderer:
 
         clipping = self.get_clippath(n)
         if name == "svg":
-            if n.getAttribute("{%s}space" % XML_NS) == 'preserve':
-                self.shape_converter.preserve_space = True
-            item = self.renderSvg(n)
-            return item
+            return self.renderSvg(n)
         elif name == "defs":
             item = self.renderG(n)
         elif name == 'a':
@@ -526,16 +524,21 @@ class SvgRenderer:
         # Main SVG desc. attr. could be used in the PDF document info field.
         pass
 
+    def get_box(self, svg_node, default_box=False):
+        view_box = svg_node.getAttribute("viewBox")
+        if view_box:
+            view_box = self.attrConverter.convertLengthList(view_box)
+            return Box(*view_box)
+        if default_box:
+            width, height = map(svg_node.getAttribute, ("width", "height"))
+            width, height = map(self.attrConverter.convertLength, (width, height))
+            return Box(0, 0, width, height)
+
     def renderSvg(self, node):
         getAttr = node.getAttribute
-        width, height = map(getAttr, ("width", "height"))
-        width, height = map(self.attrConverter.convertLength, (width, height))
-        viewBox = getAttr("viewBox")
-        if viewBox:
-            viewBox = self.attrConverter.convertLengthList(viewBox)
-            self.box = Box(*viewBox)
-        else:
-            self.box = Box(0, 0, width, height)
+        if getAttr("{%s}space" % XML_NS) == 'preserve':
+            self.shape_converter.preserve_space = True
+
         group = Group()
         for child in node.getchildren():
             self.renderNode(child, group)
