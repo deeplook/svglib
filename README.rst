@@ -79,7 +79,7 @@ interactive Python session::
     >>> renderPDF.drawToFile(drawing, "file.pdf")
     >>> renderPM.drawToFile(drawing, "file.png")
 
-In addition a script named ``svg2pdf`` can be used more easily from 
+In addition a script named ``svg2pdf`` can be used more easily from
 the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
@@ -141,7 +141,7 @@ There are three ways to install ``svglib``.
 1. Using ``pip``
 ++++++++++++++++
 
-With the ``pip`` command on your system and a working internet 
+With the ``pip`` command on your system and a working internet
 connection you can install the newest version of ``svglib`` with only
 one command in a terminal::
 
@@ -179,21 +179,21 @@ like shown here::
     $ tar xfz svglib-0.8.1.tar.gz
     $ cs svglib-0.8.1
     $ python setup.py install
-  
+
 This will install a Python package named ``svglib`` in the
-``site-packages`` subfolder of your Python installation and a script 
-tool named ``svg2pdf`` in your ``bin`` directory, e.g. in 
+``site-packages`` subfolder of your Python installation and a script
+tool named ``svg2pdf`` in your ``bin`` directory, e.g. in
 ``/usr/local/bin``.
 
 
 Testing
 -------
 
-The ``svglib`` tarball distribution contains a PyTest_ test suite 
+The ``svglib`` tarball distribution contains a PyTest_ test suite
 in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
- 
+
     $ tar xfz svglib-0.8.1.tar.gz
     $ cd svglib-0.8.1
     $ PYTHONPATH=. py.test
