@@ -422,6 +422,7 @@ class SvgRenderer:
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
         self.box = Box(x=0, y=0, width=0, height=0)
+        self.parent_node = True
 
     def render(self, svg_node):
         main_group = self.renderNode(svg_node)
@@ -525,17 +526,48 @@ class SvgRenderer:
 
     def renderSvg(self, node):
         getAttr = node.getAttribute
-        width, height = map(getAttr, ("width", "height"))
+        width, height = map(getAttr, ("width", "height",))
         width, height = map(self.attrConverter.convertLength, (width, height))
+
+        x, y = map(getAttr, ("x", "y",))
+        x, y = map(self.attrConverter.convertLength, (x, y))
+
         viewBox = getAttr("viewBox")
+
+        childBox = None
+
         if viewBox:
             viewBox = self.attrConverter.convertLengthList(viewBox)
-            self.box = Box(*viewBox)
+            if self.parent_node:
+                self.box = Box(*viewBox)
+            else:
+                childBox = Box(*viewBox)
         else:
-            self.box = Box(0, 0, width, height)
+            if self.parent_node:
+                self.box = Box(0, 0, width, height)
+        self.parent_node = False
+
         group = Group()
+
         for child in node.getchildren():
             self.renderNode(child, group)
+        transform = ""
+
+        x_scale = 1
+        y_scale = 1
+        if childBox:
+            if childBox.height != height:
+                y_scale = height /  childBox.height
+            if childBox.width != width:
+                x_scale = width /  childBox.width
+
+        if x or y:
+            transform += " translate(%s, %s)" % (x or '0', y or '0')
+
+        if transform:
+            self.shape_converter.applyTransformOnGroup(transform, group)
+
+        group.scale(x_scale, y_scale )
         return group
 
     def renderG(self, node, clipping=None, display=1):
