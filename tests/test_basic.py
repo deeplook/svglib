@@ -22,6 +22,8 @@ from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 from svglib import svglib, utils
 
+import pytest
+
 
 def _testit(func, mapping):
     "Call `func` on input in mapping and return list of failed tests."
@@ -640,3 +642,6 @@ class TestSVGEmbedded(object):
         embedded_svg_group = drawing.contents[0].contents[1].contents[0]
         # x / y translation
         assert embedded_svg_group.getProperties()['transform'][-2:] == (0, 100)
+        # viewBox scaling
+        assert pytest.approx(1.417, 0.001) == embedded_svg_group.getProperties()['transform'][0]
+        assert pytest.approx(1.417, 0.001) == embedded_svg_group.getProperties()['transform'][3]
