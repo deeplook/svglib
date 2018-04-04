@@ -551,6 +551,16 @@ class SvgRenderer:
             if x or y:
                 group.translate(x or 0, y or 0)
 
+            view_box = self.get_box(node)
+            if view_box:
+                x_scale, y_scale = 1, 1
+                width, height = map(getAttr, ("width", "height"))
+                width, height = map(self.attrConverter.convertLength, (width, height))
+                if view_box.height != height:
+                    y_scale = height / view_box.height
+                if view_box.width != width:
+                    x_scale = width / view_box.width
+                group.scale(x_scale, y_scale)
         return group
 
     def renderG(self, node, clipping=None, display=1):
