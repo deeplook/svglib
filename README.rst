@@ -77,7 +77,7 @@ interactive Python session::
     >>>
     >>> drawing = svg2rlg("file.svg")
     >>> renderPDF.drawToFile(drawing, "file.pdf")
-    >>> renderPM.drawToFile(drawing, "file.png")
+    >>> renderPM.drawToFile(drawing, "file.png", fmt="PNG")
 
 In addition a script named ``svg2pdf`` can be used more easily from
 the system command-line. Here is the output from ``svg2pdf -h``::
