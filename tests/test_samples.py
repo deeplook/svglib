@@ -406,11 +406,6 @@ class TestW3CSVG(object):
             "paint-stroke-06-t.svg",
             "paint-stroke-207-t.svg",
             "coords-trans-09-t.svg",  # renderPDF issue (div by 0)
-            # Unsupported 'transform="ref(svg, ...)"' expression
-            "coords-constr-201-t.svg",
-            "coords-constr-202-t.svg",
-            "coords-constr-203-t.svg",
-            "coords-constr-204-t.svg",
         ]
 
         paths = glob.glob("%s/svg/*.svg" % self.folder_path)

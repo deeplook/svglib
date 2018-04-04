@@ -228,10 +228,13 @@ class AttributeConverter:
             subline = subline.strip()
             subline = subline.replace(',', ' ')
             subline = re.sub("[ ]+", ',', subline)
-            if ',' in subline:
-                indices.append(tuple(float(num) for num in subline.split(',')))
-            else:
-                indices.append(float(subline))
+            try:
+                if ',' in subline:
+                    indices.append(tuple(float(num) for num in subline.split(',')))
+                else:
+                    indices.append(float(subline))
+            except ValueError:
+                continue
             ops = ops[:bi] + ' '*(bj-bi+1) + ops[bj+1:]
         ops = ops.replace(',', ' ').split()
 

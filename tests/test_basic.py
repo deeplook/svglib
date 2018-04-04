@@ -252,8 +252,10 @@ class TestTransformAttrConverter(object):
                 [("scale", 2.0), ("translate", (10.0, -20.5))]),
             ("scale(0.9), translate(27,40)",
                 [("scale", 0.9), ("translate", (27.0, 40.0))]),
-            # Invalid expression returns empty list
+            # Invalid/unsupported expressions return empty list
             ("scale(0.9), translate",
+                []),
+            ("ref(svg)",
                 []),
         )
         ac = svglib.Svg2RlgAttributeConverter()
