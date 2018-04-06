@@ -14,5 +14,8 @@ docs/_build
 *.swp
 *.egg
 env/
+venv/
 .workon
 dist/
+.idea/
+.DS_Store
