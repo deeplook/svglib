@@ -38,7 +38,7 @@ from reportlab.graphics.shapes import (
     Polygon, Rect, String,
 )
 from reportlab.lib import colors
-from reportlab.lib.units import pica, toLength
+from reportlab.lib.units import pica, toLength, mm
 from lxml import etree
 
 from .utils import (
@@ -284,9 +284,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * em_base
         elif text.endswith("px"):
             return float(text[:-2])
+        elif text.endswith("mm"):
+            return float(text[:-2]) * mm
 
         if "ex" in text:
-            logger.warn("Ignoring unit ex")
+            logger.warning("Ignoring unit ex")
             text = text.replace("ex", '')
 
         text = text.strip()
@@ -425,15 +427,18 @@ class SvgRenderer:
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
         self.box = Box(x=0, y=0, width=0, height=0)
+        self.width = 0
+        self.height = 0
 
     def render(self, svg_node):
         main_group = self.renderNode(svg_node)
         for xlink in self.waiting_use_nodes.keys():
             logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
-
-        main_group.scale(1, -1)
+        scale_x = self.width / self.box.width
+        scale_y = self.height / self.box.height
+        main_group.scale(scale_x, -scale_y)
         main_group.translate(0 - self.box.x, -self.box.height - self.box.y)
-        drawing = Drawing(self.box.width, self.box.height)
+        drawing = Drawing(self.width, self.height)
         drawing.add(main_group)
         return drawing
 
@@ -530,6 +535,8 @@ class SvgRenderer:
         getAttr = node.getAttribute
         width, height = map(getAttr, ("width", "height"))
         width, height = map(self.attrConverter.convertLength, (width, height))
+        self.width = width
+        self.height = height
         viewBox = getAttr("viewBox")
         if viewBox:
             viewBox = self.attrConverter.convertLengthList(viewBox)
@@ -801,7 +808,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         subpath_start = []
         lastop = ''
 
-        for i in xrange(0, len(normPath), 2):
+        for i in range(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
 
             if op in ('m', 'M') and i > 0 and path.operators[-1] != _CLOSEPATH:
