@@ -801,7 +801,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         subpath_start = []
         lastop = ''
 
-        for i in xrange(0, len(normPath), 2):
+        for i in range(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
 
             if op in ('m', 'M') and i > 0 and path.operators[-1] != _CLOSEPATH:
