@@ -38,7 +38,7 @@ from reportlab.graphics.shapes import (
     Polygon, Rect, String,
 )
 from reportlab.lib import colors
-from reportlab.lib.units import pica, toLength
+from reportlab.lib.units import pica, toLength, mm
 from lxml import etree
 
 from .utils import (
@@ -284,6 +284,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * em_base
         elif text.endswith("px"):
             return float(text[:-2])
+        elif text.endswith("mm"):
+            return float(text[:-2]) * mm
 
         if "ex" in text:
             logger.warn("Ignoring unit ex")
