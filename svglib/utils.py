@@ -196,7 +196,7 @@ def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
 
     c1 = cos(theta1)
     s1 = sin(theta1)
-    for i in xrange(nfrag):
+    for i in range(nfrag):
         c0 = c1
         s0 = s1
         theta1 = start_rad + i * frag_rad
