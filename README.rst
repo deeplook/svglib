@@ -8,13 +8,16 @@ Svglib
 A pure-Python library for reading and converting SVG
 ---------------------------------------------------------------------------
 
-|ci| |appveyor|
+|ci| |appveyor| |pypi|
 
 .. |ci| image:: http://img.shields.io/travis/deeplook/svglib.svg
   :target: https://travis-ci.org/deeplook/svglib
 
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/4guofbxkwgsu8537/branch/master?svg=true
   :target: https://ci.appveyor.com/project/deeplook/svglib
+
+.. |pypi| image:: https://img.shields.io/pypi/v/svglib.svg
+  :target: https://pypi.python.org/pypi/svglib
 
 
 About
