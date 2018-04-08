@@ -82,6 +82,10 @@ interactive Python session::
     >>> renderPDF.drawToFile(drawing, "file.pdf")
     >>> renderPM.drawToFile(drawing, "file.png", fmt="PNG")
 
+Note that the second parameter of ``drawToFile`` can be any
+`Python file object`_, like a ``BytesIO`` buffer if you don't want the result
+to be written on disk for example.
+
 In addition a script named ``svg2pdf`` can be used more easily from
 the system command-line. Here is the output from ``svg2pdf -h``::
 
@@ -234,6 +238,7 @@ well as the versions of ``svglib``, ReportLab and Python being used!
 .. _PyTest: http://pytest.org
 .. _svglib page on PyPI: https://pypi.python.org/pypi/svglib
 .. _svglib releases page on GitHub: https://github.com/deeplook/svglib/releases
+.. _Python file object: https://docs.python.org/3/glossary.html#term-file-object
 .. _Anaconda: https://www.anaconda.com/download/
 .. _Miniconda: https://conda.io/miniconda.html
 .. _Conda: https://conda.io
