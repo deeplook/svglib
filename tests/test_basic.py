@@ -649,7 +649,7 @@ class TestViewBox(object):
             </svg>
         ''')))
         # Main group coordinates are translated to match the viewBox origin
-        assert drawing.contents[0].transform == (1, 0, 0, -1, 60.0, 40.0)
+        assert drawing.contents[0].transform == (10, 0, 0, -10, 600.0, 400.0)
 
 
 class TestEmbedded(object):
