@@ -58,7 +58,7 @@ Features
 - test entire `W3C SVG test suite`_ after pulling from the internet
 - test all SVG `flags from Wikipedia`_ after pulling from the internet
 - test selected SVG `symbols from Wikipedia`_ after pulling from the net
-- run on Python 2.7 and Python 3.5
+- run on Python 2.7 and Python 3.5 and 3.6
 
 
 Known limitations
