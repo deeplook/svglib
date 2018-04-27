@@ -1,2 +1,2 @@
 reportlab==3.4.0
-lxml
+lxml==4.2.1
