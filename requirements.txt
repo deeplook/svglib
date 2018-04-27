@@ -1,2 +1,2 @@
-reportlab
-lxml
+reportlab==3.4.0
+lxml==4.2.1
