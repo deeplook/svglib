@@ -364,6 +364,28 @@ class TestApplyTransformOnGroup(object):
         assert group.transform == (1, 0, 0, 1, 10, 0)
 
 
+class TestStyleSheets(object):
+    def test_css_stylesheet(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267" xml:space="preserve">
+              <defs>
+                <style type="text/css">
+                #p1 { fill:rgb(255,0,0); }
+                .paths { stroke-width:1.5; }
+                </style>
+              </defs>
+              <g id="g1">
+                <path id="p1" class="paths" d="M 0,-100 V 0 H 50"/>
+                <path id="p2" class="paths other" d="M 0,100 V 0 H 50"/>
+              </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        assert main_group.contents[0].contents[0].contents[0].fillColor == colors.red
+        assert main_group.contents[0].contents[1].contents[0].strokeWidth == 1.5
+
+
 class TestTextNode(object):
     def test_font_family(self):
         def font_config_available():

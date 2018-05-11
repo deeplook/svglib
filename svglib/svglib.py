@@ -40,6 +40,8 @@ from reportlab.graphics.shapes import (
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
 from lxml import etree
+import cssselect2
+import tinycss2
 
 from .utils import (
     bezier_arc_from_end_points, convert_quadratic_to_cubic_path,
@@ -64,6 +66,8 @@ _registered_fonts = {}
 logger = logging.getLogger(__name__)
 
 Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
+
+split_whitespace = re.compile('[^ \t\r\n\f]+').findall
 
 
 def find_font(font_name):
@@ -138,10 +142,34 @@ class ClippingPath(Path):
         return props
 
 
+class CSSMatcher(cssselect2.Matcher):
+    def __init__(self, style_content):
+        super(CSSMatcher, self).__init__()
+        self.rules = tinycss2.parse_stylesheet(
+            style_content, skip_comments=True, skip_whitespace=True
+        )
+        for rule in self.rules:
+            if not rule.prelude:
+                continue
+            selectors = cssselect2.compile_selector_list(rule.prelude)
+            selector_string = tinycss2.serialize(rule.prelude)
+            content_dict = dict(
+                (attr.split(':')[0].strip(), attr.split(':')[1].strip())
+                for attr in tinycss2.serialize(rule.content).split(';')
+                if ':' in attr
+            )
+            payload = (selector_string, content_dict)
+            for selector in selectors:
+                self.add_selector(selector, payload)
+
+
 # Attribute converters (from SVG to RLG)
 
-class AttributeConverter:
+class AttributeConverter(object):
     "An abstract class to locate and convert attributes in a DOM instance."
+
+    def __init__(self):
+        self.css_rules = None
 
     def parseMultiAttributes(self, line):
         """Try parsing compound attribute string.
@@ -171,6 +199,11 @@ class AttributeConverter:
 
         # This needs also to lookup values like "url(#SomeName)"...
 
+        if self.css_rules is not None and not svgNode.attrib.get('__rules_applied', False):
+            if isinstance(svgNode, NodeTracker):
+                svgNode.apply_rules(self.css_rules)
+            else:
+                ElementWrapper(svgNode).apply_rules(self.css_rules)
         attr_value = svgNode.attrib.get(name, '').strip()
 
         if attr_value and attr_value != "inherit":
@@ -181,7 +214,6 @@ class AttributeConverter:
                 return dict[name]
         if svgNode.getparent() is not None:
             return self.findAttr(svgNode.getparent(), name)
-
         return ''
 
     def getAllAttributes(self, svgNode):
@@ -252,7 +284,8 @@ class AttributeConverter:
 class Svg2RlgAttributeConverter(AttributeConverter):
     "A concrete SVG to RLG attribute converter."
 
-    def __init__(self,color_converter=None):
+    def __init__(self, color_converter=None):
+        super(Svg2RlgAttributeConverter, self).__init__()
         self.color_converter = color_converter or self.identity_color_converter
 
     @staticmethod
@@ -386,15 +419,72 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return DEFAULT_FONT_NAME
 
 
-class NodeTracker:
+class ElementWrapper(object):
+    """
+    lxml element wrapper to partially match the API from cssselect2.ElementWrapper
+    so as element can be passed to rules.match().
+    """
+    in_html_document = False
+
+    def __init__(self, obj):
+        self.object = obj
+
+    @property
+    def id(self):
+        return self.object.attrib.get('id')
+
+    @property
+    def etree_element(self):
+        return self.object
+
+    @property
+    def parent(self):
+        par = self.object.getparent()
+        return ElementWrapper(par) if par else None
+
+    @property
+    def classes(self):
+        cl = self.object.attrib.get('class')
+        return split_whitespace(cl) if cl is not None else []
+
+    @property
+    def local_name(self):
+        return node_name(self.object)
+
+    @property
+    def namespace_url(self):
+        if '}' in self.object.tag:
+            self.object.tag.split('}')[0][1:]
+
+    def iter_ancestors(self):
+        element = self
+        while element.parent is not None:
+            element = element.parent
+            yield element
+
+    def apply_rules(self, rules):
+        matches = rules.match(self)
+        for match in matches:
+            attr_dict = match[3][1]
+            for attr, val in attr_dict.items():
+                if not attr in self.object.attrib:
+                    try:
+                        self.object.attrib[attr] = val
+                    except ValueError:
+                        pass
+        # Set marker on the node to not apply rules more than once
+        self.object.set('__rules_applied', '1')
+
+
+class NodeTracker(ElementWrapper):
     """An object wrapper keeping track of arguments to certain method calls.
 
     Instances wrap an object and store all arguments to one special
     method, getAttribute(name), in a list of unique elements, usedAttrs.
     """
 
-    def __init__(self, anObject):
-        self.object = anObject
+    def __init__(self, obj):
+        super(NodeTracker, self).__init__(obj)
         self.usedAttrs = []
 
     def getAttribute(self, name):
@@ -458,6 +548,8 @@ class SvgRenderer:
             item = self.renderG(n, clipping=clipping)
             if display != "none":
                 parent.add(item)
+        elif name == "style":
+            self.renderStyle(n)
         elif name == "symbol":
             item = self.renderSymbol(n)
             parent.add(item)
@@ -578,6 +670,9 @@ class SvgRenderer:
             self.shape_converter.applyTransformOnGroup(transform, gr)
 
         return gr
+
+    def renderStyle(self, node):
+        self.attrConverter.css_rules = CSSMatcher(node.text)
 
     def renderSymbol(self, node):
         return self.renderG(node, display=0)
