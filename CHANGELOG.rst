@@ -31,3 +31,18 @@ Sadly, no condensed changelog exists prior to version 0.6.3.
 - fixed crash with empty path definitions
 - symbol definitions are considered when referenced in nodes
 - fixed compatibility with recent ReportLab versions
+
+0.8.2:
+
+- fixed svgz output on Python 3
+- kept PDF standard fonts untouched (#89)
+- added basic support for non-standard fonts (#89, #107)
+- allowed list of font names
+- better merge style attributes from parent nodes (#119)
+- fixed crash with strings in transform parameters
+- handled PNGs embedded in SVG sources (#93)
+- improved scaling of embedded SVGs (#124)
+- added millimeter unit support
+- fixed crash in elliptical arc calculation (#117)
+- added experimental support for CSS style sheets (#111)
+- allowed decimal percentage values in rgb colors
