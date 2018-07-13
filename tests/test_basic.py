@@ -176,7 +176,7 @@ class TestColorAttrConverter(object):
             ("red", colors.red),
             ("#ff0000", colors.red),
             ("#f00", colors.red),
-            ("rgb(100%,0%,0%)", colors.red),
+            ("rgb(100%,0.5%,0.5%)", colors.Color(1, 0.005, 0.005, 1)),
             ("rgb(255, 0, 0)", colors.red),
         )
         ac = svglib.Svg2RlgAttributeConverter()

@@ -370,7 +370,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return self.color_converter(colors.HexColor(col))
         elif text.startswith('rgb') and '%' in text:
             t = text[3:].replace('%', '').strip('()')
-            tup = (int(val)/100.0 for val in t.split(','))
+            tup = (float(val)/100.0 for val in t.split(','))
             return self.color_converter(colors.Color(*tup))
 
         logger.warn("Can't handle color: %s" % text)
