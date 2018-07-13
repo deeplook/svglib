@@ -457,5 +457,5 @@ class TestOtherFiles(object):
         path = join(TEST_ROOT, "samples", "others", "png_in_svg.svg")
         drawing = svglib.svg2rlg(path)
         result = renderPDF.drawToString(drawing)
-        # If the PNG image is really included, the size is over 10k.
-        assert len(result) > 10000
+        # If the PNG image is really included, the size is over 7k.
+        assert len(result) > 7000
