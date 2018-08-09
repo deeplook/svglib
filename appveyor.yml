@@ -8,8 +8,8 @@ install:
   - C:\Python36\python -m pip install tox
 
 build_script:
-  - C:\Python36\python python setup.py bdist_wheel
-  - C:\Python27\python python setup.py bdist_wheel
+  - C:\Python36\python setup.py bdist_wheel
+  - C:\Python27\python setup.py bdist_wheel
 
 test_script:
   - C:\Python36\scripts\tox
@@ -19,7 +19,8 @@ deploy_script:
   - SET PYPI_USERNAME=SVG_LIB_USERNAME
   - SET PYPI_PASSWORD=SVG_LIB_PASSWORD
   - SET PYPI_REPO_URL=https://test.pypi.org/legacy/
-  - C:\Python36\python -m pip install twine --repository-url %PYPI_REPO_URL% dist/* -u %PYPI_USERNAME% - p %PYPI_PASSWORD%
+  - C:\Python36\python -m pip install twine
+  - twine upload --repository-url %PYPI_REPO_URL% dist/* -u %PYPI_USERNAME% - p %PYPI_PASSWORD%
 
 artifacts:
   - path: ./dist/*.whl
