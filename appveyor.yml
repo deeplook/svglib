@@ -19,11 +19,11 @@ test_script:
   # From https://gist.github.com/IlyaFinkelshteyn/dc0b08593cb0babff2bd84dd05c4ee42
   # From https://gist.github.com/IlyaFinkelshteyn/14750254656005c25c359371d7b4359f
   - echo "Starting release..."
-  - Import-module ./appveyor_wait_for_other_jobs_complete.ps1 -Force
-  - Import-module ./appveyor_wait_for_travis.ps1 -Force
-  - SET TRAVIS_API_TOKEN='FOO'
-  - allJobsFinished
-  - allCIsFinished
+  - ps: Import-module ./appveyor_wait_for_other_jobs_complete.ps1 -Force
+  - ps: Import-module ./appveyor_wait_for_travis.ps1 -Force
+  - ps: $env:TRAVIS_API_TOKEN="FOO"
+  - ps: allJobsFinished
+  - ps: allCIsFinished
   - SET PYPI_USERNAME=SVG_LIB_USERNAME
   - SET PYPI_PASSWORD=SVG_LIB_PASSWORD
   - SET PYPI_REPO_URL=https://test.pypi.org/legacy/
