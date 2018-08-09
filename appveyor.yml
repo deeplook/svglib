@@ -18,7 +18,8 @@ deploy_script:
   #- if %APPVEYOR_REPO_TAG% equ false exit
   - SET PYPI_USERNAME=SVG_LIB_USERNAME
   - SET PYPI_PASSWORD=SVG_LIB_PASSWORD
-  - C:\Python36\python -m pip install twine --repository-url https://test.pypi.org/legacy/ dist/* -u %PYPI_USERNAME% - p %PYPI_PASSWORD%
+  - SET PYPI_REPO_URL=https://test.pypi.org/legacy/
+  - C:\Python36\python -m pip install twine --repository-url %PYPI_REPO_URL% dist/* -u %PYPI_USERNAME% - p %PYPI_PASSWORD%
 
 artifacts:
   - path: ./dist/*.whl
