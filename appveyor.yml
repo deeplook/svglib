@@ -7,7 +7,18 @@ environment:
 install:
   - C:\Python36\python -m pip install tox
 
-build: false  # Not a C# project
+build_script:
+  - C:\Python36\python python setup.py bdist_wheel
+  - C:\Python27\python python setup.py bdist_wheel
 
 test_script:
   - C:\Python36\scripts\tox
+
+deploy_script:
+  #- if %APPVEYOR_REPO_TAG% equ false exit
+  - SET PYPI_USERNAME=SVG_LIB_USERNAME
+  - SET PYPI_PASSWORD=SVG_LIB_PASSWORD
+  - C:\Python36\python -m pip install twine --repository-url https://test.pypi.org/legacy/ dist/* -u %PYPI_USERNAME% - p %PYPI_PASSWORD%
+
+artifacts:
+  - path: ./dist/*.whl
