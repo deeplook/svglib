@@ -19,8 +19,8 @@ test_script:
   # From https://gist.github.com/IlyaFinkelshteyn/dc0b08593cb0babff2bd84dd05c4ee42
   # From https://gist.github.com/IlyaFinkelshteyn/14750254656005c25c359371d7b4359f
   - echo "Starting release..."
-  - . ./appveyor_wait_for_other_jobs_complete.ps1
-  - . ./appveyor_wait_for_travis.ps1
+  - Import-module ./appveyor_wait_for_other_jobs_complete.ps1 -Force
+  - Import-module ./appveyor_wait_for_travis.ps1 -Force
   - SET TRAVIS_API_TOKEN='FOO'
   - allJobsFinished
   - allCIsFinished
