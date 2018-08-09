@@ -5,7 +5,8 @@ environment:
   - TOXENV: "py36"
 
 install:
-  - C:\Python36\python -m pip install tox
+  - C:\Python36\python -m pip install tox wheel
+  - C:\Python27\python -m pip install wheel
 
 build_script:
   - C:\Python36\python setup.py bdist_wheel
