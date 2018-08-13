@@ -16,3 +16,9 @@ docs/_build
 env/
 .workon
 dist/
+
+# Generated files
+.cache
+tests/samples/**/*.pdf
+tests/samples/W3C_SVG_12*
+tests/samples/wikipedia
