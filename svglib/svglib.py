@@ -50,6 +50,11 @@ logger = logging.getLogger(__name__)
 
 Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 
+# python3??
+try:
+    xrange
+except NameError:
+    xrange = range
 
 class NoStrokePath(Path):
     """
