@@ -408,6 +408,10 @@ class TestTextNode(object):
         else:
             # Unknown fonts are converted to Helvetica by default.
             assert converter.convertFontFamily('SomeFont') == 'Helvetica'
+        # Check font names with spaces
+        assert converter.split_attr_list("'Open Sans', Arial, 'New Times Roman'") == [
+            'Open Sans', 'Arial', 'New Times Roman'
+        ]
 
     def test_space_preservation(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
