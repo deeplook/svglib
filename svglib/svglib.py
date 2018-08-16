@@ -23,6 +23,7 @@ import os
 import re
 import base64
 import tempfile
+import shlex
 import shutil
 import subprocess
 import sys
@@ -294,7 +295,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
     @staticmethod
     def split_attr_list(attr):
-        return re.split(r'\s+', attr.strip().replace(',', ' '))
+        return shlex.split(attr.strip().replace(',', ' '))
 
     def convertLength(self, svgAttr, percentOf=100, em_base=12):
         "Convert length to points."
