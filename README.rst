@@ -1,8 +1,8 @@
 .. -*- mode: rst -*-
 
-========
+======
 Svglib
-========
+======
 
 ---------------------------------------------------------------------------
 A pure-Python library for reading and converting SVG
@@ -18,6 +18,15 @@ A pure-Python library for reading and converting SVG
 
 .. |pypi| image:: https://img.shields.io/pypi/v/svglib.svg
   :target: https://pypi.python.org/pypi/svglib
+
+
+Warning
+-------
+
+**Release 0.9.0b0 will be an interrim release (still work in progress)
+and, while containing many improvements over the previous 0.8.1 release,
+will be removed from PyPI again and fully replaced with 0.9.0 final
+within a timeframe of one or two weeks after publishing 0.9.0b0!**
 
 
 About
@@ -92,7 +101,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.8.1
+    svg2pdf v. 0.9.0b0
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -166,7 +175,7 @@ run the test suite::
 ++++++++++++++++++
 
 If you use Anaconda_ or Miniconda_ you are surely using its respective package
-manager, Conda_, as well. In that case you can install ``svglib`` 0.8.1 or
+manager, Conda_, as well. In that case you can install ``svglib`` 0.9.0b0 or
 higher using these simple commands::
 
     $ conda config --add channels conda-forge
@@ -179,13 +188,13 @@ higher using these simple commands::
 3. Manual installation
 +++++++++++++++++++++++
 
-Alternatively, you can install a tarball like ``svglib-0.8.1.tar.gz``
+Alternatively, you can install a tarball like ``svglib-0.9.0b0.tar.gz``
 after downloading it from the `svglib page on PyPI`_ or the
 `svglib releases page on GitHub`_ and executing a sequence of commands
 like shown here::
 
-    $ tar xfz svglib-0.8.1.tar.gz
-    $ cs svglib-0.8.1
+    $ tar xfz svglib-0.9.0b0.tar.gz
+    $ cs svglib-0.9.0b0
     $ python setup.py install
 
 This will install a Python package named ``svglib`` in the
@@ -202,8 +211,8 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
 
-    $ tar xfz svglib-0.8.1.tar.gz
-    $ cd svglib-0.8.1
+    $ tar xfz svglib-0.9.0b0.tar.gz
+    $ cd svglib-0.9.0b0
     $ PYTHONPATH=. py.test
     ======================== test session starts =========================
     platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0

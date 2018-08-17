@@ -31,3 +31,7 @@ Sadly, no condensed changelog exists prior to version 0.6.3.
 - fixed crash with empty path definitions
 - symbol definitions are considered when referenced in nodes
 - fixed compatibility with recent ReportLab versions
+
+0.9.0b0:
+
+- countless improvements to be hopefully listed in more detail in 0.9.0

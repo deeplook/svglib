@@ -49,10 +49,10 @@ from .utils import (
     normalise_svg_path,
 )
 
-__version__ = '0.8.1'
+__version__ = '0.9.0b0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2017-04-22'
+__date__ = '2018-08-18'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 STANDARD_FONT_NAMES = (
