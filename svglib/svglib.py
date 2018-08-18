@@ -40,6 +40,7 @@ from reportlab.graphics.shapes import (
 )
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
+from reportlab.lib.utils import haveImages
 from lxml import etree
 import cssselect2
 import tinycss2
@@ -1069,6 +1070,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         return gr
 
     def convertImage(self, node):
+        if not haveImages:
+            logger.warn(
+                "Unable to handle embedded images. Maybe the pillow library is missing?"
+            )
+            return None
+
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))

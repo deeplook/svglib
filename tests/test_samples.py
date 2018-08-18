@@ -32,6 +32,7 @@ except ImportError:
 
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
+from reportlab.lib.utils import haveImages
 from reportlab.graphics import renderPDF, renderPM
 import pytest
 
@@ -453,6 +454,7 @@ class TestW3CSVG(object):
 
 
 class TestOtherFiles(object):
+    @pytest.mark.skipif(not haveImages, reason="missing pillow library")
     def test_png_in_svg(self):
         path = join(TEST_ROOT, "samples", "others", "png_in_svg.svg")
         drawing = svglib.svg2rlg(path)
