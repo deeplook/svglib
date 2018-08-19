@@ -1,6 +1,6 @@
 # configuration for pyup.io
 
-pin: True
+pin: False
 
 schedule: "every day"
 
