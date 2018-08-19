@@ -1,4 +1,4 @@
-reportlab
-lxml
+reportlab==3.5.5
+lxml==4.2.4
 tinycss2>=0.6.0
 cssselect2>=0.2.0
