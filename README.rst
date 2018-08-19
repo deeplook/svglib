@@ -8,7 +8,7 @@ Svglib
 A pure-Python library for reading and converting SVG
 ---------------------------------------------------------------------------
 
-|ci| |appveyor| |pypi|
+|ci| |appveyor| |pypi| |pyup|
 
 .. |ci| image:: http://img.shields.io/travis/deeplook/svglib.svg
   :target: https://travis-ci.org/deeplook/svglib
@@ -21,7 +21,6 @@ A pure-Python library for reading and converting SVG
 
 .. |pyup| image:: https://pyup.io/repos/github/deeplook/svglib/shield.svg
   :target: https://pyup.io/repos/github/deeplook/svglib/
-  :alt: Updates
 
 
 Warning
@@ -179,8 +178,8 @@ run the test suite::
 ++++++++++++++++++
 
 If you use Anaconda_ or Miniconda_ you are surely using its respective package
-manager, Conda_, as well. In that case you can install ``svglib`` 0.9.0b0 or
-higher using these simple commands::
+manager, Conda_, as well. In that case the latest ``svglib`` you can install
+is 0.8.1 (until a higher version will be available) using these simple commands::
 
     $ conda config --add channels conda-forge
     $ conda install svglib
