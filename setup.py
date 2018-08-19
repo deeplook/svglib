@@ -5,7 +5,7 @@ import distutils.core
 __version__ = '0.9.0b0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2018-08-18'
+__date__ = '2018-08-19'
 
 install_requires = open('requirements.txt').read().strip().split()
 v = sys.version_info
