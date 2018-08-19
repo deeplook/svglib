@@ -26,10 +26,10 @@ A pure-Python library for reading and converting SVG
 Warning
 -------
 
-**Release 0.9.0b0 will be an interrim release (still work in progress)
-and, while containing many improvements over the previous 0.8.1 release,
-will be removed from PyPI again and fully replaced with 0.9.0 final
-within a timeframe of one or two weeks after publishing 0.9.0b0!**
+**Release 0.9.0b0 is an interrim release and, while containing many
+improvements over the previous 0.8.1 release, will be removed from PyPI
+again and fully replaced with 0.9.0 final within a timeframe of one or
+two weeks after publishing 0.9.0b0!**
 
 
 About
