@@ -1230,6 +1230,25 @@ def svg2rlg(path, **kwargs):
     return drawing
 
 
+def svgstring2rlg(svgstring, **kwargs):
+    "Convert an SVG file to an RLG Drawing object."
+
+    # load SVG file
+    parser = etree.XMLParser(remove_comments=True, recover=True)
+    try:
+        svg = etree.fromstring(svgstring, parser=parser)
+    except Exception as exc:
+        logger.error("Failed to load svg string! (%s)" % exc)
+
+        return
+
+    # convert to a RLG drawing
+    svgRenderer = SvgRenderer(path=None,**kwargs)
+    drawing = svgRenderer.render(svg)
+
+    return drawing
+
+
 def node_name(node):
     """Return lxml node name without the namespace prefix."""
 
