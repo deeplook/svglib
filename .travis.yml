@@ -11,7 +11,7 @@ script:
   - travis_wait 30 tox
   - pip install requests
   - python travis_wait_for_appveyor.py
-  - echo 'LOOKS LIKE APPVEYOR IS DONE'
+  - echo 'LOOKS LIKE APPVEYOR IS OK'
   #- SET PYPI_USERNAME=SVG_LIB_USERNAME
   #- SET PYPI_PASSWORD=SVG_LIB_PASSWORD
   #- SET PYPI_REPO_URL=https://test.pypi.org/legacy/
