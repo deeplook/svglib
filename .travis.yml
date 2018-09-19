@@ -11,3 +11,9 @@ script:
   - travis_wait 30 tox
   - pip install requests
   - python travis_wait_for_appveyor.py
+  - echo 'LOOKS LIKE APPVEYOR IS DONE'
+  #- SET PYPI_USERNAME=SVG_LIB_USERNAME
+  #- SET PYPI_PASSWORD=SVG_LIB_PASSWORD
+  #- SET PYPI_REPO_URL=https://test.pypi.org/legacy/
+  #- C:\Python36\python -m pip install twine
+  #- twine upload --repository-url %PYPI_REPO_URL% dist/* -u %PYPI_USERNAME% - p %PYPI_PASSWORD%
