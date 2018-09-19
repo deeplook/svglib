@@ -9,3 +9,5 @@ install:
 
 script:
   - travis_wait 30 tox
+  - pip install requests
+  - python travis_wait_for_appveyor.py
