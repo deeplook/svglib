@@ -18,7 +18,7 @@ def fetch_appveyor_build(url, headers, params, commit_sha):
     return build
 
 def main():
-    assert os.environ['TRAVIS'] == True
+    assert os.environ['TRAVIS'] == 'true'
     assert 'APPVEYOR_AUTH_TOKEN' in os.environ and os.environ['APPVEYOR_AUTH_TOKEN'] is not None
     assert 'APPVEYOR_USER' in os.environ and os.environ['APPVEYOR_USER'] is not None
 
