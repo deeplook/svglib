@@ -15,6 +15,7 @@ tool named sv2pdf (which should also handle SVG files compressed with
 gzip and extension .svgz).
 """
 
+import sys
 import copy
 import gzip
 import itertools
@@ -68,6 +69,13 @@ _registered_fonts = {}
 logger = logging.getLogger(__name__)
 
 Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
+
+# Some Python 3 compatibility shims
+if sys.version_info.major < 3:
+    STRING_TYPES = (str, unicode)
+else:
+    STRING_TYPES = str
+    xrange = range
 
 split_whitespace = re.compile('[^ \t\r\n\f]+').findall
 
