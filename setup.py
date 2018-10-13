@@ -1,5 +1,5 @@
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 import distutils.core
 
 __version__ = '0.9.0b0'
@@ -30,9 +30,11 @@ setup(
     setup_requires=[] + pytest_runner,
     tests_require=['pytest'],
     package_dir = {'svglib': 'svglib'},
-    packages = ['svglib'],
+    packages = find_packages(),
     py_modules = [],
-    scripts = ['scripts/svg2pdf'],
+    entry_points = {
+        'console_scripts': ['svg2pdf=svglib.svg2pdf:_main'],
+    },
     classifiers=[
         # see http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 4 - Beta',
