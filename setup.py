@@ -1,6 +1,5 @@
 import sys
 from setuptools import setup
-import distutils.core
 
 __version__ = '0.9.0b0'
 __license__ = 'LGPL 3'
