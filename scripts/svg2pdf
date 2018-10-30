@@ -107,7 +107,6 @@ def _main():
              'base, ext, now) in both, %%(name)s and {name} notations.'
     )
 
-    line_filter_default = u''
     p.add_argument('input',
         metavar='PATH',
         nargs='*',
