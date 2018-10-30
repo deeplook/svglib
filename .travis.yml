@@ -3,10 +3,12 @@ python:
   - "2.7"
   - "3.5"
   - "3.6"
-  - "3.7-dev"
-
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial  # required for Python 3.7 (travis-ci/travis-ci#9069)
+      sudo: true    # required for Python 3.7 (travis-ci/travis-ci#9069)
 install:
   - pip install tox-travis
-
 script:
   - travis_wait 30 tox
