@@ -20,6 +20,7 @@ wikipedia/flags
 
 The remaining issues here are mostly related to gradient fillings.
 
+- Belarus.svg
 - Belize.svg (gradient support)
 - Ecuador.svg (gradient support)
 - Guatemala.svg (gradient support)
