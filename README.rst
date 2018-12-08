@@ -105,7 +105,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.9.0b0
+    svg2pdf v. 0.9.0
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -179,8 +179,8 @@ run the test suite::
 ++++++++++++++++++
 
 If you use Anaconda_ or Miniconda_ you are surely using its respective package
-manager, Conda_, as well. In that case the latest ``svglib`` you can install
-is 0.8.1 (until a higher version will be available) using these simple commands::
+manager, Conda_, as well. In that case you should be able to install ``svglib``
+using these simple commands::
 
     $ conda config --add channels conda-forge
     $ conda install svglib
@@ -192,13 +192,13 @@ is 0.8.1 (until a higher version will be available) using these simple commands:
 3. Manual installation
 +++++++++++++++++++++++
 
-Alternatively, you can install a tarball like ``svglib-0.9.0b0.tar.gz``
+Alternatively, you can install a tarball like ``svglib-0.9.0.tar.gz``
 after downloading it from the `svglib page on PyPI`_ or the
 `svglib releases page on GitHub`_ and executing a sequence of commands
 like shown here::
 
-    $ tar xfz svglib-0.9.0b0.tar.gz
-    $ cs svglib-0.9.0b0
+    $ tar xfz svglib-0.9.0.tar.gz
+    $ cs svglib-0.9.0
     $ python setup.py install
 
 This will install a Python package named ``svglib`` in the
@@ -215,8 +215,8 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
 
-    $ tar xfz svglib-0.9.0b0.tar.gz
-    $ cd svglib-0.9.0b0
+    $ tar xfz svglib-0.9.0.tar.gz
+    $ cd svglib-0.9.0
     $ PYTHONPATH=. py.test
     ======================== test session starts =========================
     platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0

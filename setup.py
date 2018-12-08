@@ -1,10 +1,10 @@
 import sys
 from setuptools import setup
 
-__version__ = '0.9.0b0'
+__version__ = '0.9.0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2018-08-19'
+__date__ = '2018-12-08'
 
 install_requires = open('requirements.txt').read().strip().split()
 v = sys.version_info
