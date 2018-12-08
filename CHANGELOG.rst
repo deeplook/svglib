@@ -3,7 +3,7 @@
 ChangeLog
 =========
 
-0.9.0 (to be released)
+0.9.0 (2018-12-08)
 ----------------------
 
 - fixed svgz output on Python 3
