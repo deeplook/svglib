@@ -22,7 +22,10 @@ A pure-Python library for reading and converting SVG
 
 .. image:: https://img.shields.io/pypi/pyversions/svglib.svg
   :target: https://pypi.org/project/svglib
-  
+
+.. image:: https://img.shields.io/pypi/dm/svglib.svg
+  :target: https://pypi.org/project/svglib
+
 .. image:: https://img.shields.io/pypi/v/svglib.svg
   :target: https://pypi.org/project/svglib
 
