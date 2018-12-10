@@ -240,7 +240,7 @@ well as the versions of ``svglib``, ReportLab and Python being used!
 .. _RML: http://www.reportlab.com/software/rml-reference/
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
 .. _PyTest: http://pytest.org
-.. _svglib page on PyPI: https://pypi.python.org/pypi/svglib
+.. _svglib page on PyPI: https://pypi.org/project/svglib/
 .. _svglib releases page on GitHub: https://github.com/deeplook/svglib/releases
 .. _Python file object: https://docs.python.org/3/glossary.html#term-file-object
 .. _Anaconda: https://www.anaconda.com/download/
