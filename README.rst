@@ -10,17 +10,23 @@ A pure-Python library for reading and converting SVG
 
 |ci| |appveyor| |pypi| |pyup|
 
-.. |ci| image:: http://img.shields.io/travis/deeplook/svglib.svg
+.. image:: http://img.shields.io/travis/deeplook/svglib.svg
   :target: https://travis-ci.org/deeplook/svglib
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/4guofbxkwgsu8537/branch/master?svg=true
+.. image:: https://ci.appveyor.com/api/projects/status/4guofbxkwgsu8537/branch/master?svg=true
   :target: https://ci.appveyor.com/project/deeplook/svglib
 
-.. |pypi| image:: https://img.shields.io/pypi/v/svglib.svg
-  :target: https://pypi.python.org/pypi/svglib
-
-.. |pyup| image:: https://pyup.io/repos/github/deeplook/svglib/shield.svg
+.. image:: https://pyup.io/repos/github/deeplook/svglib/shield.svg
   :target: https://pyup.io/repos/github/deeplook/svglib/
+
+.. image:: https://img.shields.io/pypi/v/svglib.svg
+  :target: https://pypi.org/project/svglib
+
+.. image:: https://img.shields.io/pypi/pyversions/svglib.svg
+  :target: https://pypi.org/project/svglib
+
+.. image:: https://img.shields.io/pypi/l/svglib.svg
+  :target: https://pypi.org/project/svglib
 
 
 About
