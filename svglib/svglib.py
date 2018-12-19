@@ -1102,7 +1102,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 logger.error("Unable to read the image %s. Skipping..." % img.path)
                 return None
         group = Group(img)
-        group.translate(0, (x + height) * 2)
+        group.translate(0, (y + height) * 2)
         group.scale(1, -1)
         return group
 
