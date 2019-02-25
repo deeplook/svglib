@@ -1093,6 +1093,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # this needs to be removed later, not here...
             # if exists(path): os.remove(path)
         else:
+            if not isinstance(self.svg_source_file, str):
+                logger.error(
+                    "Unable to resolve image path '%s' as the SVG source is not a file system path." % xlink_href
+                )
+                return None
             xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
             img = Image(int(x), int(y + height), int(width), int(height), xlink_href)
             try:

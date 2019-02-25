@@ -652,7 +652,7 @@ class TestViewBox(object):
         assert drawing.contents[0].transform == (1, 0, 0, -1, 60.0, 40.0)
 
 
-class TestSVGEmbedded(object):
+class TestEmbedded(object):
     def test_svg_in_svg(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
@@ -684,3 +684,16 @@ class TestSVGEmbedded(object):
         # viewBox scaling
         assert pytest.approx(1.417, 0.001) == embedded_svg_group.getProperties()['transform'][0]
         assert pytest.approx(1.417, 0.001) == embedded_svg_group.getProperties()['transform'][3]
+
+    def test_png_in_svg_file_like(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 viewBox="0 0 210 297" height="297mm" width="210mm">
+              <image id="refImage" xlink:href="../png/jpeg-required-201-t.png" height="36" width="48" y="77" x="50" />
+            </svg>
+        ''')))
+        # FIXME: test the error log when we can require pytest >= 3.4
+        # No image as relative path in file-like input cannot be determined.
+        assert drawing.contents[0].contents == []
