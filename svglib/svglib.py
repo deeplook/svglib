@@ -510,9 +510,10 @@ class SvgRenderer:
     transforming it into a ReportLab Drawing instance.
     """
 
-    def __init__(self, path=None,color_converter=None):
+    def __init__(self, path=None, color_converter=None):
+        self.source_path = path
         self.attrConverter = Svg2RlgAttributeConverter(color_converter=color_converter)
-        self.shape_converter = Svg2RlgShapeConverter(path,self.attrConverter)
+        self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
@@ -562,6 +563,16 @@ class SvgRenderer:
             item = self.renderG(n)
         elif name in self.handled_shapes:
             display = n.getAttribute("display")
+            # If the node is an embedded svg image, we have to catch it before convertShape
+            if name == 'image':
+                xlink_href = n.attrib.get('{http://www.w3.org/1999/xlink}href')
+                if xlink_href and xlink_href.endswith('.svg'):
+                    path = os.path.join(os.path.dirname(self.source_path), xlink_href)
+                    svg_node = load_svg_file(path)
+                    if svg_node is not None:
+                        item = self.renderSvg(NodeTracker(svg_node))
+                        parent.add(item)
+                        return
             item = self.shape_converter.convertShape(name, n, clipping)
             if item and display != "none":
                 parent.add(item)
@@ -1215,24 +1226,30 @@ def svg2rlg(path, **kwargs):
         path = path[:-1]
         unzipped = True
 
-    # load SVG file
-    parser = etree.XMLParser(remove_comments=True, recover=True)
-    try:
-        doc = etree.parse(path, parser=parser)
-        svg = doc.getroot()
-    except Exception as exc:
-        logger.error("Failed to load input file! (%s)" % exc)
+    svg_root = load_svg_file(path)
+    if svg_root is None:
         return
 
     # convert to a RLG drawing
     svgRenderer = SvgRenderer(path,**kwargs)
-    drawing = svgRenderer.render(svg)
+    drawing = svgRenderer.render(svg_root)
 
     # remove unzipped .svgz file (.svg)
     if unzipped:
         os.remove(path)
 
     return drawing
+
+
+def load_svg_file(path):
+    parser = etree.XMLParser(remove_comments=True, recover=True)
+    try:
+        doc = etree.parse(path, parser=parser)
+        svg_root = doc.getroot()
+    except Exception as exc:
+        logger.error("Failed to load input file! (%s)" % exc)
+    else:
+        return svg_root
 
 
 def node_name(node):
