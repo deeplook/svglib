@@ -34,6 +34,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.lib.utils import haveImages
 from reportlab.graphics import renderPDF, renderPM
+from reportlab.graphics.shapes import Rect
 import pytest
 
 from svglib import svglib
@@ -461,3 +462,8 @@ class TestOtherFiles(object):
         result = renderPDF.drawToString(drawing)
         # If the PNG image is really included, the size is over 7k.
         assert len(result) > 7000
+
+    def test_external_svg_in_svg(self):
+        path = join(TEST_ROOT, "samples", "others", "svg_in_svg.svg")
+        drawing = svglib.svg2rlg(path)
+        assert isinstance(drawing.contents[0].contents[0].contents[0], Rect)
