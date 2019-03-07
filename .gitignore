@@ -1,4 +1,5 @@
 .coverage
+.idea
 MANIFEST
 coverage.xml
 nosetests.xml

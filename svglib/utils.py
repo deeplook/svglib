@@ -16,7 +16,7 @@ def split_floats(op, min_num, value):
     Example: with op='m' and value='10,20 30,40,' the returned value will be
              ['m', [10.0, 20.0], 'l', [30.0, 40.0]]
     """
-    floats = [float(seq) for seq in re.findall('(-?\d*\.?\d*(?:e[+-]\d+)?)', value) if seq]
+    floats = [float(seq) for seq in re.findall(r'(-?\d*\.?\d*(?:e[+-]\d+)?)', value) if seq]
     res = []
     for i in range(0, len(floats), min_num):
         if i > 0 and op in {'m', 'M'}:
