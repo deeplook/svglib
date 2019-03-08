@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 
-split_whitespace = re.compile('[^ \t\r\n\f]+').findall
+split_whitespace = re.compile(r'[^ \t\r\n\f]+').findall
 
 
 def find_font(font_name):
