@@ -466,4 +466,6 @@ class TestOtherFiles(object):
     def test_external_svg_in_svg(self):
         path = join(TEST_ROOT, "samples", "others", "svg_in_svg.svg")
         drawing = svglib.svg2rlg(path)
-        assert isinstance(drawing.contents[0].contents[0].contents[0], Rect)
+        embedded = drawing.contents[0].contents[0]
+        assert isinstance(embedded.contents[0].contents[0], Rect)
+        assert embedded.transform, (1, 0, 0, -1, 0.0, 200.0)

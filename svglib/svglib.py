@@ -56,6 +56,10 @@ __author__ = 'Dinu Gherman'
 __date__ = '2018-12-08'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
+
+# A sentinel to identify a situation where a node reference a fragment not yet defined.
+DELAYED = object()
+
 STANDARD_FONT_NAMES = (
     'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
     'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique',
@@ -562,18 +566,19 @@ class SvgRenderer:
         elif name == "clipPath":
             item = self.renderG(n)
         elif name in self.handled_shapes:
-            display = n.getAttribute("display")
-            # If the node is an embedded svg image, we have to catch it before convertShape
             if name == 'image':
-                xlink_href = n.attrib.get('{http://www.w3.org/1999/xlink}href')
-                if xlink_href and xlink_href.endswith('.svg'):
-                    path = os.path.join(os.path.dirname(self.source_path), xlink_href)
-                    svg_node = load_svg_file(path)
-                    if svg_node is not None:
-                        item = self.renderSvg(NodeTracker(svg_node))
-                        parent.add(item)
-                        return
+                # We resolve the image target at renderer level because it can point
+                # to another SVG file which has to be rendered too.
+                target = self.xlink_href_target(n)
+                if target is None:
+                    return
+                elif isinstance(target, NodeTracker):
+                    target = self.renderSvg(target)
+                # Attaching target to node, so we can get it back in convertImage
+                n._resolved_target = target
+
             item = self.shape_converter.convertShape(name, n, clipping)
+            display = n.getAttribute("display")
             if item and display != "none":
                 parent.add(item)
         else:
@@ -620,6 +625,72 @@ class SvgRenderer:
         unused_attrs = [attr for attr in all_attrs if attr not in n.usedAttrs]
         if unused_attrs:
             logger.debug("Unused attrs: %s %s" % (node_name(n), unused_attrs))
+
+    def xlink_href_target(self, node, group=None):
+        """
+        Return either:
+            - the node targetted by the xlink:href attribute for vector targets
+            - the path to an image file for any raster image targets
+            - None if any problem occurs
+        """
+        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
+        if not xlink_href:
+            return None
+
+        # First handle any raster embedded image data
+        match = re.match(r"^data:image/(jpeg|png);base64", xlink_href)
+        if match:
+            img_format = match.groups()[0]
+            image_data = base64.decodestring(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
+            _, path = tempfile.mkstemp(suffix='.%s' % img_format)
+            with open(path, 'wb') as fh:
+                fh.write(image_data)
+            # this needs to be removed later, not here...
+            # if exists(path): os.remove(path)
+            return path
+
+        # From here, we can assume this is a path.
+        if '#' in xlink_href:
+            iri, fragment = xlink_href.split('#', 1)
+        else:
+            iri, fragment = xlink_href, None
+
+        if iri:
+            # Only local relative paths are supported yet
+            if not isinstance(self.source_path, str):
+                logger.error(
+                    "Unable to resolve image path '%s' as the SVG source is not a file system path." % iri
+                )
+                return None
+            path = os.path.join(os.path.dirname(self.source_path), iri)
+            if not os.access(path, os.R_OK):
+                return None
+            if path == self.source_path:
+                # Self-referencing, ignore the IRI part
+                iri = None
+
+        if iri:
+            if path.endswith('.svg'):
+                svg_node = load_svg_file(path)
+                if svg_node is not None:
+                    return NodeTracker(svg_node)
+            else:
+                # A raster image path
+                try:
+                    # This will catch invalid images
+                    PDFImage(path, 0, 0)
+                except IOError:
+                    logger.error("Unable to read the image %s. Skipping..." % path)
+                    return None
+
+        elif fragment:
+            # A pointer to an internal definition
+            if fragment in self.definitions:
+                return self.definitions[fragment]
+            else:
+                # The missing definition should appear later in the file
+                self.waiting_use_nodes[fragment].append((node, group))
+                return DELAYED
 
     def renderTitle_(self, node):
         # Main SVG title attr. could be used in the PDF document info field.
@@ -699,19 +770,17 @@ class SvgRenderer:
         if group is None:
             group = Group()
 
-        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
-        if not xlink_href:
+        item = self.xlink_href_target(node, group=group)
+        if item is None:
             return
-        if xlink_href[1:] not in self.definitions:
-            # The missing definition should appear later in the file
-            self.waiting_use_nodes[xlink_href[1:]].append((node, group))
+        elif item is DELAYED:
             return group
 
         if clipping:
             group.add(clipping)
         if len(node.getchildren()) == 0:
             # Append a copy of the referenced node as the <use> child (if not already done)
-            node.append(copy.deepcopy(self.definitions[xlink_href[1:]]))
+            node.append(copy.deepcopy(item))
         self.renderNode(node.getchildren()[-1], parent=group)
         getAttr = node.getAttribute
         transform = getAttr("transform")
@@ -1090,34 +1159,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         getAttr = node.getAttribute
         x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
-        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
 
-        magic_re = r"^data:image/(jpeg|png);base64"
-        match = re.match(magic_re, xlink_href)
-        if match:
-            img_format = match.groups()[0]
-            image_data = base64.decodestring(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
-            _, path = tempfile.mkstemp(suffix='.%s' % img_format)
-            with open(path, 'wb') as fh:
-                fh.write(image_data)
-            img = Image(int(x), int(y + height), int(width), int(height), path)
-            # this needs to be removed later, not here...
-            # if exists(path): os.remove(path)
-        else:
-            if not isinstance(self.svg_source_file, str):
-                logger.error(
-                    "Unable to resolve image path '%s' as the SVG source is not a file system path." % xlink_href
-                )
-                return None
-            xlink_href = os.path.join(os.path.dirname(self.svg_source_file), xlink_href)
-            img = Image(int(x), int(y + height), int(width), int(height), xlink_href)
-            try:
-                # this will catch invalid image
-                PDFImage(xlink_href, 0, 0)
-            except IOError:
-                logger.error("Unable to read the image %s. Skipping..." % img.path)
-                return None
-        group = Group(img)
+        image = node._resolved_target
+        if isinstance(image, str):
+            image = Image(int(x), int(y + height), int(width), int(height), image)
+
+        group = Group(image)
         group.translate(0, (y + height) * 2)
         group.scale(1, -1)
         return group
