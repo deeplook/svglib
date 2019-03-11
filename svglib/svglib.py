@@ -1161,12 +1161,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
 
         image = node._resolved_target
-        if isinstance(image, str):
+        is_raster = isinstance(image, str)  # A path to a file
+        if is_raster:
             image = Image(int(x), int(y + height), int(width), int(height), image)
 
         group = Group(image)
-        group.translate(0, (y + height) * 2)
-        group.scale(1, -1)
+        if is_raster:
+            group.translate(0, (y + height) * 2)
+            group.scale(1, -1)
         return group
 
     def applyTransformOnGroup(self, transform, group):
