@@ -521,6 +521,7 @@ class SvgRenderer:
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions = {}
         self.waiting_use_nodes = defaultdict(list)
+        self._external_svgs = {}
 
     def render(self, svg_node):
         node = NodeTracker(svg_node)
@@ -671,7 +672,9 @@ class SvgRenderer:
 
         if iri:
             if path.endswith('.svg'):
-                svg_node = load_svg_file(path)
+                if path not in self._external_svgs:
+                    self._external_svgs[path] = load_svg_file(path)
+                svg_node = self._external_svgs[path]
                 if svg_node is not None:
                     return NodeTracker(svg_node)
             else:
