@@ -273,7 +273,7 @@ class AttributeConverter(object):
         ops = ops.replace(',', ' ').split()
 
         if len(ops) != len(indices):
-            logger.warn("Unable to parse transform expression '%s'" % svgAttr)
+            logger.warning("Unable to parse transform expression '%s'" % svgAttr)
             return []
 
         result = []
@@ -321,7 +321,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2])
 
         if "ex" in text:
-            logger.warn("Ignoring unit ex")
+            logger.warning("Ignoring unit ex")
             text = text.replace("ex", '')
 
         text = text.strip()
@@ -375,7 +375,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             tup = (float(val)/100.0 for val in t.split(','))
             return self.color_converter(colors.Color(*tup))
 
-        logger.warn("Can't handle color: %s" % text)
+        logger.warning("Can't handle color: %s" % text)
 
         return None
 
@@ -417,7 +417,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if non_exact_matches:
             return non_exact_matches[0]
         else:
-            logger.warn("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
+            logger.warning("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
             return DEFAULT_FONT_NAME
 
 
@@ -1082,7 +1082,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertImage(self, node):
         if not haveImages:
-            logger.warn(
+            logger.warning(
                 "Unable to handle embedded images. Maybe the pillow library is missing?"
             )
             return None
