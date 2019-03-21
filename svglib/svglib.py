@@ -968,7 +968,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     continue
                 x1, y1, dx, dy = [c.attrib.get(name, '') for name in ("x", "y", "dx", "dy")]
                 has_x, has_y = (x1 != '', y1 != '')
-                x1, y1, dx, dy = map(convertLength, (x1, y1, dx, dy))
+                # Handle case where x1 or y1 are individual coords per character
+                x1 = [convertLength(xitem) for xitem in x1.split()]
+                if len(x1) == 1:
+                    x1 = x1[0]
+                y1 = [convertLength(yitem) for yitem in y1.split()]
+                if len(y1) == 1:
+                    y1 = y1[0]
+                dx, dy = map(convertLength, (dx, dy))
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
                 baseLineShift = c.attrib.get("baseline-shift", '0')
@@ -980,14 +987,48 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 continue
 
             frag_lengths.append(stringWidth(text, ff, fs))
-            new_x = (x1 + dx) if has_x else (x + dx0 + sum(frag_lengths[:-1]))
-            new_y = (y1 + dy) if has_y else (y + dy0)
-            shape = String(new_x, -(new_y - baseLineShift), text)
-            self.applyStyleOnShape(shape, node)
-            if node_name(c) == 'tspan':
-                self.applyStyleOnShape(shape, c)
+            # Deal with multi-coordinate tspan elements
+            if has_x and isinstance(x1, list):
+                if has_y and isinstance(y1, list):
+                    # If both x1 and y1 are lists, we have individual x,y coords for each char
+                    for character_x, character_y, this_character in zip(x1, y1, text):
+                        new_x = (character_x + dx)
+                        new_y = (character_y + dy)
+                        shape = String(new_x, - (new_y - baseLineShift), this_character)
+                        self.applyStyleOnShape(shape, node)
+                        if node_name(c) == 'tspan':
+                            self.applyStyleOnShape(shape, c)
+                        gr.add(shape)
+                else:
+                    # If x1 is a list but y1 is not, we have one shared y and a separate x for each car
+                    for character_x, this_character in zip(x1, text):
+                        new_x = (character_x + dx)
+                        new_y = (y1 + dy) if has_y else (y + dy0)
+                        shape = String(new_x, - (new_y - baseLineShift), this_character)
+                        self.applyStyleOnShape(shape, node)
+                        if node_name(c) == 'tspan':
+                            self.applyStyleOnShape(shape, c)
+                        gr.add(shape)
+            elif has_y and isinstance(y1, list):
+                # If y1 is a list but x1 is not, we have one shared x and a separate y for each car
+                for character_y, this_character in zip(y1, text):
+                    new_x = (x1 + dx) if has_x else (x + dx0 + sum(frag_lengths[:-1]))
+                    new_y = (character_y + dy)
+                    shape = String(new_x, - (new_y - baseLineShift), this_character)
+                    self.applyStyleOnShape(shape, node)
+                    if node_name(c) == 'tspan':
+                        self.applyStyleOnShape(shape, c)
+                    gr.add(shape)
+            # If y1 and x1 are not lists, we have one x and y that defines the starting coordinate
+            else:
+                new_x = (x1 + dx) if has_x else (x + dx0 + sum(frag_lengths[:-1]))
+                new_y = (y1 + dy) if has_y else (y + dy0)
+                shape = String(new_x, -(new_y - baseLineShift), text)
+                self.applyStyleOnShape(shape, node)
+                if node_name(c) == 'tspan':
+                    self.applyStyleOnShape(shape, c)
 
-            gr.add(shape)
+                gr.add(shape)
 
         gr.scale(1, -1)
 
