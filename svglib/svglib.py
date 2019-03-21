@@ -643,9 +643,11 @@ class SvgRenderer:
         if match:
             img_format = match.groups()[0]
             image_data = base64.decodestring(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
-            _, path = tempfile.mkstemp(suffix='.%s' % img_format)
+            file_indicator, path = tempfile.mkstemp(suffix='.%s' % img_format)
             with open(path, 'wb') as fh:
                 fh.write(image_data)
+            # Close temporary file (as opened by tempfile.mkstemp)
+            os.close(file_indicator)
             # this needs to be removed later, not here...
             # if exists(path): os.remove(path)
             return path
