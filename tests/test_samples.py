@@ -405,6 +405,8 @@ class TestW3CSVG(object):
         """
 
         exclude_list = [
+            "animate-elem-41-t.svg",  # Freeze renderPM in pathFill()
+            "animate-elem-78-t.svg",  # id
             "paint-stroke-06-t.svg",
             "paint-stroke-207-t.svg",
             "coords-trans-09-t.svg",  # renderPDF issue (div by 0)

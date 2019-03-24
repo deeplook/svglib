@@ -530,9 +530,11 @@ class SvgRenderer:
             logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
 
         view_box = self.get_box(node, default_box=True)
-        main_group.scale(1, -1)
         main_group.translate(0 - view_box.x, -view_box.height - view_box.y)
-        drawing = Drawing(view_box.width, view_box.height)
+
+        width, height = svg_node.attrib.get("width"), svg_node.attrib.get("height")
+        width, height = map(self.attrConverter.convertLength, (width, height))
+        drawing = Drawing(width, height)
         drawing.add(main_group)
         return drawing
 
@@ -726,22 +728,28 @@ class SvgRenderer:
             self.renderNode(child, group)
         self.shape_converter.preserve_space = _saved_preserve_space
 
+        # Translating
         if not outermost:
             x, y = map(getAttr, ("x", "y"))
             x, y = map(self.attrConverter.convertLength, (x, y))
             if x or y:
                 group.translate(x or 0, y or 0)
 
-            view_box = self.get_box(node)
-            if view_box:
-                x_scale, y_scale = 1, 1
-                width, height = map(getAttr, ("width", "height"))
-                width, height = map(self.attrConverter.convertLength, (width, height))
-                if view_box.height != height:
-                    y_scale = height / view_box.height
-                if view_box.width != width:
-                    x_scale = width / view_box.width
-                group.scale(x_scale, y_scale)
+        # Scaling
+        view_box = self.get_box(node)
+        if not view_box and outermost:
+            # Apply only the 'reverse' y-scaling (PDF 0,0 is bottom left)
+            group.scale(1, -1)
+        elif view_box:
+            x_scale, y_scale = 1, 1
+            width, height = map(getAttr, ("width", "height"))
+            width, height = map(self.attrConverter.convertLength, (width, height))
+            if view_box.height != height:
+                y_scale = height / view_box.height
+            if view_box.width != width:
+                x_scale = width / view_box.width
+            group.scale(x_scale, y_scale * (-1 if outermost else 1))
+
         return group
 
     def renderG(self, node, clipping=None, display=1):
