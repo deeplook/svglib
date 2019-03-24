@@ -215,7 +215,6 @@ class TestLengthAttrConverter(object):
             ("1e-5", 1e-5),
             ("1e1cm", 10*cm),
             ("1e1in", 10*inch),
-            ("1e1%", 10),
             ("-8e-2cm", (-8e-2)*cm),
             ("20px", 20),
             ("20pt", 20 * 1.25),
@@ -227,14 +226,16 @@ class TestLengthAttrConverter(object):
         assert len(failed) == 0
         assert ac.convertLength("1.5em", em_base=16.5) == 24.75
 
-    def test_1(self):
-        "Test length attribute conversion."
+    def test_percentage_conversion(self):
+        "Test percentage length attribute conversion."
 
         ac = svglib.Svg2RlgAttributeConverter()
-        attr = "1e1%"
-        expected = 1
-        obj = ac.convertLength(attr, 10)
-        assert obj == expected
+        ac.set_box(svglib.Box(0, 0, 50, 150))
+        # Percentages depend on current viewport and type of attribute
+        length = ac.convertLength("1e1%", attr_name='width')
+        assert length == 5
+        length = ac.convertLength("1e1%", attr_name='height')
+        assert length == 15
 
 
 class TestLengthListAttrConverter(object):
@@ -650,6 +651,19 @@ class TestViewBox(object):
         ''')))
         # Main group coordinates are translated to match the viewBox origin
         assert drawing.contents[0].transform == (10, 0, 0, -10, 600.0, 400.0)
+
+    def test_percent_width_height(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="100%" height="100%"
+                 viewBox="0 0 480 360">
+                <g fill="#E70013">
+                    <rect x="60" y="40" width="120" height="80"/>
+                </g>
+            </svg>
+        ''')))
+        assert (drawing.width, drawing.height) == (480, 360)
 
 
 class TestEmbedded(object):
