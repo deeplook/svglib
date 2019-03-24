@@ -175,6 +175,10 @@ class AttributeConverter(object):
 
     def __init__(self):
         self.css_rules = None
+        self.main_box = None
+
+    def set_box(self, main_box):
+        self.main_box = main_box
 
     def parseMultiAttributes(self, line):
         """Try parsing compound attribute string.
@@ -301,7 +305,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def split_attr_list(attr):
         return shlex.split(attr.strip().replace(',', ' '))
 
-    def convertLength(self, svgAttr, percentOf=100, em_base=12):
+    def convertLength(self, svgAttr, em_base=12, attr_name=None):
         "Convert length to points."
 
         text = svgAttr
@@ -312,8 +316,20 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             text = text.replace(',', ' ').split()[0]
 
         if text.endswith('%'):
-            logger.debug("Fiddling length unit: %")
-            return float(text[:-1]) / 100 * percentOf
+            if self.main_box is None:
+                logger.error("Unable to resolve percentage unit without a main box")
+                return float(text[:-1])
+            if attr_name is None:
+                logger.error("Unable to resolve percentage unit without knowing the node name")
+                return float(text[:-1])
+            if attr_name in ('x', 'cx', 'x1', 'x2', 'width'):
+                full = self.main_box.width
+            elif attr_name in ('y', 'cy', 'y1', 'y2', 'height'):
+                full = self.main_box.height
+            else:
+                logger.error("Unable to detect if node '%s' is width or height" % attr_name)
+                return float(text[:-1])
+            return float(text[:-1]) / 100 * full
         elif text.endswith("pc"):
             return float(text[:-2]) * pica
         elif text.endswith("pt"):
@@ -542,11 +558,14 @@ class SvgRenderer:
 
     def render(self, svg_node):
         node = NodeTracker(svg_node)
+        view_box = self.get_box(node, default_box=True)
+        # Knowing the main box is useful for percentage units
+        self.attrConverter.set_box(view_box)
+
         main_group = self.renderSvg(node, outermost=True)
         for xlink in self.waiting_use_nodes.keys():
             logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
 
-        view_box = self.get_box(node, default_box=True)
         main_group.translate(0 - view_box.x, -view_box.height - view_box.y)
 
         width, height = self.shape_converter.convert_length_attrs(svg_node, "width", "height")
@@ -899,7 +918,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         # Support node both as NodeTracker or lxml node
         getAttr = node.getAttribute if hasattr(node, 'getAttribute') else lambda attr: node.attrib.get(attr, '')
         convLength = self.attrConverter.convertLength
-        return [convLength(getAttr(attr), em_base=em_base) for attr in attrs]
+        return [convLength(getAttr(attr), attr_name=attr, em_base=em_base) for attr in attrs]
 
     def convertLine(self, node):
         x1, y1, x2, y2 = self.convert_length_attrs(node, 'x1', 'y1', 'x2', 'y2')
