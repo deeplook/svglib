@@ -34,7 +34,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.lib.utils import haveImages
 from reportlab.graphics import renderPDF, renderPM
-from reportlab.graphics.shapes import Rect
+from reportlab.graphics.shapes import Group, Rect
 import pytest
 
 from svglib import svglib
@@ -468,6 +468,12 @@ class TestOtherFiles(object):
     def test_external_svg_in_svg(self):
         path = join(TEST_ROOT, "samples", "others", "svg_in_svg.svg")
         drawing = svglib.svg2rlg(path)
-        embedded = drawing.contents[0].contents[0]
-        assert isinstance(embedded.contents[0].contents[0], Rect)
-        assert embedded.transform, (1, 0, 0, -1, 0.0, 200.0)
+        img_group = drawing.contents[0].contents[0]
+        # First image points to SVG rendered as a group
+        assert isinstance(img_group.contents[0], Group)
+        assert isinstance(img_group.contents[0].contents[0].contents[0], Rect)
+        assert img_group.contents[0].transform, (1, 0, 0, 1, 200.0, 100.0)
+        # Second image points directly to a Group with Rect element
+        assert isinstance(img_group.contents[1], Group)
+        assert isinstance(img_group.contents[1].contents[0], Rect)
+        assert img_group.contents[1].transform, (1, 0, 0, 1, 100.0, 200.0)

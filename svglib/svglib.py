@@ -446,7 +446,7 @@ class ElementWrapper(object):
     @property
     def parent(self):
         par = self.object.getparent()
-        return ElementWrapper(par) if par else None
+        return ElementWrapper(par) if par is not None else None
 
     @property
     def classes(self):
@@ -505,6 +505,23 @@ class NodeTracker(ElementWrapper):
         return getattr(self.object, name)
 
 
+class CircularRefError(Exception):
+    pass
+
+
+class ExternalSVG:
+    def __init__(self, path, renderer):
+        self.root_node = load_svg_file(path)
+        self.renderer = SvgRenderer(path, parent_svgs=renderer._parent_chain + [renderer.source_path])
+        self.rendered = False
+
+    def get_fragment(self, fragment):
+        if not self.rendered:
+            self.renderer.render(self.root_node)
+            self.rendered = True
+        return self.renderer.definitions.get(fragment)
+
+
 ### the main meat ###
 
 class SvgRenderer:
@@ -514,8 +531,9 @@ class SvgRenderer:
     transforming it into a ReportLab Drawing instance.
     """
 
-    def __init__(self, path=None, color_converter=None):
+    def __init__(self, path, color_converter=None, parent_svgs=None):
         self.source_path = path
+        self._parent_chain = parent_svgs or []  #  To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(color_converter=color_converter)
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
@@ -547,7 +565,8 @@ class SvgRenderer:
 
         clipping = self.get_clippath(n)
         if name == "svg":
-            return self.renderSvg(n)
+            item = self.renderSvg(n)
+            parent.add(item)
         elif name == "defs":
             item = self.renderG(n)
         elif name == 'a':
@@ -571,14 +590,21 @@ class SvgRenderer:
         elif name in self.handled_shapes:
             if name == 'image':
                 # We resolve the image target at renderer level because it can point
-                # to another SVG file which has to be rendered too.
+                # to another SVG file or node which has to be rendered too.
                 target = self.xlink_href_target(n)
                 if target is None:
                     return
-                elif isinstance(target, NodeTracker):
-                    target = self.renderSvg(target)
-                # Attaching target to node, so we can get it back in convertImage
-                n._resolved_target = target
+                elif isinstance(target, tuple):
+                    # This is SVG content needed to be rendered
+                    gr = Group()
+                    renderer, node = target
+                    renderer.renderNode(node, parent=gr)
+                    self.apply_node_attr_to_group(n, gr)
+                    parent.add(gr)
+                    return
+                else:
+                    # Attaching target to node, so we can get it back in convertImage
+                    n._resolved_target = target
 
             item = self.shape_converter.convertShape(name, n, clipping)
             display = n.getAttribute("display")
@@ -629,10 +655,19 @@ class SvgRenderer:
         if unused_attrs:
             logger.debug("Unused attrs: %s %s" % (node_name(n), unused_attrs))
 
+    def apply_node_attr_to_group(self, node, group):
+        getAttr = node.getAttribute
+        transform, x, y = map(getAttr, ("transform", "x", "y"))
+        if x or y:
+            transform += " translate(%s, %s)" % (x or '0', y or '0')
+        if transform:
+            self.shape_converter.applyTransformOnGroup(transform, group)
+
     def xlink_href_target(self, node, group=None):
         """
         Return either:
-            - the node targetted by the xlink:href attribute for vector targets
+            - a tuple (renderer, node) when the the xlink:href attribute targets
+              a vector file or node
             - the path to an image file for any raster image targets
             - None if any problem occurs
         """
@@ -667,7 +702,7 @@ class SvgRenderer:
                     "Unable to resolve image path '%s' as the SVG source is not a file system path." % iri
                 )
                 return None
-            path = os.path.join(os.path.dirname(self.source_path), iri)
+            path = os.path.normpath(os.path.join(os.path.dirname(self.source_path), iri))
             if not os.access(path, os.R_OK):
                 return None
             if path == self.source_path:
@@ -676,11 +711,19 @@ class SvgRenderer:
 
         if iri:
             if path.endswith('.svg'):
+                if path in self._parent_chain:
+                    logger.error("Circular reference detected in file.")
+                    raise CircularRefError()
                 if path not in self._external_svgs:
-                    self._external_svgs[path] = load_svg_file(path)
-                svg_node = self._external_svgs[path]
-                if svg_node is not None:
-                    return NodeTracker(svg_node)
+                    self._external_svgs[path] = ExternalSVG(path, self)
+                ext_svg = self._external_svgs[path]
+                if ext_svg.root_node is not None:
+                    if fragment:
+                        ext_frag = ext_svg.get_fragment(fragment)
+                        if ext_frag is not None:
+                            return ext_svg.renderer, ext_frag
+                    else:
+                        return ext_svg.renderer, ext_svg.root_node
             else:
                 # A raster image path
                 try:
@@ -689,11 +732,12 @@ class SvgRenderer:
                 except IOError:
                     logger.error("Unable to read the image %s. Skipping..." % path)
                     return None
+                return path
 
         elif fragment:
             # A pointer to an internal definition
             if fragment in self.definitions:
-                return self.definitions[fragment]
+                return self, self.definitions[fragment]
             else:
                 # The missing definition should appear later in the file
                 self.waiting_use_nodes[fragment].append((node, group))
@@ -783,11 +827,20 @@ class SvgRenderer:
         if group is None:
             group = Group()
 
-        item = self.xlink_href_target(node, group=group)
+        try:
+            item = self.xlink_href_target(node, group=group)
+        except CircularRefError:
+            node.parent.object.remove(node.object)
+            return group
         if item is None:
+            return
+        elif isinstance(item, str):
+            logger.error("<use> nodes cannot reference bitmap image files")
             return
         elif item is DELAYED:
             return group
+        else:
+            item = item[1]  # [0] is the renderer, not used here.
 
         if clipping:
             group.add(clipping)
@@ -795,13 +848,7 @@ class SvgRenderer:
             # Append a copy of the referenced node as the <use> child (if not already done)
             node.append(copy.deepcopy(item))
         self.renderNode(node.getchildren()[-1], parent=group)
-        getAttr = node.getAttribute
-        transform = getAttr("transform")
-        x, y = map(getAttr, ("x", "y"))
-        if x or y:
-            transform += " translate(%s, %s)" % (x or '0', y or '0')
-        if transform:
-            self.shape_converter.applyTransformOnGroup(transform, group)
+        self.apply_node_attr_to_group(node, group)
         return group
 
 
@@ -1174,14 +1221,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
 
         image = node._resolved_target
-        is_raster = isinstance(image, str)  # A path to a file
-        if is_raster:
-            image = Image(int(x), int(y + height), int(width), int(height), image)
+        image = Image(int(x), int(y + height), int(width), int(height), image)
 
         group = Group(image)
-        if is_raster:
-            group.translate(0, (y + height) * 2)
-            group.scale(1, -1)
+        group.translate(0, (y + height) * 2)
+        group.scale(1, -1)
         return group
 
     def applyTransformOnGroup(self, transform, group):
@@ -1293,7 +1337,7 @@ def svg2rlg(path, **kwargs):
         return
 
     # convert to a RLG drawing
-    svgRenderer = SvgRenderer(path,**kwargs)
+    svgRenderer = SvgRenderer(path, **kwargs)
     drawing = svgRenderer.render(svg_root)
 
     # remove unzipped .svgz file (.svg)
