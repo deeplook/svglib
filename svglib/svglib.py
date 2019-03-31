@@ -28,7 +28,6 @@ import shutil
 import subprocess
 import sys
 from collections import defaultdict, namedtuple
-from functools import partial
 
 from reportlab.pdfbase.pdfmetrics import registerFont, stringWidth
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
@@ -550,8 +549,7 @@ class SvgRenderer:
         view_box = self.get_box(node, default_box=True)
         main_group.translate(0 - view_box.x, -view_box.height - view_box.y)
 
-        width, height = svg_node.attrib.get("width"), svg_node.attrib.get("height")
-        width, height = map(self.attrConverter.convertLength, (width, height))
+        width, height = self.shape_converter.convert_length_attrs(svg_node, "width", "height")
         drawing = Drawing(width, height)
         drawing.add(main_group)
         return drawing
@@ -762,10 +760,8 @@ class SvgRenderer:
             return Box(0, 0, width, height)
 
     def renderSvg(self, node, outermost=False):
-        getAttr = node.getAttribute
-
         _saved_preserve_space = self.shape_converter.preserve_space
-        self.shape_converter.preserve_space = getAttr("{%s}space" % XML_NS) == 'preserve'
+        self.shape_converter.preserve_space = node.getAttribute("{%s}space" % XML_NS) == 'preserve'
 
         group = Group()
         for child in node.getchildren():
@@ -774,8 +770,7 @@ class SvgRenderer:
 
         # Translating
         if not outermost:
-            x, y = map(getAttr, ("x", "y"))
-            x, y = map(self.attrConverter.convertLength, (x, y))
+            x, y = self.shape_converter.convert_length_attrs(node, "x", "y")
             if x or y:
                 group.translate(x or 0, y or 0)
 
@@ -786,8 +781,7 @@ class SvgRenderer:
             group.scale(1, -1)
         elif view_box:
             x_scale, y_scale = 1, 1
-            width, height = map(getAttr, ("width", "height"))
-            width, height = map(self.attrConverter.convertLength, (width, height))
+            width, height = self.shape_converter.convert_length_attrs(node, "width", "height")
             if view_box.height != height:
                 y_scale = height / view_box.height
             if view_box.width != width:
@@ -898,45 +892,37 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             group.add(shape)
             return group
 
-    def convertLine(self, node):
-        getAttr = node.getAttribute
-        x1, y1, x2, y2 = map(getAttr, ("x1", "y1", "x2", "y2"))
-        x1, y1, x2, y2 = map(self.attrConverter.convertLength, (x1, y1, x2, y2))
-        shape = Line(x1, y1, x2, y2)
+    def convert_length_attrs(self, node, *attrs, **kwargs):
+        # When dropping Python 2, we can replace **kwargs by em_base=None in the
+        # function signature.
+        em_base = kwargs.pop('em_base', None)
+        # Support node both as NodeTracker or lxml node
+        getAttr = node.getAttribute if hasattr(node, 'getAttribute') else lambda attr: node.attrib.get(attr, '')
+        convLength = self.attrConverter.convertLength
+        return [convLength(getAttr(attr), em_base=em_base) for attr in attrs]
 
-        return shape
+    def convertLine(self, node):
+        x1, y1, x2, y2 = self.convert_length_attrs(node, 'x1', 'y1', 'x2', 'y2')
+        return Line(x1, y1, x2, y2)
 
     def convertRect(self, node):
-        getAttr = node.getAttribute
-        x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
-        x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
-        rx, ry = map(getAttr, ("rx", "ry"))
-        rx, ry = map(self.attrConverter.convertLength, (rx, ry))
-        shape = Rect(x, y, width, height, rx=rx, ry=ry)
-
-        return shape
+        x, y, width, height, rx, ry = self.convert_length_attrs(
+            node, 'x', 'y', 'width', 'height', 'rx', 'ry'
+        )
+        return Rect(x, y, width, height, rx=rx, ry=ry)
 
     def convertCircle(self, node):
         # not rendered if r == 0, error if r < 0.
-        getAttr = node.getAttribute
-        cx, cy, r = map(getAttr, ("cx", "cy", 'r'))
-        cx, cy, r = map(self.attrConverter.convertLength, (cx, cy, r))
-        shape = Circle(cx, cy, r)
-
-        return shape
+        cx, cy, r = self.convert_length_attrs(node, 'cx', 'cy', 'r')
+        return Circle(cx, cy, r)
 
     def convertEllipse(self, node):
-        getAttr = node.getAttribute
-        cx, cy, rx, ry = map(getAttr, ("cx", "cy", "rx", "ry"))
-        cx, cy, rx, ry = map(self.attrConverter.convertLength, (cx, cy, rx, ry))
+        cx, cy, rx, ry = self.convert_length_attrs(node, 'cx', 'cy', 'rx', 'ry')
         width, height = rx, ry
-        shape = Ellipse(cx, cy, width, height)
-
-        return shape
+        return Ellipse(cx, cy, width, height)
 
     def convertPolyline(self, node):
-        getAttr = node.getAttribute
-        points = getAttr("points")
+        points = node.getAttribute("points")
         points = points.replace(',', ' ')
         points = points.split()
         points = list(map(self.attrConverter.convertLength, points))
@@ -962,8 +948,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         return polyline
 
     def convertPolygon(self, node):
-        getAttr = node.getAttribute
-        points = getAttr("points")
+        points = node.getAttribute("points")
         points = points.replace(',', ' ')
         points = points.split()
         points = list(map(self.attrConverter.convertLength, points))
@@ -1006,9 +991,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         ff = attrConv.convertFontFamily(ff)
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
-        convertLength = partial(attrConv.convertLength, em_base=fs)
-        x, y = map(node.getAttribute, ('x', 'y'))
-        x, y = map(convertLength, (x, y))
+        x, y = self.convert_length_attrs(node, 'x', 'y', em_base=fs)
         for c in itertools.chain([node], node.getchildren()):
             has_x, has_y = False, False
             dx, dy = 0, 0
@@ -1021,16 +1004,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 text = self.clean_text(c.text, preserve_space)
                 if not text:
                     continue
-                x1, y1, dx, dy = [c.attrib.get(name, '') for name in ("x", "y", "dx", "dy")]
-                has_x, has_y = (x1 != '', y1 != '')
-                x1, y1, dx, dy = map(convertLength, (x1, y1, dx, dy))
+                x1, y1, dx, dy = self.convert_length_attrs(c, 'x', 'y', 'dx', 'dy', em_base=fs)
+                has_x, has_y = (c.attrib.get('x', '') != '', c.attrib.get('y', '') != '')
                 dx0 = dx0 + dx
                 dy0 = dy0 + dy
                 baseLineShift = c.attrib.get("baseline-shift", '0')
                 if baseLineShift in ("sub", "super", "baseline"):
                     baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
                 else:
-                    baseLineShift = convertLength(baseLineShift, fs)
+                    baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)
             else:
                 continue
 
@@ -1216,10 +1198,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             )
             return None
 
-        getAttr = node.getAttribute
-        x, y, width, height = map(getAttr, ('x', 'y', "width", "height"))
-        x, y, width, height = map(self.attrConverter.convertLength, (x, y, width, height))
-
+        x, y, width, height = self.convert_length_attrs(node, 'x', 'y', 'width', 'height')
         image = node._resolved_target
         image = Image(int(x), int(y + height), int(width), int(height), image)
 
