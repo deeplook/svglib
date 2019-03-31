@@ -855,7 +855,7 @@ class SvgRenderer:
 class SvgShapeConverter:
     """An abstract SVG shape converter.
 
-    Implement subclasses with methods named 'renderX(node)', where
+    Implement subclasses with methods named 'convertX(node)', where
     'X' should be the capitalised name of an SVG node element for
     shapes, like 'Rect', 'Circle', 'Line', etc.
 
