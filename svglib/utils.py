@@ -147,6 +147,7 @@ def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
         rx *= rr
         ry *= rr
         r = x1d * x1d / (rx * rx) + y1d * y1d / (ry * ry)
+        r = 1 / r - 1
     elif r != 0:
         r = 1 / r - 1
     if -1e-10 < r < 0:
