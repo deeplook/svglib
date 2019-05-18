@@ -60,11 +60,6 @@ Tests include a huge `W3C SVG test suite`_ plus ca. 200 `flags from
 Wikipedia`_ and some selected `symbols from Wikipedia`_ (with increasingly
 less pointing to missing features).
 
-This release introduces *many* contributions by Claude Paroz, who
-stepped forward to give this project a long needed overhaul after ca.
-six years of taking a nap, for which I'm really very grateful! Thanks,
-Claude!
-
 Previous versions were hosted at https://bitbucket.org/deeplook/svglib.
 
 
@@ -114,7 +109,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.9.0
+    svg2pdf v. 0.9.1
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -201,13 +196,13 @@ using these simple commands::
 3. Manual installation
 +++++++++++++++++++++++
 
-Alternatively, you can install a tarball like ``svglib-0.9.0.tar.gz``
+Alternatively, you can install a tarball like ``svglib-0.9.1.tar.gz``
 after downloading it from the `svglib page on PyPI`_ or the
 `svglib releases page on GitHub`_ and executing a sequence of commands
 like shown here::
 
-    $ tar xfz svglib-0.9.0.tar.gz
-    $ cs svglib-0.9.0
+    $ tar xfz svglib-0.9.1.tar.gz
+    $ cs svglib-0.9.1
     $ python setup.py install
 
 This will install a Python package named ``svglib`` in the
@@ -224,8 +219,8 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
 
-    $ tar xfz svglib-0.9.0.tar.gz
-    $ cd svglib-0.9.0
+    $ tar xfz svglib-0.9.1.tar.gz
+    $ cd svglib-0.9.1
     $ PYTHONPATH=. py.test
     ======================== test session starts =========================
     platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
