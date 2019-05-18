@@ -3,8 +3,20 @@
 ChangeLog
 =========
 
+0.9.1 (2019-06-22)
+------------------
+
+- fixed rendering of circular arcs in some edge cases (#189)
+- support for percentage attribute values has been added (#141)
+- SVG viewbox is now properly scaled to its width/height attributes (#121)
+- embedded external SVG files or file fragments are now rendered (#175)
+- support <rect> as a clipping source
+- prevented crash when a relative file path is used in a memory-only SVG
+  source (#173)
+- fixed image translation (by y value instead of x)
+
 0.9.0 (2018-12-08)
-----------------------
+------------------
 
 - fixed svgz output on Python 3
 - kept PDF standard fonts untouched (#89)
@@ -36,6 +48,11 @@ ChangeLog
 
 0.8.0 (2017-01-23)
 ------------------
+
+This release introduces *many* contributions by Claude Paroz, who
+stepped forward to give this project a long needed overhaul after ca.
+six years of taking a nap, for which I'm really very grateful! Thanks,
+Claude!
 
 - moved repository to https://github.com/deeplook/svglib
 - skipped version 0.7.0 to indicate tons of fixes regarding the points below
