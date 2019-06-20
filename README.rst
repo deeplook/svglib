@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdeeplook%2Fsvglib.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdeeplook%2Fsvglib?ref=badge_shield)
+
 .. -*- mode: rst -*-
 
 ======
@@ -267,3 +269,7 @@ well as the versions of ``svglib``, ReportLab and Python being used!
 .. _Conda: https://conda.io
 .. _svglib with conda: https://github.com/conda-forge/svglib-feedstock
 .. _nicoddemus: https://github.com/nicoddemus
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdeeplook%2Fsvglib.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdeeplook%2Fsvglib?ref=badge_large)
