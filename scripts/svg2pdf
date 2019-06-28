@@ -90,7 +90,7 @@ def _main():
             https://github.com/deeplook/svglib
 
         Copyleft by {author}, 2008-{copyleft_year} ({license}):
-            http://www.gnu.org/copyleft/gpl.html'''.format(**args))
+            https://www.gnu.org/licenses/lgpl-3.0.html'''.format(**args))
     p = argparse.ArgumentParser(
         description=desc,
         epilog=epilog,
