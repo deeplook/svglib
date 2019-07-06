@@ -9,9 +9,18 @@ inside the test directory:
 """
 
 import io
+import os
 import subprocess
+import tempfile
 import textwrap
+import shutil
 from lxml import etree
+
+try:
+    import pathlib
+    py3k_support = True
+except ImportError:
+    py3k_support = False
 
 from reportlab.graphics.shapes import (
     _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
@@ -735,3 +744,55 @@ class TestEmbedded(object):
         # FIXME: test the error log when we can require pytest >= 3.4
         # No image as relative path in file-like input cannot be determined.
         assert drawing.contents[0].contents == []
+
+
+class TestSvgPathVariants(object):
+
+    testcontent = textwrap.dedent(u'''\
+    <?xml version="1.0" standalone="no"?>
+    <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+      "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+    <svg width="12cm" height="5.25cm" viewBox="0 0 1200 400"
+         xmlns="http://www.w3.org/2000/svg" version="1.1">
+      <title>Testfile</title>
+      <desc>A testfile</desc>
+      <rect x="1" y="1" width="1198" height="398"
+            fill="none" stroke="blue" stroke-width="1" />
+    </svg>
+    ''')
+
+    def test_svg2rlg_pathlib(self):
+        if not py3k_support:
+            return
+        try:
+            tmpdir = tempfile.mkdtemp()
+            path = pathlib.Path(tmpdir) / "testfile.svg"
+            with open(path, 'w') as fd:
+                fd.write(self.testcontent)
+
+            drawing = svglib.svg2rlg(path)
+            assert drawing is not None
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_svg2rlg_file_like(self):
+        try:
+            tmpdir = tempfile.mkdtemp()
+            file_like = io.StringIO(self.testcontent)
+
+            drawing = svglib.svg2rlg(file_like)
+            assert drawing is not None
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_svg2rlg_fd(self):
+        try:
+            tmpdir = tempfile.mkdtemp()
+            path = os.path.join(tmpdir, 'testfile.svg')
+            with open(path, 'w') as fd:
+                fd.write(self.testcontent)
+
+            drawing = svglib.svg2rlg(path)
+            assert drawing is not None
+        finally:
+            shutil.rmtree(tmpdir)

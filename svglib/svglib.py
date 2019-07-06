@@ -49,6 +49,12 @@ from .utils import (
     normalise_svg_path,
 )
 
+try:
+    import pathlib
+    py3k_support = True
+except ImportError:
+    py3k_support = False
+
 __version__ = '0.9.1'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
@@ -1354,6 +1360,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 def svg2rlg(path, **kwargs):
     "Convert an SVG file to an RLG Drawing object."
+
+    if py3k_support and isinstance(path, pathlib.Path):
+        path = str(path)
 
     # unzip .svgz file into .svg
     unzipped = False
