@@ -689,6 +689,18 @@ class TestViewBox(object):
         ''')))
         assert (drawing.width, drawing.height) == (480, 360)
 
+    def test_no_width_height(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 480 360">
+                <g fill="#E70013">
+                    <rect x="60" y="40" width="120" height="80"/>
+                </g>
+            </svg>
+        ''')))
+        assert (drawing.width, drawing.height) == (480, 360)
+
 
 class TestEmbedded(object):
     def test_svg_in_svg(self):
