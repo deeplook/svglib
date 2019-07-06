@@ -49,11 +49,10 @@ from .utils import (
     normalise_svg_path,
 )
 
-try:
+py3k_support = sys.version_info > (3, 0)
+
+if py3k_support:
     import pathlib
-    py3k_support = True
-except ImportError:
-    py3k_support = False
 
 __version__ = '0.9.1'
 __license__ = 'LGPL 3'

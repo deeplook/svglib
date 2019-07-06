@@ -11,20 +11,16 @@ inside the test directory:
 import io
 import os
 import subprocess
+import sys
 import tempfile
 import textwrap
 import shutil
 from lxml import etree
 
-try:
-    import pathlib
-    py3k_support = True
-except ImportError:
-    py3k_support = False
-
 from reportlab.graphics.shapes import (
     _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
 )
+
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
@@ -32,6 +28,11 @@ from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 from svglib import svglib, utils
 
 import pytest
+
+py3k_support = sys.version_info > (3, 0)
+
+if py3k_support:
+    import pathlib
 
 
 def _testit(func, mapping):
