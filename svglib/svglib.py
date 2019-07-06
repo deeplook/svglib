@@ -305,12 +305,12 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def split_attr_list(attr):
         return shlex.split(attr.strip().replace(',', ' '))
 
-    def convertLength(self, svgAttr, em_base=12, attr_name=None):
+    def convertLength(self, svgAttr, em_base=12, attr_name=None, default=0.0):
         "Convert length to points."
 
         text = svgAttr
         if not text:
-            return 0.0
+            return default
         if ' ' in text.replace(',', ' ').strip():
             logger.debug("Only getting first value of %s" % text)
             text = text.replace(',', ' ').split()[0]
@@ -570,7 +570,9 @@ class SvgRenderer:
 
         main_group.translate(0 - view_box.x, -view_box.height - view_box.y)
 
-        width, height = self.shape_converter.convert_length_attrs(svg_node, "width", "height")
+        width, height = self.shape_converter.convert_length_attrs(
+            svg_node, "width", "height", defaults=(view_box.width, view_box.height)
+        )
         drawing = Drawing(width, height)
         drawing.add(main_group)
         return drawing
@@ -832,10 +834,12 @@ class SvgRenderer:
             group.scale(1, -1)
         elif view_box:
             x_scale, y_scale = 1, 1
-            width, height = self.shape_converter.convert_length_attrs(node, "width", "height")
-            if view_box.height != height:
+            width, height = self.shape_converter.convert_length_attrs(
+                node, "width", "height", defaults=(None,) * 2
+            )
+            if height is not None and view_box.height != height:
                 y_scale = height / view_box.height
-            if view_box.width != width:
+            if width is not None and view_box.width != width:
                 x_scale = width / view_box.width
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
 
@@ -950,7 +954,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         # Support node both as NodeTracker or lxml node
         getAttr = node.getAttribute if hasattr(node, 'getAttribute') else lambda attr: node.attrib.get(attr, '')
         convLength = self.attrConverter.convertLength
-        return [convLength(getAttr(attr), attr_name=attr, em_base=em_base) for attr in attrs]
+        defaults = kwargs.get('defaults', (0.0,) * len(attrs))
+        return [
+            convLength(getAttr(attr), attr_name=attr, em_base=em_base, default=default)
+            for attr, default in zip(attrs, defaults)
+        ]
 
     def convertLine(self, node):
         x1, y1, x2, y2 = self.convert_length_attrs(node, 'x1', 'y1', 'x2', 'y2')
