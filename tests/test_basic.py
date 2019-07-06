@@ -767,7 +767,7 @@ class TestSvgPathVariants(object):
         try:
             tmpdir = tempfile.mkdtemp()
             path = pathlib.Path(tmpdir) / "testfile.svg"
-            with open(path, 'w') as fd:
+            with open(str(path), 'w') as fd:
                 fd.write(self.testcontent)
 
             drawing = svglib.svg2rlg(path)
