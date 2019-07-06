@@ -1358,7 +1358,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
 def svg2rlg(path, **kwargs):
-    "Convert an SVG file to an RLG Drawing object."
+    """Convert an SVG file to an RLG Drawing object.
+
+    Args:
+        path: the source object can be a str to be interpreted
+              as a path. A file-like or pathlib object also supported.
+    """
 
     if py3k_support and isinstance(path, pathlib.Path):
         path = str(path)
