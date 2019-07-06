@@ -20,7 +20,6 @@ from lxml import etree
 from reportlab.graphics.shapes import (
     _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
 )
-
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
