@@ -364,20 +364,13 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertColor(self, svgAttr):
         "Convert string to a RL color object."
 
-        # fix it: most likely all "web colors" are allowed
-        predefined = "aqua black blue fuchsia gray green lime maroon navy "
-        predefined = predefined + "olive orange purple red silver teal white yellow "
-        predefined = predefined + "lawngreen indianred aquamarine lightgreen brown"
-
         # This needs also to lookup values like "url(#SomeName)"...
 
         text = svgAttr
         if not text or text == "none":
             return None
 
-        if text in predefined.split():
-            return self.color_converter(getattr(colors, text))
-        elif text == "currentColor":
+        if text == "currentColor":
             return "currentColor"
         elif len(text) == 7 and text[0] == '#':
             return self.color_converter(colors.HexColor(text))
@@ -393,8 +386,14 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             t = text[3:].replace('%', '').strip('()')
             tup = (float(val)/100.0 for val in t.split(','))
             return self.color_converter(colors.Color(*tup))
-
-        logger.warning("Can't handle color: %s" % text)
+        else:
+            # Test if text is a predefined color constant
+            try:
+                color = getattr(colors, text)
+            except AttributeError:
+                logger.warning("Can't handle color: %s" % text)
+            else:
+                return self.color_converter(color)
 
         return None
 

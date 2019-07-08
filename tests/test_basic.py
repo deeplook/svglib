@@ -202,6 +202,10 @@ class TestColorAttrConverter(object):
             ("#f00", colors.red),
             ("rgb(100%,0.5%,0.5%)", colors.Color(1, 0.005, 0.005, 1)),
             ("rgb(255, 0, 0)", colors.red),
+            ("fuchsia", colors.Color(1, 0, 1, 1)),
+            ("slategrey", colors.HexColor(0x708090)),
+            ("transparent", colors.Color(0, 0, 0, 0)),
+            ("whatever", None),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertColor, mapping)
