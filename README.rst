@@ -109,7 +109,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.9.1
+    svg2pdf v. 0.9.2
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -196,13 +196,13 @@ using these simple commands::
 3. Manual installation
 +++++++++++++++++++++++
 
-Alternatively, you can install a tarball like ``svglib-0.9.1.tar.gz``
+Alternatively, you can install a tarball like ``svglib-<version>.tar.gz``
 after downloading it from the `svglib page on PyPI`_ or the
 `svglib releases page on GitHub`_ and executing a sequence of commands
 like shown here::
 
-    $ tar xfz svglib-0.9.1.tar.gz
-    $ cs svglib-0.9.1
+    $ tar xfz svglib-<version>.tar.gz
+    $ cd svglib-<version>
     $ python setup.py install
 
 This will install a Python package named ``svglib`` in the
@@ -219,8 +219,8 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
 
-    $ tar xfz svglib-0.9.1.tar.gz
-    $ cd svglib-0.9.1
+    $ tar xfz svglib-<version>.tar.gz
+    $ cd svglib-<version>
     $ PYTHONPATH=. py.test
     ======================== test session starts =========================
     platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0

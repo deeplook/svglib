@@ -211,6 +211,10 @@ class TestColorAttrConverter(object):
             ("#f00", colors.red),
             ("rgb(100%,0.5%,0.5%)", colors.Color(1, 0.005, 0.005, 1)),
             ("rgb(255, 0, 0)", colors.red),
+            ("fuchsia", colors.Color(1, 0, 1, 1)),
+            ("slategrey", colors.HexColor(0x708090)),
+            ("transparent", colors.Color(0, 0, 0, 0)),
+            ("whatever", None),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertColor, mapping)
@@ -690,6 +694,18 @@ class TestViewBox(object):
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  width="100%" height="100%"
+                 viewBox="0 0 480 360">
+                <g fill="#E70013">
+                    <rect x="60" y="40" width="120" height="80"/>
+                </g>
+            </svg>
+        ''')))
+        assert (drawing.width, drawing.height) == (480, 360)
+
+    def test_no_width_height(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
                  viewBox="0 0 480 360">
                 <g fill="#E70013">
                     <rect x="60" y="40" width="120" height="80"/>

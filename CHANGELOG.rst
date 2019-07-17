@@ -3,6 +3,15 @@
 ChangeLog
 =========
 
+0.9.2 (2019-07-12)
+------------------
+
+- fixed license mention in the svg2pdf script (#194)
+- support the whole range of HTML color names for color styles (#203)
+- fixed a division by zero error when width/height are missing in main viewBox
+  (#195)
+
+
 0.9.1 (2019-06-22)
 ------------------
 
