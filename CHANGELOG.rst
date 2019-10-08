@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+Unreleased
+----------
+
+- fixed styles precedence issue (#211)
+
 0.9.2 (2019-07-12)
 ------------------
 

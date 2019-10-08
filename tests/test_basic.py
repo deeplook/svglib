@@ -401,17 +401,20 @@ class TestStyleSheets(object):
               <defs>
                 <style type="text/css">
                 #p1 { fill:rgb(255,0,0); }
+                #p2 { fill:rgb(255,0,0); }
                 .paths { stroke-width:1.5; }
                 </style>
               </defs>
               <g id="g1">
                 <path id="p1" class="paths" d="M 0,-100 V 0 H 50"/>
-                <path id="p2" class="paths other" d="M 0,100 V 0 H 50"/>
+                <path id="p2" class="paths other" style="fill: #000000" d="M 0,100 V 0 H 50"/>
               </g>
             </svg>
         ''')))
         main_group = drawing.contents[0]
         assert main_group.contents[0].contents[0].contents[0].fillColor == colors.red
+        # The style on the element has precedence over the global style
+        assert main_group.contents[0].contents[1].contents[0].fillColor == colors.black
         assert main_group.contents[0].contents[1].contents[0].strokeWidth == 1.5
 
 
