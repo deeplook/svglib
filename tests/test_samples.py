@@ -261,7 +261,7 @@ class TestWikipediaFlags(object):
 
         # find all flag base filenames
         # ["Flag_of_Bhutan.svg", "Flag_of_Bhutan.svg", ...]
-        flag_names = re.findall("\:(Flag_of_.*?\.svg)", data)
+        flag_names = re.findall(r"\:(Flag_of_.*?\.svg)", data)
         flag_names = [unquote(fn) for fn in flag_names]
 
         # save flag URLs into a JSON file, if not already present
