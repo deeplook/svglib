@@ -208,19 +208,24 @@ class AttributeConverter(object):
 
         # This needs also to lookup values like "url(#SomeName)"...
 
-        if self.css_rules is not None and not svgNode.attrib.get('__rules_applied', False):
-            if isinstance(svgNode, NodeTracker):
-                svgNode.apply_rules(self.css_rules)
-            else:
-                ElementWrapper(svgNode).apply_rules(self.css_rules)
+        if not svgNode.attrib.get('__rules_applied', False):
+            # Apply global styles...
+            if self.css_rules is not None:
+                if isinstance(svgNode, NodeTracker):
+                    svgNode.apply_rules(self.css_rules)
+                else:
+                    ElementWrapper(svgNode).apply_rules(self.css_rules)
+            # ...and locally defined
+            if svgNode.attrib.get("style"):
+                attrs = self.parseMultiAttributes(svgNode.attrib.get("style"))
+                for key, val in attrs.items():
+                    svgNode.attrib[key] = val
+                svgNode.attrib['__rules_applied'] = '1'
+
         attr_value = svgNode.attrib.get(name, '').strip()
 
         if attr_value and attr_value != "inherit":
             return attr_value
-        elif svgNode.attrib.get("style"):
-            dict = self.parseMultiAttributes(svgNode.attrib.get("style"))
-            if name in dict:
-                return dict[name]
         if svgNode.getparent() is not None:
             return self.findAttr(svgNode.getparent(), name)
         return ''
