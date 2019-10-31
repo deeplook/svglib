@@ -6,7 +6,8 @@ ChangeLog
 Unreleased
 ----------
 
-- added support for color hex values containing alpha value (#213)
+- added support for more color values (hex with alpha, rgba(), etc.)
+  (#213, #115)
 - fixed styles precedence issue (#211)
 
 0.9.2 (2019-07-12)
