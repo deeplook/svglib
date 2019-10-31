@@ -377,10 +377,14 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
         if text == "currentColor":
             return "currentColor"
-        elif len(text) == 7 and text[0] == '#':
-            return self.color_converter(colors.HexColor(text))
+        elif len(text) in (7, 9) and text[0] == '#':
+            return self.color_converter(colors.HexColor(text, hasAlpha=len(text) == 9))
         elif len(text) == 4 and text[0] == '#':
             return self.color_converter(colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3]))
+        elif len(text) == 5 and text[0] == '#':
+            return self.color_converter(colors.HexColor(
+                '#' + 2*text[1] + 2*text[2] + 2*text[3] + 2*text[4], hasAlpha=True
+            ))
         elif text.startswith('rgb') and '%' not in text:
             t = text[3:].strip('()')
             tup = [h[2:] for h in [hex(int(num)) for num in t.split(',')]]

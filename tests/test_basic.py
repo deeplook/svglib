@@ -199,7 +199,9 @@ class TestColorAttrConverter(object):
         mapping = (
             ("red", colors.red),
             ("#ff0000", colors.red),
+            ("#ff000055", colors.Color(1, 0, 0, 1/3.0)),
             ("#f00", colors.red),
+            ("#f00f", colors.red),
             ("rgb(100%,0.5%,0.5%)", colors.Color(1, 0.005, 0.005, 1)),
             ("rgb(255, 0, 0)", colors.red),
             ("fuchsia", colors.Color(1, 0, 1, 1)),
