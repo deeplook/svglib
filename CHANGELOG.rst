@@ -6,6 +6,7 @@ ChangeLog
 Unreleased
 ----------
 
+- added support for color hex values containing alpha value (#213)
 - fixed styles precedence issue (#211)
 
 0.9.2 (2019-07-12)
