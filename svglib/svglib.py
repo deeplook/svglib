@@ -377,34 +377,27 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
         if text == "currentColor":
             return "currentColor"
-        elif len(text) in (7, 9) and text[0] == '#':
-            return self.color_converter(colors.HexColor(text, hasAlpha=len(text) == 9))
+        if len(text) in (7, 9) and text[0] == '#':
+            color = colors.HexColor(text, hasAlpha=len(text) == 9)
         elif len(text) == 4 and text[0] == '#':
-            return self.color_converter(colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3]))
+            color = colors.HexColor('#' + 2*text[1] + 2*text[2] + 2*text[3])
         elif len(text) == 5 and text[0] == '#':
-            return self.color_converter(colors.HexColor(
+            color = colors.HexColor(
                 '#' + 2*text[1] + 2*text[2] + 2*text[3] + 2*text[4], hasAlpha=True
-            ))
-        elif text.startswith('rgb') and '%' not in text:
-            t = text[3:].strip('()')
-            tup = [h[2:] for h in [hex(int(num)) for num in t.split(',')]]
-            tup = [(2 - len(h)) * '0' + h for h in tup]
-            col = "#%s%s%s" % tuple(tup)
-            return self.color_converter(colors.HexColor(col))
-        elif text.startswith('rgb') and '%' in text:
-            t = text[3:].replace('%', '').strip('()')
-            tup = (float(val)/100.0 for val in t.split(','))
-            return self.color_converter(colors.Color(*tup))
+            )
         else:
-            # Test if text is a predefined color constant
-            try:
-                color = getattr(colors, text)
-            except AttributeError:
-                logger.warning("Can't handle color: %s" % text)
-            else:
-                return self.color_converter(color)
-
-        return None
+            # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
+            color = colors.cssParse(text)
+            if color is None:
+                # Test if text is a predefined color constant
+                try:
+                    color = getattr(colors, text)
+                except AttributeError:
+                    pass
+        if color is None:
+            logger.warning("Can't handle color: %s" % text)
+        else:
+            return self.color_converter(color)
 
     def convertLineJoin(self, svgAttr):
         return {"miter":0, "round":1, "bevel":2}[svgAttr]
