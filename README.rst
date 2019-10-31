@@ -109,7 +109,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 0.9.2
+    svg2pdf v. 0.9.3
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
@@ -144,7 +144,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
     issues/pull requests:
         https://github.com/deeplook/svglib
 
-    Copyleft by Dinu Gherman, 2008-2018 (LGPL 3):
+    Copyleft by Dinu Gherman, 2008-2019 (LGPL 3):
         http://www.gnu.org/copyleft/gpl.html
 
 
@@ -223,7 +223,7 @@ shown in the following lines on the command-line::
     $ cd svglib-<version>
     $ PYTHONPATH=. py.test
     ======================== test session starts =========================
-    platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+    platform darwin -- Python 3.7.3, pytest-5.0.1, py-1.8.0, pluggy-0.12.0
     rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
     plugins: cov-2.4.0
     collected 36 items
@@ -249,9 +249,9 @@ well as the versions of ``svglib``, ReportLab and Python being used!
 .. _flags from Wikipedia:
       https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags
 .. _symbols from Wikipedia:
-      http://en.wikipedia.org/wiki/List_of_symbols
-.. _ReportLab: http://www.reportlab.org
-.. _RML: http://www.reportlab.com/software/rml-reference/
+      https://en.wikipedia.org/wiki/List_of_symbols
+.. _ReportLab: https://www.reportlab.org
+.. _RML: https://www.reportlab.com/software/rml-reference/
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
 .. _PyTest: http://pytest.org
 .. _svglib page on PyPI: https://pypi.org/project/svglib/

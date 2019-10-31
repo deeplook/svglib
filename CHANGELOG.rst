@@ -3,9 +3,10 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+0.9.3 (2019-11-02)
+------------------
 
+- WARNING: this is the last release supporting Python 2!
 - added support for more color values (hex with alpha, rgba(), etc.)
   (#213, #115)
 - handle text positioning when x, y, dx, dy have a list of values
