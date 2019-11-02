@@ -8,6 +8,7 @@ Unreleased
 
 - added support for more color values (hex with alpha, rgba(), etc.)
   (#213, #115)
+- handle text positioning when x, y, dx, dy have a list of values
 - fixed styles precedence issue (#211)
 
 0.9.2 (2019-07-12)

@@ -251,6 +251,8 @@ class TestLengthAttrConverter(object):
             ("20pt", 20 * 1.25),
             ("1.5em", 12 * 1.5),
             ("10.5mm", 10.5*(cm*0.1)),
+            ("3, 5 -7", [3, 5, -7]),
+            ("2pt  12pt", [2 * 1.25, 12 * 1.25]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLength, mapping)
