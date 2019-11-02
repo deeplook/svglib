@@ -29,6 +29,12 @@ import subprocess
 import sys
 from collections import defaultdict, namedtuple
 
+try:
+    zip_longest = itertools.zip_longest
+except AttributeError:
+    # Python 2 fallback
+    zip_longest = itertools.izip_longest
+
 from reportlab.pdfbase.pdfmetrics import registerFont, stringWidth
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
@@ -315,12 +321,15 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertLength(self, svgAttr, em_base=12, attr_name=None, default=0.0):
         "Convert length to points."
 
-        text = svgAttr
+        text = svgAttr.replace(',', ' ').strip()
         if not text:
             return default
-        if ' ' in text.replace(',', ' ').strip():
-            logger.debug("Only getting first value of %s" % text)
-            text = text.replace(',', ' ').split()[0]
+        if ' ' in text:
+            # Multiple length values, returning a list
+            return [
+                self.convertLength(val, em_base=em_base, attr_name=attr_name, default=default)
+                for val in self.split_attr_list(text)
+            ]
 
         if text.endswith('%'):
             if self.main_box is None:
@@ -1059,18 +1068,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             has_x, has_y = False, False
             dx, dy = 0, 0
             baseLineShift = 0
-            if node_name(c) == 'text':
-                text = self.clean_text(c.text, preserve_space)
-                if not text:
-                    continue
-            elif node_name(c) == 'tspan':
+            if node_name(c) in ('text', 'tspan'):
                 text = self.clean_text(c.text, preserve_space)
                 if not text:
                     continue
                 x1, y1, dx, dy = self.convert_length_attrs(c, 'x', 'y', 'dx', 'dy', em_base=fs)
                 has_x, has_y = (c.attrib.get('x', '') != '', c.attrib.get('y', '') != '')
-                dx0 = dx0 + dx
-                dy0 = dy0 + dy
+                dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)
+                dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
                 baseLineShift = c.attrib.get("baseline-shift", '0')
                 if baseLineShift in ("sub", "super", "baseline"):
                     baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
@@ -1080,14 +1085,48 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 continue
 
             frag_lengths.append(stringWidth(text, ff, fs))
-            new_x = (x1 + dx) if has_x else (x + dx0 + sum(frag_lengths[:-1]))
-            new_y = (y1 + dy) if has_y else (y + dy0)
-            shape = String(new_x, -(new_y - baseLineShift), text)
-            self.applyStyleOnShape(shape, node)
-            if node_name(c) == 'tspan':
-                self.applyStyleOnShape(shape, c)
 
-            gr.add(shape)
+            # When x, y, dx, or dy is a list, we calculate position for each char of text.
+            if any(isinstance(val, list) for val in (x1, y1, dx, dy)):
+                #if isinstance(dx, list):
+                #    import pdb; pdb.set_trace()
+                if has_x:
+                    xlist = x1 if isinstance(x1, list) else [x1]
+                else:
+                    xlist = [x + dx0 + sum(frag_lengths[:-1])]
+                if has_y:
+                    ylist = y1 if isinstance(y1, list) else [y1]
+                else:
+                    ylist = [y + dy0]
+                dxlist = dx if isinstance(dx, list) else [dx]
+                dylist = dy if isinstance(dy, list) else [dy]
+                last_x, last_y, last_char = xlist[0], ylist[0], ''
+                for char_x, char_y, char_dx, char_dy, char in zip_longest(
+                        xlist, ylist, dxlist, dylist, text):
+                    if char is None:
+                        break
+                    if char_dx is None:
+                        char_dx = 0
+                    if char_dy is None:
+                        char_dy = 0
+                    new_x = char_dx + (last_x + stringWidth(last_char, ff, fs) if char_x is None else char_x)
+                    new_y = char_dy + (last_y if char_y is None else char_y)
+                    shape = String(new_x, -(new_y - baseLineShift), char)
+                    self.applyStyleOnShape(shape, node)
+                    if node_name(c) == 'tspan':
+                        self.applyStyleOnShape(shape, c)
+                    gr.add(shape)
+                    last_x = new_x
+                    last_y = new_y
+                    last_char = char
+            else:
+                new_x = (x1 + dx) if has_x else (x + dx0 + sum(frag_lengths[:-1]))
+                new_y = (y1 + dy) if has_y else (y + dy0)
+                shape = String(new_x, -(new_y - baseLineShift), text)
+                self.applyStyleOnShape(shape, node)
+                if node_name(c) == 'tspan':
+                    self.applyStyleOnShape(shape, c)
+                gr.add(shape)
 
         gr.scale(1, -1)
 
