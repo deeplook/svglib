@@ -7,9 +7,6 @@ __author__ = 'Dinu Gherman'
 __date__ = '2019-11-02'
 
 install_requires = open('requirements.txt').read().strip().split()
-v = sys.version_info
-if (v.major, v.minor) < (2, 7):
-    install_requires.append('argparse')
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 pytest_runner = ['pytest-runner'] if needs_pytest else []
@@ -43,7 +40,6 @@ setup(
         'Operating System :: POSIX',
         'Natural Language :: English',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

@@ -42,7 +42,7 @@ def _testit(func, mapping):
     return failed
 
 
-class TestPaths(object):
+class TestPaths:
     """Testing path-related code."""
 
     def test_path_normalisation(self):
@@ -190,7 +190,7 @@ def force_cmyk(rgb):
     c, m, y, k = colors.rgb2cmyk(rgb.red,rgb.green,rgb.blue)
     return colors.CMYKColor(c,m,y,k,alpha=rgb.alpha)
 
-class TestColorAttrConverter(object):
+class TestColorAttrConverter:
     "Testing color attribute conversion."
 
     def test_0(self):
@@ -231,7 +231,7 @@ class TestColorAttrConverter(object):
         assert len(failed) == 0
 
 
-class TestLengthAttrConverter(object):
+class TestLengthAttrConverter:
     "Testing length attribute conversion."
 
     def test_0(self):
@@ -271,7 +271,7 @@ class TestLengthAttrConverter(object):
         assert length == 15
 
 
-class TestLengthListAttrConverter(object):
+class TestLengthListAttrConverter:
     "Testing length attribute conversion."
 
     def test_0(self):
@@ -286,7 +286,7 @@ class TestLengthListAttrConverter(object):
         assert len(failed) == 0
 
 
-class TestTransformAttrConverter(object):
+class TestTransformAttrConverter:
     "Testing transform attribute conversion."
 
     def test_0(self):
@@ -310,7 +310,7 @@ class TestTransformAttrConverter(object):
         assert len(failed) == 0
 
 
-class TestAttrConverter(object):
+class TestAttrConverter:
     "Testing multi-attribute conversion."
 
     def test_0(self):
@@ -391,7 +391,7 @@ class TestAttrConverter(object):
         assert path.strokeWidth == 1
 
 
-class TestApplyTransformOnGroup(object):
+class TestApplyTransformOnGroup:
     def test_translate_only_x(self):
         """
         When the second translate value is missing, 0 is assumed.
@@ -403,7 +403,7 @@ class TestApplyTransformOnGroup(object):
         assert group.transform == (1, 0, 0, 1, 10, 0)
 
 
-class TestStyleSheets(object):
+class TestStyleSheets:
     def test_css_stylesheet(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
@@ -428,7 +428,7 @@ class TestStyleSheets(object):
         assert main_group.contents[0].contents[1].contents[0].strokeWidth == 1.5
 
 
-class TestTextNode(object):
+class TestTextNode:
     def test_font_family(self):
         def font_config_available():
             try:
@@ -530,7 +530,7 @@ class TestTextNode(object):
         assert main_group.contents[0].contents[3].y == -20 - (1.5 * 28)
 
 
-class TestPolylineNode(object):
+class TestPolylineNode:
     def test_filling(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = svglib.NodeTracker(etree.XML(
@@ -551,7 +551,7 @@ class TestPolylineNode(object):
         assert isinstance(group.contents[1], PolyLine)
 
 
-class TestUseNode(object):
+class TestUseNode:
     def test_use(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
@@ -658,7 +658,7 @@ class TestUseNode(object):
         assert use_group.contents[0].getProperties()['strokeColor'] is None
 
 
-class TestSymbolNode(object):
+class TestSymbolNode:
     def test_symbol_node(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
@@ -678,7 +678,7 @@ class TestSymbolNode(object):
         assert isinstance(use_group.contents[0].contents[1], Path)
 
 
-class TestViewBox(object):
+class TestViewBox:
     def test_nonzero_origin(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
@@ -719,7 +719,7 @@ class TestViewBox(object):
         assert (drawing.width, drawing.height) == (480, 360)
 
 
-class TestEmbedded(object):
+class TestEmbedded:
     def test_svg_in_svg(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
