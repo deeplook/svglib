@@ -15,20 +15,12 @@ import re
 import gzip
 import io
 import json
-import sys
 import tarfile
 import textwrap
+from http.client import HTTPSConnection
 from os.path import dirname, splitext, exists, join, basename, getsize
-try:
-    from httplib import HTTPSConnection  # PY2
-except ImportError:
-    from http.client import HTTPSConnection  # PY3
-try:
-    from urllib import quote, unquote, urlopen  # PY2
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import quote, unquote, urlparse  # PY3
-    from urllib.request import urlopen
+from urllib.parse import quote, unquote, urlparse
+from urllib.request import urlopen
 
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -50,7 +42,7 @@ def found_uniconv():
     return len(res) > 0
 
 
-class TestSVGSamples(object):
+class TestSVGSamples:
     "Tests on misc. sample SVG files included in this test suite."
 
     def cleanup(self):
@@ -92,7 +84,7 @@ class TestSVGSamples(object):
                 os.remove(out)
 
 
-class TestWikipediaSymbols(object):
+class TestWikipediaSymbols:
     "Tests on sample symbol SVG files from wikipedia.org."
 
     def fetch_file(self, server, path):
@@ -196,7 +188,7 @@ class TestWikipediaSymbols(object):
                 os.remove(out)
 
 
-class TestWikipediaFlags(object):
+class TestWikipediaFlags:
     "Tests using SVG flags from Wikipedia.org."
 
     def fetch_file(self, url):
@@ -270,8 +262,6 @@ class TestWikipediaFlags(object):
             flag_url_map = []
             prefix = "https://en.wikipedia.org/wiki/File:"
             for i, fn in enumerate(flag_names):
-                if "Ivoire" in fn and sys.version_info < (3, 0):
-                    continue
                 # load single flag HTML page, like
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
                 flag_html = self.fetch_file(prefix + quote(fn))
@@ -344,7 +334,7 @@ class TestWikipediaFlags(object):
                 os.remove(out)
 
 
-class TestW3CSVG(object):
+class TestW3CSVG:
     "Tests using the official W3C SVG testsuite."
 
     def setup_method(self):
@@ -455,7 +445,7 @@ class TestW3CSVG(object):
                 os.remove(out)
 
 
-class TestOtherFiles(object):
+class TestOtherFiles:
     @pytest.mark.skipif(not haveImages, reason="missing pillow library")
     def test_png_in_svg(self):
         path = join(TEST_ROOT, "samples", "others", "png_in_svg.svg")

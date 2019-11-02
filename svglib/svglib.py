@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
 """A library for reading and converting SVG.
 
 This is a converter from SVG to RLG (ReportLab Graphics) drawings.
@@ -28,12 +26,6 @@ import shutil
 import subprocess
 import sys
 from collections import defaultdict, namedtuple
-
-try:
-    zip_longest = itertools.zip_longest
-except AttributeError:
-    # Python 2 fallback
-    zip_longest = itertools.izip_longest
 
 from reportlab.pdfbase.pdfmetrics import registerFont, stringWidth
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
@@ -124,13 +116,13 @@ class NoStrokePath(Path):
     """
     def __init__(self, *args, **kwargs):
         copy_from = kwargs.pop('copy_from', None)
-        Path.__init__(self, *args, **kwargs)  # we're old-style class on PY2
+        super().__init__(*args, **kwargs)
         if copy_from:
             self.__dict__.update(copy.deepcopy(copy_from.__dict__))
 
     def getProperties(self, *args, **kwargs):
         # __getattribute__ wouldn't suit, as RL is directly accessing self.__dict__
-        props = Path.getProperties(self, *args, **kwargs)
+        props = super().getProperties(*args, **kwargs)
         if 'strokeWidth' in props:
             props['strokeWidth'] = 0
         if 'strokeColor' in props:
@@ -155,7 +147,7 @@ class ClippingPath(Path):
 
 class CSSMatcher(cssselect2.Matcher):
     def __init__(self, style_content):
-        super(CSSMatcher, self).__init__()
+        super().__init__()
         self.rules = tinycss2.parse_stylesheet(
             style_content, skip_comments=True, skip_whitespace=True
         )
@@ -176,7 +168,7 @@ class CSSMatcher(cssselect2.Matcher):
 
 # Attribute converters (from SVG to RLG)
 
-class AttributeConverter(object):
+class AttributeConverter:
     "An abstract class to locate and convert attributes in a DOM instance."
 
     def __init__(self):
@@ -307,7 +299,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     "A concrete SVG to RLG attribute converter."
 
     def __init__(self, color_converter=None):
-        super(Svg2RlgAttributeConverter, self).__init__()
+        super().__init__()
         self.color_converter = color_converter or self.identity_color_converter
 
     @staticmethod
@@ -452,7 +444,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return DEFAULT_FONT_NAME
 
 
-class ElementWrapper(object):
+class ElementWrapper:
     """
     lxml element wrapper to partially match the API from cssselect2.ElementWrapper
     so as element can be passed to rules.match().
@@ -517,7 +509,7 @@ class NodeTracker(ElementWrapper):
     """
 
     def __init__(self, obj):
-        super(NodeTracker, self).__init__(obj)
+        super().__init__(obj)
         self.usedAttrs = []
 
     def __repr__(self):
@@ -743,7 +735,7 @@ class SvgRenderer:
         match = re.match(r"^data:image/(jpeg|png);base64", xlink_href)
         if match:
             img_format = match.groups()[0]
-            image_data = base64.decodestring(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
+            image_data = base64.decodebytes(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
             file_indicator, path = tempfile.mkstemp(suffix='.%s' % img_format)
             with open(path, 'wb') as fh:
                 fh.write(image_data)
@@ -960,10 +952,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             group.add(shape)
             return group
 
-    def convert_length_attrs(self, node, *attrs, **kwargs):
-        # When dropping Python 2, we can replace **kwargs by em_base=None in the
-        # function signature.
-        em_base = kwargs.pop('em_base', None)
+    def convert_length_attrs(self, node, *attrs, em_base=None, **kwargs):
         # Support node both as NodeTracker or lxml node
         getAttr = node.getAttribute if hasattr(node, 'getAttribute') else lambda attr: node.attrib.get(attr, '')
         convLength = self.attrConverter.convertLength
@@ -1088,8 +1077,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             # When x, y, dx, or dy is a list, we calculate position for each char of text.
             if any(isinstance(val, list) for val in (x1, y1, dx, dy)):
-                #if isinstance(dx, list):
-                #    import pdb; pdb.set_trace()
                 if has_x:
                     xlist = x1 if isinstance(x1, list) else [x1]
                 else:
@@ -1101,7 +1088,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 dxlist = dx if isinstance(dx, list) else [dx]
                 dylist = dy if isinstance(dy, list) else [dy]
                 last_x, last_y, last_char = xlist[0], ylist[0], ''
-                for char_x, char_y, char_dx, char_dy, char in zip_longest(
+                for char_x, char_y, char_dx, char_dy, char in itertools.zip_longest(
                         xlist, ylist, dxlist, dylist, text):
                     if char is None:
                         break
