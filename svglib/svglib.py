@@ -219,7 +219,9 @@ class AttributeConverter(object):
             if svgNode.attrib.get("style"):
                 attrs = self.parseMultiAttributes(svgNode.attrib.get("style"))
                 for key, val in attrs.items():
-                    svgNode.attrib[key] = val
+                    # lxml nodes cannot accept attributes starting with '-'
+                    if not key.startswith('-'):
+                        svgNode.attrib[key] = val
                 svgNode.attrib['__rules_applied'] = '1'
 
         attr_value = svgNode.attrib.get(name, '').strip()
