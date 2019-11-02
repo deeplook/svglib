@@ -324,11 +324,16 @@ class TestAttrConverter(object):
 
     def test_findAttr(self):
         """
-        Whitespace in attribute values shouldn't disturb parsing.
+        Test various attribute peculiarities.
         """
         ac = svglib.Svg2RlgAttributeConverter()
+        # Whitespace in attribute values shouldn't disturb parsing.
         node = etree.XML('<rect fill=" #00A1DE\n"/>')
         assert ac.findAttr(node, 'fill') == "#00A1DE"
+
+        # Attributes starting with '-' are not supported.
+        node = etree.XML('<text style="-inkscape-font-specification:Arial"/>')
+        assert ac.findAttr(node, '-inkscape-font-specification') == ""
 
     def test_findAttr_parents(self):
         ac = svglib.Svg2RlgAttributeConverter()
