@@ -641,6 +641,12 @@ class SvgRenderer:
             logger.debug("Ignoring node: %s" % name)
 
         if not ignored:
+            item.setProperties({'svgid': nid})
+            label_attrs = [v for k, v in node.attrib.items() if 'label' in k]
+            if len(label_attrs) == 1:
+                label, = label_attrs
+                item.setProperties({'label': label})
+
             if nid and item:
                 self.definitions[nid] = node
             if nid in self.waiting_use_nodes.keys():
