@@ -428,6 +428,73 @@ class TestStyleSheets:
         assert main_group.contents[0].contents[1].contents[0].strokeWidth == 1.5
 
 
+class TestGroupNode:
+    def test_svg_groups_have_svgid(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+                <g inkscape:groupmode="layer"
+                 id="layer2"
+                 inkscape:label="x_axis"
+                 style="display:inline"
+                 transform="translate(-476.20282,35.510971)">
+                <path
+                   style="opacity:1;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Send)"
+                   d="M 601.06712,388.63166 H 954.67961"
+                   id="path819" />
+                </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+
+        gr, = main_group.contents
+        assert gr.svgid == 'layer2'
+        assert isinstance(gr, Group)
+
+    def test_created_groups_have_svgid_of_their_content(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+                <g inkscape:groupmode="layer"
+                 id="layer2"
+                 inkscape:label="x_axis"
+                 style="display:inline"
+                 transform="translate(-476.20282,35.510971)">
+                <path
+                   style="opacity:1;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Send)"
+                   d="M 601.06712,388.63166 H 954.67961"
+                   id="path819" />
+                </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        gr, = main_group.contents
+
+        pth_gr, = gr.contents
+        assert pth_gr.svgid == 'path819'
+        assert isinstance(pth_gr, Group)
+
+    def test_svg_layers_have_label(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+                <g inkscape:groupmode="layer"
+                 id="layer2"
+                 inkscape:label="x_axis"
+                 style="display:inline"
+                 transform="translate(-476.20282,35.510971)">
+                <path
+                   style="opacity:1;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Send)"
+                   d="M 601.06712,388.63166 H 954.67961"
+                   id="path819" />
+                </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        gr, = main_group.contents
+        assert gr.label == "x_axis"
+
+
 class TestTextNode:
     def test_font_family(self):
         def font_config_available():
