@@ -50,57 +50,57 @@ class TestPaths:
 
         mapping = (
             ("",
-                []),
+             []),
 
             ("M10 20, L 30 40 ",
-                ["M", [10, 20], "L", [30, 40]]),
+             ["M", [10, 20], "L", [30, 40]]),
 
             ("M10 20, L 40 40Z",
-                ["M", [10, 20], "L", [40, 40], "Z", []]),
+             ["M", [10, 20], "L", [40, 40], "Z", []]),
 
             ("M10 20, L 30 40 40 40Z",
-                ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", []]),
+             ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", []]),
 
             ("  M10 20,L30 40,40 40Z  ",
-                ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", []]),
+             ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", []]),
 
             ("  M 10 20, M 30 40, L 40 40, Z M 40 50, l 50 60, Z",
-                ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", [],
-                 "M", [40, 50], "l", [50, 60], "Z", []]),
+             ["M", [10, 20], "L", [30, 40], "L", [40, 40], "Z", [],
+              "M", [40, 50], "l", [50, 60], "Z", []]),
 
             ("  m 10 20, m 30 40, l 40 40, z",
-                ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
+             ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
 
             ("  m 10,20 30,40, l 40 40, z ",
-                ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
+             ["m", [10, 20], "l", [30, 40], "l", [40, 40], "z", []]),
 
             ("M 10,20 30,40, l 40 40, z",
-                ["M", [10, 20], "L", [30, 40], "l", [40, 40], "z", []]),
+             ["M", [10, 20], "L", [30, 40], "l", [40, 40], "z", []]),
 
             ("M0,0 500,300M500,0 0,300",
-                ["M", [0, 0], "L", [500, 300], "M", [500, 0], "L", [0, 300]]),
+             ["M", [0, 0], "L", [500, 300], "M", [500, 0], "L", [0, 300]]),
 
             ("M10 20, l 5e-5,0",
-                ["M", [10, 20], "l", [5e-5, 0]]),
+             ["M", [10, 20], "l", [5e-5, 0]]),
 
             ("m246.026 120.178c-.558-.295-1.186-.768-1.395-1.054-.314-.438-.132-.456 1.163-.104 "
              "2.318.629 3.814.383 5.298-.873l1.308-1.103 1.54.784c.848.428 1.748.725 "
              "2.008.656.667-.176 2.05-1.95 2.005-2.564-.054-.759.587-.568.896.264.615 1.631-.281 "
              "3.502-1.865 3.918-.773.201-1.488.127-2.659-.281-1.438-.502-1.684-.494-2.405.058-1.618 "
              "1.239-3.869 1.355-5.894.299z",
-                ['m', [246.026, 120.178], 'c', [-0.558, -0.295, -1.186, -0.768, -1.395, -1.054],
-                 'c', [-0.314, -0.438, -0.132, -0.456, 1.163, -0.104],
-                 'c', [2.318, 0.629, 3.814, 0.383, 5.298, -0.873],
-                 'l', [1.308, -1.103], 'l', [1.54, 0.784],
-                 'c', [0.848, 0.428, 1.748, 0.725, 2.008, 0.656],
-                 'c', [0.667, -0.176, 2.05, -1.95, 2.005, -2.564],
-                 'c', [-0.054, -0.759, 0.587, -0.568, 0.896, 0.264],
-                 'c', [0.615, 1.631, -0.281, 3.502, -1.865, 3.918],
-                 'c', [-0.773, 0.201, -1.488, 0.127, -2.659, -0.281],
-                 'c', [-1.438, -0.502, -1.684, -0.494, -2.405, 0.058],
-                 'c', [-1.618, 1.239, -3.869, 1.355, -5.894, 0.299],
-                 'z', []
-                ]),
+             ['m', [246.026, 120.178], 'c', [-0.558, -0.295, -1.186, -0.768, -1.395, -1.054],
+              'c', [-0.314, -0.438, -0.132, -0.456, 1.163, -0.104],
+              'c', [2.318, 0.629, 3.814, 0.383, 5.298, -0.873],
+              'l', [1.308, -1.103], 'l', [1.54, 0.784],
+              'c', [0.848, 0.428, 1.748, 0.725, 2.008, 0.656],
+              'c', [0.667, -0.176, 2.05, -1.95, 2.005, -2.564],
+              'c', [-0.054, -0.759, 0.587, -0.568, 0.896, 0.264],
+              'c', [0.615, 1.631, -0.281, 3.502, -1.865, 3.918],
+              'c', [-0.773, 0.201, -1.488, 0.127, -2.659, -0.281],
+              'c', [-1.438, -0.502, -1.684, -0.494, -2.405, 0.058],
+              'c', [-1.618, 1.239, -3.869, 1.355, -5.894, 0.299],
+              'z', []
+              ]),
         )
         failed = _testit(utils.normalise_svg_path, mapping)
         assert len(failed) == 0
@@ -187,8 +187,9 @@ class TestPaths:
 
 
 def force_cmyk(rgb):
-    c, m, y, k = colors.rgb2cmyk(rgb.red,rgb.green,rgb.blue)
-    return colors.CMYKColor(c,m,y,k,alpha=rgb.alpha)
+    c, m, y, k = colors.rgb2cmyk(rgb.red, rgb.green, rgb.blue)
+    return colors.CMYKColor(c, m, y, k, alpha=rgb.alpha)
+
 
 class TestColorAttrConverter:
     "Testing color attribute conversion."
@@ -199,12 +200,12 @@ class TestColorAttrConverter:
         mapping = (
             ("red", colors.red),
             ("#ff0000", colors.red),
-            ("#ff000055", colors.Color(1, 0, 0, 1/3.0)),
+            ("#ff000055", colors.Color(1, 0, 0, 1 / 3.0)),
             ("#f00", colors.red),
             ("#f00f", colors.red),
-            ("rgb(100%,50%,10%)", colors.Color(1, 1.0/255 * 128, 1.0/255 * 26, 1)),
+            ("rgb(100%,50%,10%)", colors.Color(1, 1.0 / 255 * 128, 1.0 / 255 * 26, 1)),
             ("rgb(255, 0, 0)", colors.red),
-            ("rgba(255, 255, 128, .5)", colors.Color(1, 1, 1.0/255 * 128, .5)),
+            ("rgba(255, 255, 128, .5)", colors.Color(1, 1, 1.0 / 255 * 128, .5)),
             ("fuchsia", colors.Color(1, 0, 1, 1)),
             ("slategrey", colors.HexColor(0x708090)),
             ("transparent", colors.Color(0, 0, 0, 0)),
@@ -223,8 +224,8 @@ class TestColorAttrConverter:
             ("#f00", force_cmyk(colors.red)),
             ("rgb(100%,0%,0%)", force_cmyk(colors.red)),
             ("rgb(255, 0, 0)", force_cmyk(colors.red)),
-            ("rgb(0,255, 0)", force_cmyk(colors.Color(0,1,0))),
-            ("rgb(0, 0, 255)", force_cmyk(colors.Color(0,0,1))),
+            ("rgb(0,255, 0)", force_cmyk(colors.Color(0, 1, 0))),
+            ("rgb(0, 0, 255)", force_cmyk(colors.Color(0, 0, 1))),
         )
         ac = svglib.Svg2RlgAttributeConverter(color_converter=force_cmyk)
         failed = _testit(ac.convertColor, mapping)
@@ -244,13 +245,13 @@ class TestLengthAttrConverter:
             ("-3.16", -3.16),
             ("-1e-2", -0.01),
             ("1e-5", 1e-5),
-            ("1e1cm", 10*cm),
-            ("1e1in", 10*inch),
-            ("-8e-2cm", (-8e-2)*cm),
+            ("1e1cm", 10 * cm),
+            ("1e1in", 10 * inch),
+            ("-8e-2cm", (-8e-2) * cm),
             ("20px", 20),
             ("20pt", 20 * 1.25),
             ("1.5em", 12 * 1.5),
-            ("10.5mm", 10.5*(cm*0.1)),
+            ("10.5mm", 10.5 * (cm * 0.1)),
             ("3, 5 -7", [3, 5, -7]),
             ("2pt  12pt", [2 * 1.25, 12 * 1.25]),
         )
@@ -278,7 +279,7 @@ class TestLengthListAttrConverter:
         "Test length list attribute conversion."
 
         mapping = (
-            (" 5cm 5in", [5*cm, 5*inch]),
+            (" 5cm 5in", [5 * cm, 5 * inch]),
             (" 5, 5", [5, 5]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
@@ -294,16 +295,16 @@ class TestTransformAttrConverter:
 
         mapping = (
             ("",
-                []),
+             []),
             ("scale(2) translate(10,-20.5)",
-                [("scale", 2.0), ("translate", (10.0, -20.5))]),
+             [("scale", 2.0), ("translate", (10.0, -20.5))]),
             ("scale(0.9), translate(27,40)",
-                [("scale", 0.9), ("translate", (27.0, 40.0))]),
+             [("scale", 0.9), ("translate", (27.0, 40.0))]),
             # Invalid/unsupported expressions return empty list
             ("scale(0.9), translate",
-                []),
+             []),
             ("ref(svg)",
-                []),
+             []),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertTransform, mapping)
@@ -318,7 +319,7 @@ class TestAttrConverter:
 
         mapping = (
             ("fill: black; stroke: yellow",
-                {"fill":"black", "stroke":"yellow"}),
+             {"fill": "black", "stroke": "yellow"}),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.parseMultiAttributes, mapping)
@@ -433,44 +434,55 @@ class TestGroupNode:
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
-                <g inkscape:groupmode="layer"
-                 id="layer2"
-                 inkscape:label="x_axis"
-                 style="display:inline"
-                 transform="translate(-476.20282,35.510971)">
-                <path
-                   style="opacity:1;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Send)"
-                   d="M 601.06712,388.63166 H 954.67961"
-                   id="path819" />
+                <g id="g856">
+                    <rect
+                         y="107.07929"
+                         x="64.942139"
+                         height="19.506001"
+                         width="34.690311"
+                         id="rect850"
+                         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
                 </g>
             </svg>
         ''')))
         main_group = drawing.contents[0]
 
         gr, = main_group.contents
-        assert gr.svgid == 'layer2'
+        assert gr.svgid == 'g856'
         assert isinstance(gr, Group)
 
     def test_created_groups_have_svgid_of_their_content(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
-                <g inkscape:groupmode="layer"
-                 id="layer2"
-                 inkscape:label="x_axis"
-                 style="display:inline"
-                 transform="translate(-476.20282,35.510971)">
-                <path
-                   style="opacity:1;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Send)"
-                   d="M 601.06712,388.63166 H 954.67961"
-                   id="path819" />
+                <g id="g856">
+                    <rect
+                         y="107.07929"
+                         x="64.942139"
+                         height="19.506001"
+                         width="34.690311"
+                         id="rect850"
+                         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+                    <rect
+                         y="136.5135"
+                         x="108.62624"
+                         height="17.637161"
+                         width="29.083796"
+                         id="rect852"
+                         style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+                    <path
+                       style="opacity:1;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Send)"
+                       d="M 601.06712,388.63166 H 954.67961"
+                       id="path819" />
                 </g>
             </svg>
         ''')))
         main_group = drawing.contents[0]
         gr, = main_group.contents
 
-        pth_gr, = gr.contents
+        r1_gr, r2_gr, pth_gr = gr.contents
+        assert r1_gr.svgid == 'rect850'
+        assert r2_gr.svgid == 'rect852'
         assert pth_gr.svgid == 'path819'
         assert isinstance(pth_gr, Group)
 
@@ -660,7 +672,7 @@ class TestUseNode:
         ''')))
         cgroup_node = drawing.contents[0].contents[0]
         assert (
-            cgroup_node.contents[0].transform == cgroup_node.contents[1].contents[0].transform
+                cgroup_node.contents[0].transform == cgroup_node.contents[1].contents[0].transform
         ), "The transform of the original path is different from the transform of the reused path."
 
     def test_use_forward_reference(self):
