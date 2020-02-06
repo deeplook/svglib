@@ -643,7 +643,11 @@ class SvgRenderer:
         if not ignored:
             if nid and item:
                 self.definitions[nid] = node
+                # preserve id to keep track of svg objects
+                # and simplify further analyses of generated document
                 item.setProperties({'svgid': nid})
+                # labels are used in inkscape to name specific groups as layers
+                # preserving them simplify extraction of feature from the generated document
                 label_attrs = [v for k, v in node.attrib.items() if 'label' in k]
                 if len(label_attrs) == 1:
                     label, = label_attrs
