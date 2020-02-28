@@ -594,7 +594,7 @@ class SvgRenderer:
             item = self.renderSvg(n)
             parent.add(item)
         elif name == "defs":
-            item = self.renderG(n)
+            ignored = True  # defs are handled in the initial rendering phase.
         elif name == 'a':
             item = self.renderA(n)
             parent.add(item)
@@ -682,6 +682,7 @@ class SvgRenderer:
             return
         ref = m.groups()[0]
         if not ref in self.definitions:
+            logger.warning("Unable to find a clipping path with id %s" % ref)
             return
 
         shape = get_shape_from_node(self.definitions[ref])
@@ -820,6 +821,11 @@ class SvgRenderer:
     def renderSvg(self, node, outermost=False):
         _saved_preserve_space = self.shape_converter.preserve_space
         self.shape_converter.preserve_space = node.getAttribute("{%s}space" % XML_NS) == 'preserve'
+
+        # Rendering all definition nodes first.
+        svg_ns = node.nsmap.get(None)
+        for def_node in node.iterdescendants('{%s}defs' % svg_ns if svg_ns else 'defs'):
+            self.renderG(NodeTracker(def_node))
 
         group = Group()
         for child in node.getchildren():

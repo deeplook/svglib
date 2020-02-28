@@ -552,8 +552,8 @@ class TestPolylineNode:
 
 
 class TestUseNode:
-    def test_use(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+    def test_use(self, drawing_source=None):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(drawing_source or '''\
             <?xml version="1.0"?>
             <svg version="1.1"
                  xmlns="http://www.w3.org/2000/svg"
@@ -577,6 +577,23 @@ class TestUseNode:
         # Attributes on the use node are applied to the referenced content
         assert isinstance(main_group.contents[2].contents[0], Rect)
         assert main_group.contents[2].contents[0].fillColor == colors.red
+
+    def test_use_with_defs_at_end(self):
+        self.test_use(drawing_source='''\
+            <?xml version="1.0"?>
+            <svg version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="10cm" height="3cm" viewBox="0 0 100 30">
+              <rect x=".1" y=".1" width="99.8" height="29.8"
+                    fill="none" stroke="blue" stroke-width=".2" />
+              <use x="20" y="10" xlink:href="#MyRect" />
+              <use x="30" y="20" xlink:href="#MyRect" fill="#f00" />
+              <defs>
+                  <rect id="MyRect" width="60" height="10"/>
+              </defs>
+            </svg>
+        ''')
 
     def test_transform_inherited_by_use(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
