@@ -7,6 +7,8 @@ Unreleased
 ----------
 
 - dropped Python 2 support
+- fixed references to <defs> content when placed middle or end of
+  SVG documents (#225)
 
 0.9.3 (2019-11-02)
 ------------------
