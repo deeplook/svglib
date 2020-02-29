@@ -25,6 +25,19 @@ def split_floats(op, min_num, value):
     return res
 
 
+def split_arc_values(op, value):
+    float_re = r'(-?\d*\.?\d*(?:e[+-]\d+)?)'
+    flag_re = r'([1|0])'
+    # 3 numb, 2 flags, 1 coord pair
+    a_seq_re = r'[\s,]*'.join([
+        float_re, float_re, float_re, flag_re, flag_re, float_re, float_re
+    ]) + r'[\s,]*'
+    res = []
+    for seq in re.finditer(a_seq_re, value.strip()):
+        res.extend([op, [float(num) for num in seq.groups()]])
+    return res
+
+
 def normalise_svg_path(attr):
     """Normalise SVG path.
 
@@ -66,7 +79,10 @@ def normalise_svg_path(attr):
             if ops[op] == 0:  # Z, z
                 result.extend([op, []])
         else:
-            result.extend(split_floats(op, ops[op], item))
+            if op.lower() == 'a':
+                result.extend(split_arc_values(op, item))
+            else:
+                result.extend(split_floats(op, ops[op], item))
             op = result[-2]  # Remember last op
 
     return result
