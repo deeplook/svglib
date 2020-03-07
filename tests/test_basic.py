@@ -85,15 +85,13 @@ class TestPaths:
 
             ("a1.518 1.518  0 011.195-.547 2.401,2.401,0,00-.602,-.297 ",
                 ["a", [1.518, 1.518, 0, 0, 1, 1.195, -0.547],
-                 "a", [2.401, 2.401, 0, 0, 0, -0.602, -0.297]
-                ]
-            ),
+                 "a", [2.401, 2.401, 0, 0, 0, -0.602, -0.297]]),
 
             ("m246.026 120.178c-.558-.295-1.186-.768-1.395-1.054-.314-.438-.132-.456 1.163-.104 "
              "2.318.629 3.814.383 5.298-.873l1.308-1.103 1.54.784c.848.428 1.748.725 "
              "2.008.656.667-.176 2.05-1.95 2.005-2.564-.054-.759.587-.568.896.264.615 1.631-.281 "
-             "3.502-1.865 3.918-.773.201-1.488.127-2.659-.281-1.438-.502-1.684-.494-2.405.058-1.618 "
-             "1.239-3.869 1.355-5.894.299z",
+             "3.502-1.865 3.918-.773.201-1.488.127-2.659-.281-1.438-.502-1.684-.494-2.405.058"
+             "-1.618 1.239-3.869 1.355-5.894.299z",
                 ['m', [246.026, 120.178], 'c', [-0.558, -0.295, -1.186, -0.768, -1.395, -1.054],
                  'c', [-0.314, -0.438, -0.132, -0.456, 1.163, -0.104],
                  'c', [2.318, 0.629, 3.814, 0.383, 5.298, -0.873],
@@ -105,8 +103,7 @@ class TestPaths:
                  'c', [-0.773, 0.201, -1.488, 0.127, -2.659, -0.281],
                  'c', [-1.438, -0.502, -1.684, -0.494, -2.405, 0.058],
                  'c', [-1.618, 1.239, -3.869, 1.355, -5.894, 0.299],
-                 'z', []
-                ]),
+                 'z', []]),
         )
         failed = _testit(utils.normalise_svg_path, mapping)
         assert len(failed) == 0
@@ -193,8 +190,9 @@ class TestPaths:
 
 
 def force_cmyk(rgb):
-    c, m, y, k = colors.rgb2cmyk(rgb.red,rgb.green,rgb.blue)
-    return colors.CMYKColor(c,m,y,k,alpha=rgb.alpha)
+    c, m, y, k = colors.rgb2cmyk(rgb.red, rgb.green, rgb.blue)
+    return colors.CMYKColor(c, m, y, k, alpha=rgb.alpha)
+
 
 class TestColorAttrConverter:
     "Testing color attribute conversion."
@@ -229,8 +227,8 @@ class TestColorAttrConverter:
             ("#f00", force_cmyk(colors.red)),
             ("rgb(100%,0%,0%)", force_cmyk(colors.red)),
             ("rgb(255, 0, 0)", force_cmyk(colors.red)),
-            ("rgb(0,255, 0)", force_cmyk(colors.Color(0,1,0))),
-            ("rgb(0, 0, 255)", force_cmyk(colors.Color(0,0,1))),
+            ("rgb(0,255, 0)", force_cmyk(colors.Color(0, 1, 0))),
+            ("rgb(0, 0, 255)", force_cmyk(colors.Color(0, 0, 1))),
         )
         ac = svglib.Svg2RlgAttributeConverter(color_converter=force_cmyk)
         failed = _testit(ac.convertColor, mapping)
@@ -324,7 +322,7 @@ class TestAttrConverter:
 
         mapping = (
             ("fill: black; stroke: yellow",
-                {"fill":"black", "stroke":"yellow"}),
+                {"fill": "black", "stroke": "yellow"}),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.parseMultiAttributes, mapping)
@@ -781,7 +779,8 @@ class TestEmbedded:
             <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
                  viewBox="0 0 210 297" height="297mm" width="210mm">
-              <image id="refImage" xlink:href="../png/jpeg-required-201-t.png" height="36" width="48" y="77" x="50" />
+              <image id="refImage" xlink:href="../png/jpeg-required-201-t.png"
+                     height="36" width="48" y="77" x="50" />
             </svg>
         ''')))
         # FIXME: test the error log when we can require pytest >= 3.4

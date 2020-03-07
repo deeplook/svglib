@@ -186,7 +186,7 @@ class AttributeConverter:
 
         attrs = line.split(';')
         attrs = [a.strip() for a in attrs]
-        attrs = filter(lambda a:len(a)>0, attrs)
+        attrs = filter(lambda a: len(a) > 0, attrs)
 
         new_attrs = {}
         for a in attrs:
@@ -403,10 +403,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return self.color_converter(color)
 
     def convertLineJoin(self, svgAttr):
-        return {"miter":0, "round":1, "bevel":2}[svgAttr]
+        return {"miter": 0, "round": 1, "bevel": 2}[svgAttr]
 
     def convertLineCap(self, svgAttr):
-        return {"butt":0, "round":1, "square":2}[svgAttr]
+        return {"butt": 0, "round": 1, "square": 2}[svgAttr]
 
     def convertDashArray(self, svgAttr):
         strokeDashArray = self.convertLengthList(svgAttr)
@@ -492,7 +492,7 @@ class ElementWrapper:
         for match in matches:
             attr_dict = match[3][1]
             for attr, val in attr_dict.items():
-                if not attr in self.object.attrib:
+                if attr not in self.object.attrib:
                     try:
                         self.object.attrib[attr] = val
                     except ValueError:
@@ -534,7 +534,9 @@ class CircularRefError(Exception):
 class ExternalSVG:
     def __init__(self, path, renderer):
         self.root_node = load_svg_file(path)
-        self.renderer = SvgRenderer(path, parent_svgs=renderer._parent_chain + [renderer.source_path])
+        self.renderer = SvgRenderer(
+            path, parent_svgs=renderer._parent_chain + [renderer.source_path]
+        )
         self.rendered = False
 
     def get_fragment(self, fragment):
@@ -544,7 +546,7 @@ class ExternalSVG:
         return self.renderer.definitions.get(fragment)
 
 
-### the main meat ###
+# ## the main meat ###
 
 class SvgRenderer:
     """Renderer that renders an SVG file on a ReportLab Drawing instance.
@@ -555,7 +557,7 @@ class SvgRenderer:
 
     def __init__(self, path, color_converter=None, parent_svgs=None):
         self.source_path = path
-        self._parent_chain = parent_svgs or []  #  To detect circular refs.
+        self._parent_chain = parent_svgs or []  # To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(color_converter=color_converter)
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
@@ -681,7 +683,7 @@ class SvgRenderer:
         if not m:
             return
         ref = m.groups()[0]
-        if not ref in self.definitions:
+        if ref not in self.definitions:
             logger.warning("Unable to find a clipping path with id %s" % ref)
             return
 
@@ -756,7 +758,8 @@ class SvgRenderer:
             # Only local relative paths are supported yet
             if not isinstance(self.source_path, str):
                 logger.error(
-                    "Unable to resolve image path '%s' as the SVG source is not a file system path." % iri
+                    "Unable to resolve image path '%s' as the SVG source is not "
+                    "a file system path." % iri
                 )
                 return None
             path = os.path.normpath(os.path.join(os.path.dirname(self.source_path), iri))
@@ -960,7 +963,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convert_length_attrs(self, node, *attrs, em_base=None, **kwargs):
         # Support node both as NodeTracker or lxml node
-        getAttr = node.getAttribute if hasattr(node, 'getAttribute') else lambda attr: node.attrib.get(attr, '')
+        getAttr = (
+            node.getAttribute if hasattr(node, 'getAttribute')
+            else lambda attr: node.attrib.get(attr, '')
+        )
         convLength = self.attrConverter.convertLength
         defaults = kwargs.get('defaults', (0.0,) * len(attrs))
         return [
@@ -1073,7 +1079,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
                 baseLineShift = c.attrib.get("baseline-shift", '0')
                 if baseLineShift in ("sub", "super", "baseline"):
-                    baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
+                    baseLineShift = {"sub": -fs/2, "super": fs/2, "baseline": 0}[baseLineShift]
                 else:
                     baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)
             else:
@@ -1102,7 +1108,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                         char_dx = 0
                     if char_dy is None:
                         char_dy = 0
-                    new_x = char_dx + (last_x + stringWidth(last_char, ff, fs) if char_x is None else char_x)
+                    new_x = char_dx + (
+                        last_x + stringWidth(last_char, ff, fs) if char_x is None else char_x
+                    )
                     new_y = char_dy + (last_y if char_y is None else char_y)
                     shape = String(new_x, -(new_y - baseLineShift), char)
                     self.applyStyleOnShape(shape, node)
@@ -1459,6 +1467,7 @@ def monkeypatch_reportlab():
     from reportlab.graphics import shapes
 
     original_renderPath = shapes._renderPath
+
     def patchedRenderPath(path, drawFuncs, **kwargs):
         # Patched method to transfer fillRule from Path to PDFPathObject
         # Get back from bound method to instance
@@ -1470,6 +1479,7 @@ def monkeypatch_reportlab():
     shapes._renderPath = patchedRenderPath
 
     original_drawPath = Canvas.drawPath
+
     def patchedDrawPath(self, path, **kwargs):
         current = self._fillMode
         if hasattr(path, 'fillMode'):
@@ -1479,5 +1489,6 @@ def monkeypatch_reportlab():
         original_drawPath(self, path, **kwargs)
         self._fillMode = current
     Canvas.drawPath = patchedDrawPath
+
 
 monkeypatch_reportlab()
