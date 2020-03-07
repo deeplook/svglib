@@ -22,8 +22,6 @@ from os.path import dirname, splitext, exists, join, basename, getsize
 from urllib.parse import quote, unquote, urlparse
 from urllib.request import urlopen
 
-from reportlab.lib import colors
-from reportlab.lib.units import cm, inch
 from reportlab.lib.utils import haveImages
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.graphics.shapes import Group, Rect
@@ -53,13 +51,11 @@ class TestSVGSamples:
             print("deleting [%d] %s" % (i, path))
             os.remove(path)
 
-
     def test_convert_pdf(self):
         "Test convert sample SVG files to PDF using svglib."
 
         paths = glob.glob("%s/samples/misc/*" % TEST_ROOT)
-        paths = [p for p in paths
-            if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
@@ -69,7 +65,6 @@ class TestSVGSamples:
             # save as PDF
             base = splitext(path)[0] + '-svglib.pdf'
             renderPDF.drawToFile(drawing, base, showBoundary=0)
-
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
     def test_create_pdf_uniconv(self):
@@ -103,7 +98,6 @@ class TestWikipediaSymbols:
 
         return data
 
-
     def setup_method(self):
         "Check if files exists, else download and unpack it."
 
@@ -133,19 +127,17 @@ class TestWikipediaSymbols:
 
         # convert
         for path in paths:
-            url = server + path
             data = None
             p = join(os.getcwd(), self.folder_path, basename(path))
             if not exists(p):
                 try:
                     data = self.fetch_file(server, path)
-                except:
+                except Exception:
                     print("Check your internet connection and try again!")
                     break
                 if data:
                     with io.open(p, "w", encoding='UTF-8') as fh:
                         fh.write(data)
-
 
     def cleanup(self):
         "Remove generated files when running this test class."
@@ -155,13 +147,11 @@ class TestWikipediaSymbols:
             print("deleting [%d] %s" % (i, path))
             os.remove(path)
 
-
     def test_convert_pdf(self):
         "Test converting symbol SVG files to PDF using svglib."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths
-            if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
@@ -172,14 +162,12 @@ class TestWikipediaSymbols:
             base = splitext(path)[0] + '-svglib.pdf'
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
-
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
     def test_convert_pdf_uniconv(self):
         "Test converting symbol SVG files to PDF using uniconverter."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths
-            if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
             cmd = "uniconv '%s' '%s'" % (path, out)
@@ -212,7 +200,6 @@ class TestWikipediaFlags:
 
         return data
 
-
     def flag_url2filename(self, url):
         """Convert given flag URL into a local filename.
 
@@ -224,11 +211,10 @@ class TestWikipediaFlags:
         """
 
         path = basename(url)[len("Flag_of_"):]
-        path = path.capitalize() # capitalise leading "the_"
+        path = path.capitalize()  # capitalise leading "the_"
         path = unquote(path)
 
         return path
-
 
     def setup_method(self):
         "Check if files exists, else download."
@@ -277,9 +263,7 @@ class TestWikipediaFlags:
                     flag_url = m.groups()[0]
                     flag_url_map.append((prefix + fn, flag_url))
             with io.open(json_path, "w", encoding='UTF-8') as fh:
-                fh.write(json.dumps(flag_url_map, ensure_ascii=False))
-                # When Python 2 is dropped, we can simply:
-                #json.dump(flag_url_map, fh)
+                json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
         with io.open(json_path, "r", encoding='UTF-8') as fh:
@@ -292,7 +276,6 @@ class TestWikipediaFlags:
                 with io.open(path, "w", encoding='UTF-8') as f:
                     f.write(flag_svg)
 
-
     def cleanup(self):
         "Remove generated files when running this test class."
 
@@ -301,13 +284,11 @@ class TestWikipediaFlags:
             print("deleting [%d] %s" % (i, path))
             os.remove(path)
 
-
     def test_convert_pdf(self):
         "Test converting flag SVG files to PDF using svglib."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths
-            if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):
             print("working on [%d] %s" % (i, path))
 
@@ -318,14 +299,12 @@ class TestWikipediaFlags:
             base = splitext(path)[0] + '-svglib.pdf'
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
-
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
     def test_convert_pdf_uniconv(self):
         "Test converting flag SVG files to PDF using uniconverer."
 
         paths = glob.glob("%s/*" % self.folder_path)
-        paths = [p for p in paths
-            if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
             cmd = "uniconv '%s' '%s'" % (path, out)
@@ -372,7 +351,6 @@ class TestW3CSVG:
             if exists(join(TEST_ROOT, "samples", tar_path)):
                 os.remove(join(TEST_ROOT, "samples", tar_path))
 
-
     def cleanup(self):
         "Remove generated files when running this test class."
 
@@ -382,7 +360,6 @@ class TestW3CSVG:
         for i, path in enumerate(paths):
             print("deleting [%d] %s" % (i, path))
             os.remove(path)
-
 
     def test_convert_pdf_png(self):
         """
@@ -429,14 +406,12 @@ class TestW3CSVG:
                 print('Svglib: Consider upgrading reportlab to version >= 3.3.26!')
                 raise
 
-
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
     def test_convert_pdf_uniconv(self):
         "Test converting W3C SVG files to PDF using uniconverter."
 
         paths = glob.glob("%s/svg/*" % self.folder_path)
-        paths = [p for p in paths
-            if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
             cmd = "uniconv '%s' '%s'" % (path, out)
