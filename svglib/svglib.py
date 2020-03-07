@@ -1402,7 +1402,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             shape.fillColor.alpha = shape.fillOpacity
 
 
-def svg2rlg(path, **kwargs):
+def svg2rlg(path, resolve_entities=False, **kwargs):
     "Convert an SVG file to an RLG Drawing object."
 
     # unzip .svgz file into .svg
@@ -1413,7 +1413,7 @@ def svg2rlg(path, **kwargs):
         path = path[:-1]
         unzipped = True
 
-    svg_root = load_svg_file(path)
+    svg_root = load_svg_file(path, resolve_entities=resolve_entities)
     if svg_root is None:
         return
 
@@ -1428,8 +1428,10 @@ def svg2rlg(path, **kwargs):
     return drawing
 
 
-def load_svg_file(path):
-    parser = etree.XMLParser(remove_comments=True, recover=True)
+def load_svg_file(path, resolve_entities=False):
+    parser = etree.XMLParser(
+        remove_comments=True, recover=True, resolve_entities=resolve_entities
+    )
     try:
         doc = etree.parse(path, parser=parser)
         svg_root = doc.getroot()
