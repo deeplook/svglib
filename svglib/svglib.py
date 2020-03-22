@@ -47,7 +47,7 @@ from .utils import (
     normalise_svg_path,
 )
 
-__version__ = '0.9.4'
+__version__ = '1.0.0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
 __date__ = '2020-03-22'

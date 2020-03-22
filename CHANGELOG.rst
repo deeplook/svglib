@@ -3,13 +3,17 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+1.0.0 (2020-03-22)
+------------------
 
 - dropped Python 2 support
 - fixed references to <defs> content when placed middle or end of
   SVG documents (#225)
 - fixed elliptic arcs reading when arc flags are condensed (#232)
+
+0.9.4 (2020-03-22)
+------------------
+
 - disabled external entity loading by default (#229 - CVE-2020-10799)
 
 0.9.3 (2019-11-02)

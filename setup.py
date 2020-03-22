@@ -1,7 +1,7 @@
 import sys
 from setuptools import setup
 
-__version__ = '0.9.4'
+__version__ = '1.0.0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
 __date__ = '2020-03-22'
@@ -22,6 +22,7 @@ setup(
     platforms=['Posix', 'Windows'],
     keywords='SVG, PDF, reportlab, conversion, graphics',
     url='https://github.com/deeplook/svglib',
+    python_requires='>=3',
     install_requires=install_requires,
     setup_requires=[] + pytest_runner,
     tests_require=['pytest'],
@@ -43,6 +44,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3 :: Only',
         'Topic :: Documentation',
         'Topic :: Utilities',
         'Topic :: Printing',
