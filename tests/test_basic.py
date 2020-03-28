@@ -172,7 +172,8 @@ class TestPaths:
                  xmlns:xlink="http://www.w3.org/1999/xlink" width="660" height="480">
                 <defs>
                     <path id="my-clipping-path" d="M99,176 L 110 170 112 172Z"/>
-                    <rect id="my-clipping-rect" x="88.155" y="163" width="419.69" height="20.68"/>
+                    <rect id="my-clipping-rect" x="88.155" y="163" width="419.69" height="20.68"
+                          fill="red" stroke="blue"/>
                 </defs>
                 <clipPath id="my-clip-path">
                     <use xlink:href="#my-clipping-path"/>
@@ -186,7 +187,11 @@ class TestPaths:
         ''')))
         assert isinstance(drawing.contents[0].contents[0].contents[0], svglib.ClippingPath)
         # Clipping rect was converted to a path
-        assert isinstance(drawing.contents[0].contents[1].contents[0], svglib.ClippingPath)
+        rect_clip = drawing.contents[0].contents[1].contents[0]
+        assert isinstance(rect_clip, svglib.ClippingPath)
+        # Fill and stroke properties are force-deleted.
+        assert rect_clip.getProperties()['fillColor'] is None
+        assert rect_clip.getProperties()['strokeColor'] is None
 
 
 def force_cmyk(rgb):

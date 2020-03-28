@@ -142,6 +142,8 @@ class ClippingPath(Path):
         props = Path.getProperties(self, *args, **kwargs)
         if 'fillColor' in props:
             props['fillColor'] = None
+        if 'strokeColor' in props:
+            props['strokeColor'] = None
         return props
 
 
