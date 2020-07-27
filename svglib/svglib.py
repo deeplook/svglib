@@ -826,6 +826,10 @@ class SvgRenderer:
     def renderSvg(self, node, outermost=False):
         _saved_preserve_space = self.shape_converter.preserve_space
         self.shape_converter.preserve_space = node.getAttribute("{%s}space" % XML_NS) == 'preserve'
+        view_box = self.get_box(node, default_box=True)
+        _saved_box = self.attrConverter.main_box
+        if view_box:
+            self.attrConverter.set_box(view_box)
 
         # Rendering all definition nodes first.
         svg_ns = node.nsmap.get(None)
@@ -836,6 +840,7 @@ class SvgRenderer:
         for child in node.getchildren():
             self.renderNode(child, group)
         self.shape_converter.preserve_space = _saved_preserve_space
+        self.attrConverter.set_box(_saved_box)
 
         # Translating
         if not outermost:
@@ -844,7 +849,6 @@ class SvgRenderer:
                 group.translate(x or 0, y or 0)
 
         # Scaling
-        view_box = self.get_box(node)
         if not view_box and outermost:
             # Apply only the 'reverse' y-scaling (PDF 0,0 is bottom left)
             group.scale(1, -1)
