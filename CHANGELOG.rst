@@ -7,6 +7,8 @@ Unreleased
 ----------
 
 - avoid stroking clipping paths (#238)
+- when converting percentage values in embedded SVGs, consider the direct svg
+  parent node (#246)
 
 1.0.0 (2020-03-22)
 ------------------

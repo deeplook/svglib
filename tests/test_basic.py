@@ -790,6 +790,19 @@ class TestEmbedded:
         assert pytest.approx(1.417, 0.001) == embedded_svg_group.getProperties()['transform'][0]
         assert pytest.approx(1.417, 0.001) == embedded_svg_group.getProperties()['transform'][3]
 
+    def test_embedded_svg_with_percentages(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="100" width="100">
+                <rect height="100%" width="100%" x="0" y="0" />
+                <svg height="15" width="15" x="45" y="45">
+                    <rect fill="black" height="100%" width="100%" x="0" y="0" />
+                </svg>
+            </svg>
+        ''')))
+        inner_rect = drawing.contents[0].contents[1].contents[0]
+        assert inner_rect.width == 15
+
     def test_png_in_svg_file_like(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
