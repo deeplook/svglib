@@ -539,6 +539,18 @@ class TestTextNode:
         assert main_group.contents[0].contents[3].y == -20 - (1.5 * 28)
 
 
+class TestRectNode:
+    def test_rx_ry(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<rect rx="10" ry="4" width="10" height="3" x="0" y="0"/>'
+        ))
+        rect = converter.convertRect(node)
+        # rx/ry cannot be more than half the rect lengths.
+        assert rect.rx == 5
+        assert rect.ry == 1.5
+
+
 class TestPolylineNode:
     def test_filling(self):
         converter = svglib.Svg2RlgShapeConverter(None)
