@@ -825,8 +825,8 @@ class TestFontRegistration:
     def test_0(self):
         '''Tests for font registration.''' 
         mapping = (
-            ({"font_name":"unknown font", "font_path":"/home/unkown_font.tff"}, 
-                (None, False))
+            ({'font_name':"unknown path", "font_path":"/home/unknown_font.tff"},
+             (None, False)),
         )
         failed = _testit(svglib.register_font, mapping)
         assert len(failed) == 0
