@@ -3,12 +3,14 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+1.0.1 (2020-08-26)
+------------------
 
 - avoid stroking clipping paths (#238)
 - when converting percentage values in embedded SVGs, consider the direct svg
   parent node (#246)
+- fixed rounded rects artifacts when rx/ry values are too high (#250)
+- avoid stroking rects when strokeWidth is 0 (#250)
 
 1.0.0 (2020-03-22)
 ------------------
