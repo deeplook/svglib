@@ -72,6 +72,16 @@ Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 
 split_whitespace = re.compile(r'[^ \t\r\n\f]+').findall
 
+def register_font(font_name, font_path):
+    '''Registers a font by name or alias and path to font including file extension to make adding a font more flexable.'''
+    NOT_FOUND = (None, False)
+    if font_name not in STANDARD_FONT_NAMES and font_name not in _registered_fonts:
+        try:
+            registerFont(TTFont(font_name, font_path))
+            _registered_fonts[font_name] = True
+            return font_name, True
+        except TTFError:
+            return NOT_FOUND
 
 def find_font(font_name):
     """Return the font and a Boolean indicating if the match is exact."""
