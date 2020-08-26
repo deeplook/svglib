@@ -30,7 +30,7 @@ def _testit(func, mapping):
 
     failed = []
     for input, expected in mapping:
-        result = func(input)
+        result = func(**input)
         if not result == expected:
             failed.append((input, result, expected))
 
@@ -822,7 +822,7 @@ class TestFontRegistration:
     def test_0(self):
         '''Tests for font registration.''' 
         mapping = (
-            (("unknown font", "/home/unkown_font.tff"), 
+            ({"unknown font", "/home/unkown_font.tff"}, 
                 (None, False))
         )
         failed = _testit(svglib.register_font, mapping)
