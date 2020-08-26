@@ -1422,6 +1422,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     pass
         if getattr(shape, 'fillOpacity', None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
+        if getattr(shape, 'strokeWidth', None) == 0:
+            # Quoting from the PDF 1.7 spec:
+            # A line width of 0 denotes the thinnest line that can be rendered at device resolution:
+            # 1 device pixel wide. However, some devices cannot reproduce 1-pixel lines,
+            # and on high-resolution devices, they are nearly invisible. Since the results of
+            # rendering such zero-width lines are device-dependent, their use is not recommended.
+            shape.strokeColor = None
 
 
 def svg2rlg(path, resolve_entities=False, **kwargs):

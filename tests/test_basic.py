@@ -553,6 +553,19 @@ class TestRectNode:
         assert rect.rx == 5
         assert rect.ry == 1.5
 
+    def test_strokewidth_0(self):
+        """
+        When strokeWidth = 0, we force strokeColor to None to avoid the stroke
+        to be displayed.
+        """
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<rect style="stroke: rgb(100, 84, 0); fill: rgb(255, 255, 255); '
+            'fill-opacity: 1; stroke-width: 0;" width="135" height="86" x="10" y="10"/>'
+        ))
+        rect = converter.convertShape('rect', node)
+        assert rect.strokeColor is None
+
 
 class TestPolylineNode:
     def test_filling(self):
