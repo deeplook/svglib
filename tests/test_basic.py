@@ -30,7 +30,10 @@ def _testit(func, mapping):
 
     failed = []
     for input, expected in mapping:
-        result = func(input)
+        if isinstance(input, dict):
+            result = func(**input)
+        else:
+            result = func(input)
         if not result == expected:
             failed.append((input, result, expected))
 
@@ -816,3 +819,14 @@ class TestEmbedded:
         # FIXME: test the error log when we can require pytest >= 3.4
         # No image as relative path in file-like input cannot be determined.
         assert drawing.contents[0].contents == []
+
+
+class TestFontRegistration:
+    """Testing the font registration function."""
+    def test_failed_registration(self):
+        mapping = (
+            ({'font_name': "unknown path", "font_path": "/home/unknown_font.tff"},
+             (None, False)),
+        )
+        failed = _testit(svglib.register_font, mapping)
+        assert len(failed) == 0

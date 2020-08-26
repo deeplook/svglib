@@ -73,6 +73,20 @@ Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 split_whitespace = re.compile(r'[^ \t\r\n\f]+').findall
 
 
+def register_font(font_name, font_path):
+    """
+    Register a font by name or alias and path to font including file extension.
+    """
+    NOT_FOUND = (None, False)
+    if font_name not in STANDARD_FONT_NAMES and font_name not in _registered_fonts:
+        try:
+            registerFont(TTFont(font_name, font_path))
+            _registered_fonts[font_name] = True
+            return font_name, True
+        except TTFError:
+            return NOT_FOUND
+
+
 def find_font(font_name):
     """Return the font and a Boolean indicating if the match is exact."""
     if font_name in STANDARD_FONT_NAMES:
@@ -81,32 +95,29 @@ def find_font(font_name):
         return font_name, _registered_fonts[font_name]
 
     NOT_FOUND = (None, False)
+    # Try first to register the font if it exists as ttf
+    reg_name, exact = register_font(font_name, '%s.ttf' % font_name)
+    if reg_name is not None:
+        return reg_name, exact
+    # Try searching with Fontconfig
     try:
-        # Try first to register the font if it exists as ttf,
-        # based on ReportLab font search.
-        registerFont(TTFont(font_name, '%s.ttf' % font_name))
-        _registered_fonts[font_name] = True
-        return font_name, True
+        pipe = subprocess.Popen(
+            ['fc-match', '-s', '--format=%{file}\\n', font_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
+        font_path = output.split('\n')[0]
+    except OSError:
+        return NOT_FOUND
+    try:
+        registerFont(TTFont(font_name, font_path))
     except TTFError:
-        # Try searching with Fontconfig
-        try:
-            pipe = subprocess.Popen(
-                ['fc-match', '-s', '--format=%{file}\\n', font_name],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
-            font_path = output.split('\n')[0]
-        except OSError:
-            return NOT_FOUND
-        try:
-            registerFont(TTFont(font_name, font_path))
-        except TTFError:
-            return NOT_FOUND
-        # Fontconfig may return a default font totally unrelated with font_name
-        exact = font_name.lower() in os.path.basename(font_path).lower()
-        _registered_fonts[font_name] = exact
-        return font_name, exact
+        return NOT_FOUND
+    # Fontconfig may return a default font totally unrelated with font_name
+    exact = font_name.lower() in os.path.basename(font_path).lower()
+    _registered_fonts[font_name] = exact
+    return font_name, exact
 
 
 class NoStrokePath(Path):
