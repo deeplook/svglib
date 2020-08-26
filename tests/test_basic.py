@@ -816,3 +816,14 @@ class TestEmbedded:
         # FIXME: test the error log when we can require pytest >= 3.4
         # No image as relative path in file-like input cannot be determined.
         assert drawing.contents[0].contents == []
+
+class TestFontRegistration:
+    '''Testing the font registration function.''' 
+    def test_0(self):
+        '''Tests for font registration.''' 
+        mapping = (
+            (("unknown font", "/home/unkown_font.tff"), 
+                (None, False))
+        )
+        failed = _testit(svglib.register_font, mapping)
+        assert len(failed) == 0
