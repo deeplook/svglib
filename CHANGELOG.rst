@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+Unreleased
+----------
+
+- honor cascading when applying CSS rules (#253)
+
 1.0.1 (2020-08-26)
 ------------------
 
