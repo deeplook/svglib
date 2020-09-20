@@ -505,11 +505,10 @@ class ElementWrapper:
         for match in matches:
             attr_dict = match[3][1]
             for attr, val in attr_dict.items():
-                if attr not in self.object.attrib:
-                    try:
-                        self.object.attrib[attr] = val
-                    except ValueError:
-                        pass
+                try:
+                    self.object.attrib[attr] = val
+                except ValueError:
+                    pass
         # Set marker on the node to not apply rules more than once
         self.object.set('__rules_applied', '1')
 

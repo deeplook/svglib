@@ -422,6 +422,7 @@ class TestStyleSheets:
             <svg width="777" height="267" xml:space="preserve">
               <defs>
                 <style type="text/css">
+                path { fill:none; }
                 #p1 { fill:rgb(255,0,0); }
                 #p2 { fill:rgb(255,0,0); }
                 .paths { stroke-width:1.5; }
