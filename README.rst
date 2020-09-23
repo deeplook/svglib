@@ -60,8 +60,6 @@ Tests include a huge `W3C SVG test suite`_ plus ca. 200 `flags from
 Wikipedia`_ and some selected `symbols from Wikipedia`_ (with increasingly
 less pointing to missing features).
 
-Previous versions were hosted at https://bitbucket.org/deeplook/svglib.
-
 
 Features
 --------
