@@ -1414,6 +1414,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                         svgAttrValue = default
                 if svgAttrValue == "currentColor":
                     svgAttrValue = ac.findAttr(node.getparent(), "color") or default
+                if isinstance(svgAttrValue, str):
+                    svgAttrValue = svgAttrValue.replace('!important', '').strip()
                 try:
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(svgAttrValue))

@@ -423,7 +423,7 @@ class TestStyleSheets:
               <defs>
                 <style type="text/css">
                 path { fill:none; }
-                #p1 { fill:rgb(255,0,0); }
+                #p1 { fill:rgb(255,0,0) !important; }
                 #p2 { fill:rgb(255,0,0); }
                 .paths { stroke-width:1.5; }
                 </style>
