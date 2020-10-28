@@ -7,6 +7,7 @@ Unreleased
 ----------
 
 - honor cascading when applying CSS rules (#253)
+- ignore !important statement in CSS values (#227)
 
 1.0.1 (2020-08-26)
 ------------------
