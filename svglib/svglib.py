@@ -13,13 +13,14 @@ tool named sv2pdf (which should also handle SVG files compressed with
 gzip and extension .svgz).
 """
 
+import base64
 import copy
 import gzip
 import itertools
 import logging
 import os
+import pathlib
 import re
-import base64
 import tempfile
 import shlex
 import shutil
@@ -1443,7 +1444,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
 def svg2rlg(path, resolve_entities=False, **kwargs):
-    "Convert an SVG file to an RLG Drawing object."
+    """
+    Convert an SVG file to an RLG Drawing object.
+    `path` can be a file, a file-like, or a file path as str or pathlib.Path.
+    """
+
+    if isinstance(path, pathlib.Path):
+        path = str(path)
 
     # unzip .svgz file into .svg
     unzipped = False

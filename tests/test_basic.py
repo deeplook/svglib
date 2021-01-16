@@ -9,9 +9,12 @@ inside the test directory:
 """
 
 import io
+import os
+import pathlib
 import subprocess
 import textwrap
 from lxml import etree
+from tempfile import NamedTemporaryFile
 
 from reportlab.graphics.shapes import (
     _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
@@ -43,6 +46,52 @@ def _testit(func, mapping):
             print("  %s : %s != %s" % (repr(input), result, expected))
 
     return failed
+
+
+class TestSvg2rlgInput:
+    test_content = textwrap.dedent('''\
+        <?xml version="1.0"?>
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="1200" height="800"
+             viewBox="0 0 36 24">
+            <rect y="10" width="36" height="4"/>
+        </svg>
+    ''')
+
+    def test_path_as_string_input(self):
+        try:
+            with NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as fp:
+                fp.write(self.test_content)
+                file_path = fp.name
+            drawing = svglib.svg2rlg(file_path)
+            assert drawing is not None
+        finally:
+            os.unlink(file_path)
+
+    def test_path_as_pathlib_input(self):
+        try:
+            with NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as fp:
+                fp.write(self.test_content)
+                file_path = pathlib.Path(fp.name)
+            drawing = svglib.svg2rlg(file_path)
+            assert drawing is not None
+        finally:
+            os.unlink(file_path)
+
+    def test_filelike_input(self):
+        drawing = svglib.svg2rlg(io.StringIO(self.test_content))
+        assert drawing is not None
+
+    def test_filehandle_input(self):
+        try:
+            with NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as fp:
+                fp.write(self.test_content)
+                file_path = fp.name
+            with open(file_path, 'rb') as fp:
+                drawing = svglib.svg2rlg(fp)
+                assert drawing is not None
+        finally:
+            os.unlink(file_path)
 
 
 class TestPaths:
