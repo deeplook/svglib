@@ -197,3 +197,6 @@ def find_font(font_name, weight='normal', style='normal'):
 
 def register_font_family(self, family, normal,  bold=None, italic=None, bolditalic=None):
     _font_map.register_font_family(family, normal, bold, italic, bolditalic)
+
+def get_global_font_map():
+    return _font_map

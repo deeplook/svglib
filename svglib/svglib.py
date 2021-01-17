@@ -45,7 +45,7 @@ from .utils import (
     normalise_svg_path,
 )
 
-from .fonts import (_font_map, DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE, register_font, find_font)
+from .fonts import (get_global_font_map, DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE, register_font, find_font)
 
 __version__ = '1.0.1'
 __license__ = 'LGPL 3'
@@ -258,7 +258,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def __init__(self, color_converter=None, font_map=None):
         super().__init__()
         self.color_converter = color_converter or self.identity_color_converter
-        self._font_map = _font_map
+        self._font_map = get_global_font_map()
         if font_map is not None:
             self._font_map = font_map
 
