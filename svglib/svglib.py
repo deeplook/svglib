@@ -47,10 +47,8 @@ from .utils import (
 
 from .fonts import (get_global_font_map, DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE)
 
-from .fonts import (register_font, find_font) # to keep backward compatibility, since those functions where previously part of the svglib module
-# Since the LGTM.com bot complains about unsued issues now, create dummy local variables here
-__dummy_register_font = register_font
-__dummy_find_font = find_font
+# To keep backward compatibility, since those functions where previously part of the svglib module
+from .fonts import (register_font, find_font)  # noqa
 
 __version__ = '1.0.1'
 __license__ = 'LGPL 3'
