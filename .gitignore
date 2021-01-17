@@ -1,3 +1,4 @@
+.cache
 .coverage
 MANIFEST
 coverage.xml
@@ -16,4 +17,8 @@ docs/_build
 env/
 .workon
 dist/
-tests/samples
+tests/samples/misc/*-svglib.pdf
+tests/samples/wikipedia/flags
+tests/samples/wikipedia/symbols
+tests/samples/W3C_SVG_12_TinyTestSuite.tar.gz
+tests/samples/W3C_SVG_12_TinyTestSuite/
