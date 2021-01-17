@@ -1,5 +1,6 @@
 import io
 import textwrap
+import subprocess
 
 import pytest
 from lxml import etree
@@ -69,6 +70,7 @@ def test_plain_text():
         ''')))
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == DEFAULT_FONT_NAME
+
 
 def test_fontfamily_text():
     drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
@@ -158,6 +160,7 @@ def test_fontfamily_weight_text():
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-Bold'
 
+
 def test_fontfamily_style_text():
     drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
@@ -239,3 +242,36 @@ def test_fontfamily_weight_style_text():
     ''')))
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-BoldOblique'
+
+
+def test_failed_registration():
+        fontname, exact = register_font(font_name="unknown path", font_path="/home/unknown_font.tff")
+        assert fontname == None
+        assert exact == False
+
+
+def test_font_family():
+    def font_config_available():
+        try:
+            subprocess.call(["fc-match"])
+        except OSError:
+            return False
+        return True
+
+    converter = Svg2RlgAttributeConverter()
+    # Check PDF standard names are untouched
+    assert converter.convertFontFamily('ZapfDingbats') == 'ZapfDingbats'
+    assert converter.convertFontFamily('bilbo ZapfDingbats') == 'ZapfDingbats'
+    assert converter.convertFontFamily(' bilbo    ZapfDingbats  ') == 'ZapfDingbats'
+    assert converter.convertFontFamily(' bilbo,    ZapfDingbats  ') == 'ZapfDingbats'
+    if font_config_available():
+        # Fontconfig will always provide at least a default font and register
+        # that font under the provided font name.
+        assert converter.convertFontFamily('SomeFont') == 'SomeFont'
+    else:
+        # Unknown fonts are converted to Helvetica by default.
+        assert converter.convertFontFamily('SomeFont') == 'Helvetica'
+    # Check font names with spaces
+    assert converter.split_attr_list("'Open Sans', Arial, 'New Times Roman'") == [
+        'Open Sans', 'Arial', 'New Times Roman'
+    ]

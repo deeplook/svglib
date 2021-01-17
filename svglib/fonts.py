@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 
-from reportlab.pdfbase.pdfmetrics import registerFont, stringWidth
+from reportlab.pdfbase.pdfmetrics import registerFont
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
 
 STANDARD_FONT_NAMES = (
