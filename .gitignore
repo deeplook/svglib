@@ -16,3 +16,4 @@ docs/_build
 env/
 .workon
 dist/
+tests/samples
