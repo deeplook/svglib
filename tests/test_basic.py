@@ -9,9 +9,12 @@ inside the test directory:
 """
 
 import io
+import os
+import pathlib
 import subprocess
 import textwrap
 from lxml import etree
+from tempfile import NamedTemporaryFile
 
 from reportlab.graphics.shapes import (
     _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
@@ -43,6 +46,52 @@ def _testit(func, mapping):
             print("  %s : %s != %s" % (repr(input), result, expected))
 
     return failed
+
+
+class TestSvg2rlgInput:
+    test_content = textwrap.dedent('''\
+        <?xml version="1.0"?>
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="1200" height="800"
+             viewBox="0 0 36 24">
+            <rect y="10" width="36" height="4"/>
+        </svg>
+    ''')
+
+    def test_path_as_string_input(self):
+        try:
+            with NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as fp:
+                fp.write(self.test_content)
+                file_path = fp.name
+            drawing = svglib.svg2rlg(file_path)
+            assert drawing is not None
+        finally:
+            os.unlink(file_path)
+
+    def test_path_as_pathlib_input(self):
+        try:
+            with NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as fp:
+                fp.write(self.test_content)
+                file_path = pathlib.Path(fp.name)
+            drawing = svglib.svg2rlg(file_path)
+            assert drawing is not None
+        finally:
+            os.unlink(file_path)
+
+    def test_filelike_input(self):
+        drawing = svglib.svg2rlg(io.StringIO(self.test_content))
+        assert drawing is not None
+
+    def test_filehandle_input(self):
+        try:
+            with NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as fp:
+                fp.write(self.test_content)
+                file_path = fp.name
+            with open(file_path, 'rb') as fp:
+                drawing = svglib.svg2rlg(fp)
+                assert drawing is not None
+        finally:
+            os.unlink(file_path)
 
 
 class TestPaths:
@@ -423,7 +472,7 @@ class TestStyleSheets:
               <defs>
                 <style type="text/css">
                 path { fill:none; }
-                #p1 { fill:rgb(255,0,0); }
+                #p1 { fill:rgb(255,0,0) !important; }
                 #p2 { fill:rgb(255,0,0); }
                 .paths { stroke-width:1.5; }
                 </style>
@@ -439,6 +488,79 @@ class TestStyleSheets:
         # The style on the element has precedence over the global style
         assert main_group.contents[0].contents[1].contents[0].fillColor == colors.black
         assert main_group.contents[0].contents[1].contents[0].strokeWidth == 1.5
+
+
+class TestGroupNode:
+    def test_svg_groups_have_svgid(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+                <g id="g856">
+                    <rect
+                         y="107.07929"
+                         x="64.942139"
+                         height="19.506001"
+                         width="34.690311"
+                         id="rect850"
+                </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+
+        gr, = main_group.contents
+        assert gr.svgid == 'g856'
+        assert isinstance(gr, Group)
+
+    def test_created_groups_have_svgid_of_their_content(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+                <g id="g856">
+                    <rect
+                         y="107.07929"
+                         x="64.942139"
+                         height="19.506001"
+                         width="34.690311"
+                         id="rect850"
+                    <rect
+                         y="136.5135"
+                         x="108.62624"
+                         height="17.637161"
+                         width="29.083796"
+                         id="rect852"
+                    <path
+                       d="M 601.06712,388.63166 H 954.67961"
+                       id="path819" />
+                </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        gr, = main_group.contents
+
+        r1_gr, r2_gr, pth_gr = gr.contents
+        assert r1_gr.svgid == 'rect850'
+        assert r2_gr.svgid == 'rect852'
+        assert pth_gr.svgid == 'path819'
+        assert isinstance(pth_gr, Group)
+
+    def test_svg_layers_have_label(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267">
+                <g inkscape:groupmode="layer"
+                 id="layer2"
+                 inkscape:label="x_axis"
+                 style="display:inline"
+                 transform="translate(-476.20282,35.510971)">
+                <path
+                   d="M 601.06712,388.63166 H 954.67961"
+                   id="path819" />
+                </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        gr, = main_group.contents
+        assert gr.label == "x_axis"
 
 
 class TestTextNode:

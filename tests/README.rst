@@ -14,9 +14,9 @@ which is a simple ``pip install pytest``)::
  
     $ PYTHONPATH=. py.test
     ======================== test session starts =========================
-    platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+    platform darwin -- Python 3…, pytest-3…, py-1…, pluggy-0…
     rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-    plugins: cov-2.4.0
+    plugins: cov-2…
     collected 36 items
 
     tests/test_basic.py ............................
@@ -39,9 +39,9 @@ run the following (which installs ``pytest-runner`` during testing)::
     writing manifest file 'svglib.egg-info/SOURCES.txt'
     running build_ext
     ======================== test session starts =========================
-    platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+    platform darwin -- Python 3…, pytest-3…, py-1…, pluggy-0…
     rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-    plugins: cov-2.4.0
+    plugins: cov-2…
     collected 33 items
 
     tests/test_basic.py .........................
@@ -50,13 +50,11 @@ run the following (which installs ``pytest-runner`` during testing)::
     =============== 29 passed, 4 skipped in 38.95 seconds ================
 
 If you have ``tox`` installed (``pip install tox``) you can simply
-run the testsuite on Python 2.7 and Python 3.5 (assuming you have
-them installed) or on a single version (this will not run with
-``conda``, yet, though)::
+run the testsuite on Python 3.8 (assuming you have it installed) or on a
+single version (this will not run with ``conda``, yet, though)::
 
     $ tox
-    $ tox -e py27
-    $ tox -e py35
+    $ tox -e py38
 
 All will run the entire testsuite and produce result files in PDF
 format in the subdirectories ``tests/samples`` (here also in PNG),
@@ -81,15 +79,15 @@ more code being executed and a higher test coverage)::
     $ rm -rf tests/samples/wikipedia/symbols
     $ PYTHONPATH=. py.test --cov=./svglib --cov=tests tests
     ======================== test session starts =========================
-    platform darwin -- Python 3.5.2, pytest-3.0.5, py-1.4.32, pluggy-0.4.0
+    platform darwin -- Python 3…, pytest-3…, py-1…, pluggy-0…
     rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-    plugins: cov-2.4.0
+    plugins: cov-2…
     collected 36 items
 
     tests/test_basic.py .........................
     tests/test_samples.py .s.s.s.s
 
-    ---------- coverage: platform darwin, python 3.5.2-final-0 -----------
+    ---------- coverage: platform darwin, python 3… -----------
     Name                    Stmts   Miss  Cover
     -------------------------------------------
     svglib/__init__.py          0      0   100%

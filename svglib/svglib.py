@@ -13,13 +13,14 @@ tool named sv2pdf (which should also handle SVG files compressed with
 gzip and extension .svgz).
 """
 
+import base64
 import copy
 import gzip
 import itertools
 import logging
 import os
+import pathlib
 import re
-import base64
 import tempfile
 import shlex
 import shutil
@@ -780,6 +781,15 @@ class SvgRenderer:
         if not ignored:
             if nid and item:
                 self.definitions[nid] = node
+                # preserve id to keep track of svg objects
+                # and simplify further analyses of generated document
+                item.setProperties({'svgid': nid})
+                # labels are used in inkscape to name specific groups as layers
+                # preserving them simplify extraction of feature from the generated document
+                label_attrs = [v for k, v in node.attrib.items() if 'label' in k]
+                if len(label_attrs) == 1:
+                    label, = label_attrs
+                    item.setProperties({'label': label})
             if nid in self.waiting_use_nodes.keys():
                 to_render = self.waiting_use_nodes.pop(nid)
                 for use_node, group in to_render:
@@ -1562,7 +1572,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
 def svg2rlg(path, resolve_entities=False, **kwargs):
-    "Convert an SVG file to an RLG Drawing object."
+    """
+    Convert an SVG file to an RLG Drawing object.
+    `path` can be a file, a file-like, or a file path as str or pathlib.Path.
+    """
+
+    if isinstance(path, pathlib.Path):
+        path = str(path)
 
     # unzip .svgz file into .svg
     unzipped = False
