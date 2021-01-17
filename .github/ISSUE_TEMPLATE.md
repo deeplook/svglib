@@ -1,3 +1,6 @@
+If you want to start a discussion rather then open an issue, please use the
+now enabled GitHub [discussions feature for this project](https://github.com/deeplook/svglib/discussions)!
+
 When submitting a new issue please try to be as concise and precise as possible.
 This means to show only minimal SVG or PDF files that show something unexpected.
 
