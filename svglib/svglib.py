@@ -48,7 +48,13 @@ from .utils import (
 from .fonts import (get_global_font_map, DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE)
 
 # To keep backward compatibility, since those functions where previously part of the svglib module
-from .fonts import (register_font, find_font)  # noqa
+from .fonts import (register_font as _fonts_register_font, find_font as _fonts_find_font)
+
+def register_font(font_name, font_path=None, weight='normal', style='normal', rlgFontName=None):
+    return _fonts_register_font(font_name, font_path, weight, style, rlgFontName)
+
+def find_font(font_name, weight='normal', style='normal'):
+    return _fonts_find_font(font_name, weight, style)
 
 __version__ = '1.0.1'
 __license__ = 'LGPL 3'
