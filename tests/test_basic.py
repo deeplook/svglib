@@ -11,7 +11,6 @@ inside the test directory:
 import io
 import os
 import pathlib
-import subprocess
 import textwrap
 from lxml import etree
 from tempfile import NamedTemporaryFile
@@ -564,32 +563,6 @@ class TestGroupNode:
 
 
 class TestTextNode:
-    def test_font_family(self):
-        def font_config_available():
-            try:
-                subprocess.call(["fc-match"])
-            except OSError:
-                return False
-            return True
-
-        converter = svglib.Svg2RlgAttributeConverter()
-        # Check PDF standard names are untouched
-        assert converter.convertFontFamily('ZapfDingbats') == 'ZapfDingbats'
-        assert converter.convertFontFamily('bilbo ZapfDingbats') == 'ZapfDingbats'
-        assert converter.convertFontFamily(' bilbo    ZapfDingbats  ') == 'ZapfDingbats'
-        assert converter.convertFontFamily(' bilbo,    ZapfDingbats  ') == 'ZapfDingbats'
-        if font_config_available():
-            # Fontconfig will always provide at least a default font and register
-            # that font under the provided font name.
-            assert converter.convertFontFamily('SomeFont') == 'SomeFont'
-        else:
-            # Unknown fonts are converted to Helvetica by default.
-            assert converter.convertFontFamily('SomeFont') == 'Helvetica'
-        # Check font names with spaces
-        assert converter.split_attr_list("'Open Sans', Arial, 'New Times Roman'") == [
-            'Open Sans', 'Arial', 'New Times Roman'
-        ]
-
     def test_space_preservation(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
             <?xml version="1.0"?>
@@ -955,14 +928,3 @@ class TestEmbedded:
         # FIXME: test the error log when we can require pytest >= 3.4
         # No image as relative path in file-like input cannot be determined.
         assert drawing.contents[0].contents == []
-
-
-class TestFontRegistration:
-    """Testing the font registration function."""
-    def test_failed_registration(self):
-        mapping = (
-            ({'font_name': "unknown path", "font_path": "/home/unknown_font.tff"},
-             (None, False)),
-        )
-        failed = _testit(svglib.register_font, mapping)
-        assert len(failed) == 0
