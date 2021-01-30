@@ -24,12 +24,9 @@ import re
 import tempfile
 import shlex
 import shutil
-import subprocess
-import sys
 from collections import defaultdict, namedtuple
 
-from reportlab.pdfbase.pdfmetrics import registerFont, stringWidth
-from reportlab.pdfbase.ttfonts import TTFError, TTFont
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.graphics.shapes import (
@@ -48,6 +45,24 @@ from .utils import (
     normalise_svg_path,
 )
 
+from .fonts import (
+    get_global_font_map, DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE,
+)
+
+# To keep backward compatibility, since those functions where previously part of the svglib module
+from .fonts import (
+    register_font as _fonts_register_font, find_font as _fonts_find_font,
+)
+
+
+def register_font(font_name, font_path=None, weight='normal', style='normal', rlgFontName=None):
+    return _fonts_register_font(font_name, font_path, weight, style, rlgFontName)
+
+
+def find_font(font_name, weight='normal', style='normal'):
+    return _fonts_find_font(font_name, weight, style)
+
+
 __version__ = '1.0.1'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
@@ -58,67 +73,11 @@ XML_NS = 'http://www.w3.org/XML/1998/namespace'
 # A sentinel to identify a situation where a node reference a fragment not yet defined.
 DELAYED = object()
 
-STANDARD_FONT_NAMES = (
-    'Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic',
-    'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique',
-    'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique',
-    'Symbol', 'ZapfDingbats',
-)
-DEFAULT_FONT_NAME = "Helvetica"
-_registered_fonts = {}
-
 logger = logging.getLogger(__name__)
 
 Box = namedtuple('Box', ['x', 'y', 'width', 'height'])
 
 split_whitespace = re.compile(r'[^ \t\r\n\f]+').findall
-
-
-def register_font(font_name, font_path):
-    """
-    Register a font by name or alias and path to font including file extension.
-    """
-    NOT_FOUND = (None, False)
-    if font_name not in STANDARD_FONT_NAMES and font_name not in _registered_fonts:
-        try:
-            registerFont(TTFont(font_name, font_path))
-            _registered_fonts[font_name] = True
-            return font_name, True
-        except TTFError:
-            return NOT_FOUND
-
-
-def find_font(font_name):
-    """Return the font and a Boolean indicating if the match is exact."""
-    if font_name in STANDARD_FONT_NAMES:
-        return font_name, True
-    elif font_name in _registered_fonts:
-        return font_name, _registered_fonts[font_name]
-
-    NOT_FOUND = (None, False)
-    # Try first to register the font if it exists as ttf
-    reg_name, exact = register_font(font_name, '%s.ttf' % font_name)
-    if reg_name is not None:
-        return reg_name, exact
-    # Try searching with Fontconfig
-    try:
-        pipe = subprocess.Popen(
-            ['fc-match', '-s', '--format=%{file}\\n', font_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
-        font_path = output.split('\n')[0]
-    except OSError:
-        return NOT_FOUND
-    try:
-        registerFont(TTFont(font_name, font_path))
-    except TTFError:
-        return NOT_FOUND
-    # Fontconfig may return a default font totally unrelated with font_name
-    exact = font_name.lower() in os.path.basename(font_path).lower()
-    _registered_fonts[font_name] = exact
-    return font_name, exact
 
 
 class NoStrokePath(Path):
@@ -312,9 +271,10 @@ class AttributeConverter:
 class Svg2RlgAttributeConverter(AttributeConverter):
     "A concrete SVG to RLG attribute converter."
 
-    def __init__(self, color_converter=None):
+    def __init__(self, color_converter=None, font_map=None):
         super().__init__()
         self.color_converter = color_converter or self.identity_color_converter
+        self._font_map = font_map or get_global_font_map()
 
     @staticmethod
     def identity_color_converter(c):
@@ -430,23 +390,15 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         strokeDashOffset = self.convertLength(svgAttr)
         return strokeDashOffset
 
-    def convertFontFamily(self, svgAttr):
-        if not svgAttr:
+    def convertFontFamily(self, fontAttr, weightAttr='normal', styleAttr='normal'):
+        if not fontAttr:
             return ''
-        # very hackish
-        font_mapping = {
-            "sans-serif": "Helvetica",
-            "serif": "Times-Roman",
-            "times": "Times-Roman",
-            "monospace": "Courier",
-        }
-        font_names = [
-            font_mapping.get(font_name.lower(), font_name)
-            for font_name in self.split_attr_list(svgAttr)
-        ]
+        # split the fontAttr in actual font family names
+        font_names = self.split_attr_list(fontAttr)
+
         non_exact_matches = []
         for font_name in font_names:
-            font_name, exact = find_font(font_name)
+            font_name, exact = self._font_map.find_font(font_name, weightAttr, styleAttr)
             if exact:
                 return font_name
             elif font_name:
@@ -454,7 +406,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if non_exact_matches:
             return non_exact_matches[0]
         else:
-            logger.warning("Unable to find a suitable font for 'font-family:%s'" % svgAttr)
+            logger.warning(
+                f"Unable to find a suitable font for 'font-family:{fontAttr}', "
+                f"weight:{weightAttr}, style:{styleAttr}"
+            )
             return DEFAULT_FONT_NAME
 
 
@@ -568,10 +523,12 @@ class SvgRenderer:
     transforming it into a ReportLab Drawing instance.
     """
 
-    def __init__(self, path, color_converter=None, parent_svgs=None):
+    def __init__(self, path, color_converter=None, parent_svgs=None, font_map=None):
         self.source_path = path
         self._parent_chain = parent_svgs or []  # To detect circular refs.
-        self.attrConverter = Svg2RlgAttributeConverter(color_converter=color_converter)
+        self.attrConverter = Svg2RlgAttributeConverter(
+            color_converter=color_converter, font_map=font_map
+        )
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions = {}
@@ -1091,7 +1048,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         dx0, dy0 = 0, 0
         x1, y1 = 0, 0
         ff = attrConv.findAttr(node, "font-family") or DEFAULT_FONT_NAME
-        ff = attrConv.convertFontFamily(ff)
+        fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
+        fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
+        ff = attrConv.convertFontFamily(ff, fw, fstyle)
         fs = attrConv.findAttr(node, "font-size") or "12"
         fs = attrConv.convertLength(fs)
         x, y = self.convert_length_attrs(node, 'x', 'y', em_base=fs)
@@ -1387,22 +1346,26 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         # RLG-specific: all RLG shapes
         "Apply style attributes of a sequence of nodes to an RL shape."
 
-        # tuple format: (svgAttr, rlgAttr, converter, default)
+        # tuple format: (svgAttributes, rlgAttr, converter, default)
         mappingN = (
-            ("fill", "fillColor", "convertColor", "black"),
-            ("fill-opacity", "fillOpacity", "convertOpacity", 1),
-            ("fill-rule", "_fillRule", "convertFillRule", "nonzero"),
-            ("stroke", "strokeColor", "convertColor", "none"),
-            ("stroke-width", "strokeWidth", "convertLength", "1"),
-            ("stroke-opacity", "strokeOpacity", "convertOpacity", 1),
-            ("stroke-linejoin", "strokeLineJoin", "convertLineJoin", "0"),
-            ("stroke-linecap", "strokeLineCap", "convertLineCap", "0"),
-            ("stroke-dasharray", "strokeDashArray", "convertDashArray", "none"),
+            (["fill"], "fillColor", "convertColor", ["black"]),
+            (["fill-opacity"], "fillOpacity", "convertOpacity", [1]),
+            (["fill-rule"], "_fillRule", "convertFillRule", ["nonzero"]),
+            (["stroke"], "strokeColor", "convertColor", ["none"]),
+            (["stroke-width"], "strokeWidth", "convertLength", ["1"]),
+            (["stroke-opacity"], "strokeOpacity", "convertOpacity", [1]),
+            (["stroke-linejoin"], "strokeLineJoin", "convertLineJoin", ["0"]),
+            (["stroke-linecap"], "strokeLineCap", "convertLineCap", ["0"]),
+            (["stroke-dasharray"], "strokeDashArray", "convertDashArray", ["none"]),
         )
         mappingF = (
-            ("font-family", "fontName", "convertFontFamily", DEFAULT_FONT_NAME),
-            ("font-size", "fontSize", "convertLength", "12"),
-            ("text-anchor", "textAnchor", "id", "start"),
+            (
+                ["font-family", "font-weight", "font-style"],
+                "fontName", "convertFontFamily",
+                [DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE]
+            ),
+            (["font-size"], "fontSize", "convertLength", ["12"]),
+            (["text-anchor"], "textAnchor", "id", ["start"]),
         )
 
         if shape.__class__ == Group:
@@ -1415,22 +1378,25 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         for mapping in (mappingN, mappingF):
             if shape.__class__ != String and mapping == mappingF:
                 continue
-            for (svgAttrName, rlgAttr, func, default) in mapping:
-                svgAttrValue = ac.findAttr(node, svgAttrName)
-                if svgAttrValue == '':
-                    if only_explicit:
-                        continue
-                    else:
-                        svgAttrValue = default
-                if svgAttrValue == "currentColor":
-                    svgAttrValue = ac.findAttr(node.getparent(), "color") or default
-                if isinstance(svgAttrValue, str):
-                    svgAttrValue = svgAttrValue.replace('!important', '').strip()
+            for (svgAttrNames, rlgAttr, func, defaults) in mapping:
+                svgAttrValues = []
+                for index, svgAttrName in enumerate(svgAttrNames):
+                    svgAttrValue = ac.findAttr(node, svgAttrName)
+                    if svgAttrValue == '':
+                        if only_explicit:
+                            continue
+                        else:
+                            svgAttrValue = defaults[index]
+                    if svgAttrValue == "currentColor":
+                        svgAttrValue = ac.findAttr(node.getparent(), "color") or defaults[index]
+                    if isinstance(svgAttrValue, str):
+                        svgAttrValue = svgAttrValue.replace('!important', '').strip()
+                    svgAttrValues.append(svgAttrValue)
                 try:
                     meth = getattr(ac, func)
-                    setattr(shape, rlgAttr, meth(svgAttrValue))
+                    setattr(shape, rlgAttr, meth(*svgAttrValues))
                 except (AttributeError, KeyError, ValueError):
-                    pass
+                    logger.debug("Exception during applyStyleOnShape")
         if getattr(shape, 'fillOpacity', None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
         if getattr(shape, 'strokeWidth', None) == 0:
