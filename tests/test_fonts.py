@@ -3,10 +3,17 @@ import textwrap
 import subprocess
 
 import pytest
+from reportlab.pdfbase.ttfonts import TTFOpenFile, TTFError
 from svglib.fonts import DEFAULT_FONT_NAME, STANDARD_FONT_NAMES, FontMap
 from svglib.svglib import (
     Svg2RlgAttributeConverter, SvgRenderer, find_font, register_font, svg2rlg,
 )
+
+try:
+    TTFOpenFile('times.ttf')
+    HAS_TIMES_FONT = True
+except TTFError:
+    HAS_TIMES_FONT = False
 
 
 @pytest.mark.parametrize("family,weight,style,expected", [
@@ -39,6 +46,8 @@ def test_register_return(family, path, weight, style, rlgName, expected):
     """
     Check if the result of the register_font function matches the expected results
     """
+    if path == 'times.ttf' and not HAS_TIMES_FONT:
+        pytest.skip('times.ttf is not installed on this system')
     converter = SvgRenderer('../')
     converter.font_map = FontMap()
     assert converter.font_map.register_font(family, path, weight, style, rlgName) == expected
@@ -102,6 +111,7 @@ def test_fontfamily_text():
     assert main_group.contents[0].contents[1].fontName == 'Courier'
 
 
+@pytest.mark.skipif(not HAS_TIMES_FONT, reason="times.ttf is not available")
 def test_fontfamily_reg_text():
     name, exact = register_font('MyFont', 'times.ttf')
     assert name == 'MyFont'
