@@ -258,7 +258,7 @@ class AttributeConverter:
         ops = ops.replace(',', ' ').split()
 
         if len(ops) != len(indices):
-            logger.warning("Unable to parse transform expression '%s'" % svgAttr)
+            logger.warning("Unable to parse transform expression %r", svgAttr)
             return []
 
         result = []
@@ -309,7 +309,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             elif attr_name in ('y', 'cy', 'y1', 'y2', 'height'):
                 full = self.main_box.height
             else:
-                logger.error("Unable to detect if node '%s' is width or height" % attr_name)
+                logger.error("Unable to detect if node %r is width or height", attr_name)
                 return float(text[:-1])
             return float(text[:-1]) / 100 * full
         elif text.endswith("pc"):
@@ -372,7 +372,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                 except AttributeError:
                     pass
         if color is None:
-            logger.warning("Can't handle color: %s" % text)
+            logger.warning("Can't handle color: %s", text)
         else:
             return self.color_converter(color)
 
@@ -481,7 +481,7 @@ class NodeTracker(ElementWrapper):
         self.usedAttrs = []
 
     def __repr__(self):
-        return '<NodeTracker for node %s>' % self.object
+        return '<NodeTracker for node %s>', self.object
 
     def getAttribute(self, name):
         # add argument to the history, if not already present
@@ -543,7 +543,7 @@ class SvgRenderer:
 
         main_group = self.renderSvg(node, outermost=True)
         for xlink in self.waiting_use_nodes.keys():
-            logger.debug("Ignoring unavailable object width ID '%s'." % xlink)
+            logger.debug("Ignoring unavailable object width ID %r.", xlink)
 
         main_group.translate(0 - view_box.x, -view_box.height - view_box.y)
 
@@ -610,7 +610,7 @@ class SvgRenderer:
                 parent.add(item)
         else:
             ignored = True
-            logger.debug("Ignoring node: %s" % name)
+            logger.debug("Ignoring node: %s", name)
 
         if not ignored:
             if nid and item:
@@ -663,7 +663,7 @@ class SvgRenderer:
             return
         ref = m.groups()[0]
         if ref not in self.definitions:
-            logger.warning("Unable to find a clipping path with id %s" % ref)
+            logger.warning("Unable to find a clipping path with id %s", ref)
             return
 
         shape = get_shape_from_node(self.definitions[ref])
@@ -683,7 +683,7 @@ class SvgRenderer:
         elif isinstance(shape, Path):
             return ClippingPath(copy_from=shape)
         elif shape:
-            logging.error("Unsupported shape type %s for clipping" % shape.__class__.__name__)
+            logging.error("Unsupported shape type %s for clipping", shape.__class__.__name__)
 
     def print_unused_attributes(self, node, n):
         if logger.level > logging.DEBUG:
@@ -691,7 +691,7 @@ class SvgRenderer:
         all_attrs = self.attrConverter.getAllAttributes(node).keys()
         unused_attrs = [attr for attr in all_attrs if attr not in n.usedAttrs]
         if unused_attrs:
-            logger.debug("Unused attrs: %s %s" % (node_name(n), unused_attrs))
+            logger.debug("Unused attrs: %s %s", node_name(n), unused_attrs)
 
     def apply_node_attr_to_group(self, node, group):
         getAttr = node.getAttribute
@@ -769,7 +769,7 @@ class SvgRenderer:
                     # This will catch invalid images
                     PDFImage(path, 0, 0)
                 except IOError:
-                    logger.error("Unable to read the image %s. Skipping..." % path)
+                    logger.error("Unable to read the image %s. Skipping...", path)
                     return None
                 return path
 
@@ -1261,7 +1261,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 path.closePath()
 
             else:
-                logger.debug("Suspicious path operator: %s" % op)
+                logger.debug("Suspicious path operator: %s", op)
             lastop = op
 
         gr = Group()
@@ -1335,7 +1335,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op == "matrix":
                 group.transform = values
             else:
-                logger.debug("Ignoring transform: %s %s" % (op, values))
+                logger.debug("Ignoring transform: %s %s", op, values)
 
     def applyStyleOnShape(self, shape, node, only_explicit=False):
         """
@@ -1449,7 +1449,7 @@ def load_svg_file(path, resolve_entities=False):
         doc = etree.parse(path, parser=parser)
         svg_root = doc.getroot()
     except Exception as exc:
-        logger.error("Failed to load input file! (%s)" % exc)
+        logger.error("Failed to load input file! (%s)", exc)
     else:
         return svg_root
 
