@@ -8,7 +8,8 @@ Unreleased
 
 - honor cascading when applying CSS rules (#253)
 - ignore !important statement in CSS values (#227)
-- dropped official support for Python 3.5.
+- dropped official support for Python 3.5 and modernized to 3.6+
+- added official support for Python 3.9.
 
 1.0.1 (2020-08-26)
 ------------------
