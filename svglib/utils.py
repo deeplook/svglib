@@ -200,7 +200,7 @@ def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
         nfrag = 1
         frag_angle = float(extent)
     else:
-        nfrag = int(ceil(abs(extent) / 90.))
+        nfrag = ceil(abs(extent) / 90.)
         frag_angle = float(extent) / nfrag
     if frag_angle == 0:
         return []
