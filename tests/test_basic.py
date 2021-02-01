@@ -217,7 +217,7 @@ class TestPaths:
         assert group is None
 
     def test_clipped_path(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
                  xmlns:xlink="http://www.w3.org/1999/xlink" width="660" height="480">
@@ -409,7 +409,7 @@ class TestAttrConverter:
         """
         Any shape with no fill property should set black color in rlg syntax.
         """
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  width="1200" height="800"
@@ -423,7 +423,7 @@ class TestAttrConverter:
         """
         The fill-opacity property set the alpha of the color.
         """
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg version="1.1"
                  xmlns="http://www.w3.org/2000/svg"
@@ -465,7 +465,7 @@ class TestApplyTransformOnGroup:
 
 class TestStyleSheets:
     def test_css_stylesheet(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267" xml:space="preserve">
               <defs>
@@ -491,7 +491,7 @@ class TestStyleSheets:
 
 class TestGroupNode:
     def test_svg_groups_have_svgid(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
                 <g id="g856">
@@ -511,7 +511,7 @@ class TestGroupNode:
         assert isinstance(gr, Group)
 
     def test_created_groups_have_svgid_of_their_content(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
                 <g id="g856">
@@ -543,7 +543,7 @@ class TestGroupNode:
         assert isinstance(pth_gr, Group)
 
     def test_svg_layers_have_label(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
                 <g inkscape:groupmode="layer"
@@ -564,7 +564,7 @@ class TestGroupNode:
 
 class TestTextNode:
     def test_space_preservation(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
               <text style="fill:#000000; stroke:none; font-size:28;">
@@ -579,7 +579,7 @@ class TestTextNode:
         assert len(main_group.contents[0].contents) == 2
         assert main_group.contents[0].contents[0].text == "TITLE 1"
 
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267" xml:space="preserve">
               <text style="fill:#000000; stroke:none; font-size:28;">
@@ -592,7 +592,7 @@ class TestTextNode:
         assert main_group.contents[0].contents[0].text == '     '
         assert main_group.contents[0].contents[1].text == "TITLE    1"
 
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
               <text style="fill:#000000; stroke:none; font-size:28;">
@@ -612,7 +612,7 @@ class TestTextNode:
         The x/y positions of a tspan are either relative to the current text
         position, or can be absoluted by specifying the x/y attributes.
         """
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg width="777" height="267">
               <text x="10" y="20" style="fill:#000000; stroke:none; font-size:28;">
@@ -729,7 +729,7 @@ class TestUseNode:
         ''')
 
     def test_transform_inherited_by_use(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg version="1.1"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -751,7 +751,7 @@ class TestUseNode:
         Sometimes, a node definition pointed to by xlink:href can appear after
         it has been referenced. But the order should remain.
         """
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg version="1.1"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -768,7 +768,7 @@ class TestUseNode:
         """
         Properties on the use node apply to the referenced item.
         """
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg version="1.1"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -792,7 +792,7 @@ class TestUseNode:
         different paths for filling and stroking), the use properties shouldn't
         affect the no-stroke property of the fake stroke-only path.
         """
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -810,7 +810,7 @@ class TestUseNode:
 
 class TestSymbolNode:
     def test_symbol_node(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -830,7 +830,7 @@ class TestSymbolNode:
 
 class TestViewBox:
     def test_nonzero_origin(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  width="1200" height="800"
@@ -844,7 +844,7 @@ class TestViewBox:
         assert drawing.contents[0].transform == (10, 0, 0, -10, 600.0, 400.0)
 
     def test_percent_width_height(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  width="100%" height="100%"
@@ -857,7 +857,7 @@ class TestViewBox:
         assert (drawing.width, drawing.height) == (480, 360)
 
     def test_no_width_height(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg"
                  viewBox="0 0 480 360">
@@ -871,7 +871,7 @@ class TestViewBox:
 
 class TestEmbedded:
     def test_svg_in_svg(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
                  viewBox="0 0 210 297" height="297mm" width="210mm">
@@ -916,7 +916,7 @@ class TestEmbedded:
         assert inner_rect.width == 15
 
     def test_png_in_svg_file_like(self):
-        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent(u'''\
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
                  xmlns:xlink="http://www.w3.org/1999/xlink"
