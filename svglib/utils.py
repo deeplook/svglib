@@ -93,8 +93,8 @@ def convert_quadratic_to_cubic_path(q0, q1, q2):
     Convert a quadratic Bezier curve through q0, q1, q2 to a cubic one.
     """
     c0 = q0
-    c1 = (q0[0] + 2. / 3 * (q1[0] - q0[0]), q0[1] + 2. / 3 * (q1[1] - q0[1]))
-    c2 = (c1[0] + 1. / 3 * (q2[0] - q0[0]), c1[1] + 1. / 3 * (q2[1] - q0[1]))
+    c1 = (q0[0] + 2 / 3 * (q1[0] - q0[0]), q0[1] + 2 / 3 * (q1[1] - q0[1]))
+    c2 = (c1[0] + 1 / 3 * (q2[0] - q0[0]), c1[1] + 1 / 3 * (q2[1] - q0[1]))
     c3 = q2
     return c0, c1, c2, c3
 
@@ -198,16 +198,16 @@ def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
 def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
     if abs(extent) <= 90:
         nfrag = 1
-        frag_angle = float(extent)
+        frag_angle = extent
     else:
-        nfrag = ceil(abs(extent) / 90.)
-        frag_angle = float(extent) / nfrag
+        nfrag = ceil(abs(extent) / 90)
+        frag_angle = extent / nfrag
     if frag_angle == 0:
         return []
 
     frag_rad = radians(frag_angle)
     half_rad = frag_rad * 0.5
-    kappa = abs(4. / 3. * (1. - cos(half_rad)) / sin(half_rad))
+    kappa = abs(4 / 3 * (1 - cos(half_rad)) / sin(half_rad))
 
     if frag_angle < 0:
         kappa = -kappa
