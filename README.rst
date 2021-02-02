@@ -142,7 +142,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
     issues/pull requests:
         https://github.com/deeplook/svglib
 
-    Copyleft by Dinu Gherman, 2008-2019 (LGPL 3):
+    Copyleft by Dinu Gherman, 2008-2021 (LGPL 3):
         http://www.gnu.org/copyleft/gpl.html
 
 
