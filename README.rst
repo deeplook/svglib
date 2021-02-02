@@ -91,6 +91,8 @@ Examples
 You can use ``svglib`` as a Python package e.g. like in the following
 interactive Python session::
 
+..code:
+
     >>> from svglib.svglib import svg2rlg
     >>> from reportlab.graphics import renderPDF, renderPM
     >>>
