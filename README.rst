@@ -11,12 +11,6 @@ A pure-Python library for reading and converting SVG
 .. image:: https://github.com/deeplook/svglib/workflows/CI/badge.svg
   :target: https://github.com/deeplook/svglib/actions?query=workflow%3ACI
 
-.. image:: http://img.shields.io/travis/deeplook/svglib.svg
-  :target: https://travis-ci.org/deeplook/svglib
-
-.. image:: https://ci.appveyor.com/api/projects/status/4guofbxkwgsu8537/branch/master?svg=true
-  :target: https://ci.appveyor.com/project/deeplook/svglib
-
 .. image:: https://pyup.io/repos/github/deeplook/svglib/shield.svg
   :target: https://pyup.io/repos/github/deeplook/svglib/
 
