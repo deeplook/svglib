@@ -136,7 +136,7 @@ class TestWikipediaSymbols:
                     print("Check your internet connection and try again!")
                     break
                 if data:
-                    with io.open(p, "w", encoding='UTF-8') as fh:
+                    with open(p, "w", encoding='UTF-8') as fh:
                         fh.write(data)
 
     def cleanup(self):
@@ -231,10 +231,10 @@ class TestWikipediaFlags:
             u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
             data = self.fetch_file(u)
             if data:
-                with io.open(path, "w", encoding='UTF-8') as f:
+                with open(path, "w", encoding='UTF-8') as f:
                     f.write(data)
         else:
-            with io.open(path, 'r', encoding='UTF-8') as f:
+            with open(path, encoding='UTF-8') as f:
                 data = f.read()
 
         # find all flag base filenames
@@ -262,18 +262,18 @@ class TestWikipediaFlags:
                 if m:
                     flag_url = m.groups()[0]
                     flag_url_map.append((prefix + fn, flag_url))
-            with io.open(json_path, "w", encoding='UTF-8') as fh:
+            with open(json_path, "w", encoding='UTF-8') as fh:
                 json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
-        with io.open(json_path, "r", encoding='UTF-8') as fh:
+        with open(json_path, encoding='UTF-8') as fh:
             flag_url_map = json.load(fh)
         for dummy, flag_url in flag_url_map:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print(f"fetch {flag_url}")
                 flag_svg = self.fetch_file(flag_url)
-                with io.open(path, "w", encoding='UTF-8') as f:
+                with open(path, "w", encoding='UTF-8') as f:
                     f.write(flag_svg)
 
     def cleanup(self):
