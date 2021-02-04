@@ -768,7 +768,7 @@ class SvgRenderer:
                 try:
                     # This will catch invalid images
                     PDFImage(path, 0, 0)
-                except IOError:
+                except OSError:
                     logger.error("Unable to read the image %s. Skipping...", path)
                     return None
                 return path

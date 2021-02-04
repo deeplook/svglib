@@ -332,7 +332,7 @@ class TestW3CSVG:
                     print(f"downloading {url}")
                     try:
                         data = urlopen(url).read()
-                    except IOError as details:
+                    except OSError as details:
                         print(details)
                         print("Check your internet connection and try again!")
                         return
