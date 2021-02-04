@@ -129,11 +129,11 @@ class CSSMatcher(cssselect2.Matcher):
                 continue
             selectors = cssselect2.compile_selector_list(rule.prelude)
             selector_string = tinycss2.serialize(rule.prelude)
-            content_dict = dict(
-                (attr.split(':')[0].strip(), attr.split(':')[1].strip())
+            content_dict = {
+                attr.split(':')[0].strip(): attr.split(':')[1].strip()
                 for attr in tinycss2.serialize(rule.content).split(';')
                 if ':' in attr
-            )
+            }
             payload = (selector_string, content_dict)
             for selector in selectors:
                 self.add_selector(selector, payload)
