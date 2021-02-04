@@ -737,8 +737,9 @@ class SvgRenderer:
             # Only local relative paths are supported yet
             if not isinstance(self.source_path, str):
                 logger.error(
-                    "Unable to resolve image path '%s' as the SVG source is not "
-                    "a file system path." % iri
+                    "Unable to resolve image path %r as the SVG source is not "
+                    "a file system path.",
+                    iri
                 )
                 return None
             path = os.path.normpath(os.path.join(os.path.dirname(self.source_path), iri))
