@@ -46,18 +46,18 @@ class TestSVGSamples:
     def cleanup(self):
         "Remove generated files created by this class."
 
-        paths = glob.glob("%s/samples/misc/*.pdf" % TEST_ROOT)
+        paths = glob.glob(f"{TEST_ROOT}/samples/misc/*.pdf")
         for i, path in enumerate(paths):
-            print("deleting [%d] %s" % (i, path))
+            print(f"deleting [{i}] {path}")
             os.remove(path)
 
     def test_convert_pdf(self):
         "Test convert sample SVG files to PDF using svglib."
 
-        paths = glob.glob("%s/samples/misc/*" % TEST_ROOT)
+        paths = glob.glob(f"{TEST_ROOT}/samples/misc/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):
-            print("working on [%d] %s" % (i, path))
+            print(f"working on [{i}] {path}")
 
             # convert
             drawing = svglib.svg2rlg(path)
@@ -70,10 +70,10 @@ class TestSVGSamples:
     def test_create_pdf_uniconv(self):
         "Test converting sample SVG files to PDF using uniconverter."
 
-        paths = glob.glob("%s/samples/misc/*.svg" % TEST_ROOT)
+        paths = glob.glob(f"{TEST_ROOT}/samples/misc/*.svg")
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
@@ -85,7 +85,7 @@ class TestWikipediaSymbols:
     def fetch_file(self, server, path):
         "Fetch file using httplib module."
 
-        print("downloading https://%s%s" % (server, path))
+        print(f"downloading https://{server}{path}")
 
         req = HTTPSConnection(server)
         req.putrequest('GET', path)
@@ -101,7 +101,7 @@ class TestWikipediaSymbols:
     def setup_method(self):
         "Check if files exists, else download and unpack it."
 
-        self.folder_path = "%s/samples/wikipedia/symbols" % TEST_ROOT
+        self.folder_path = f"{TEST_ROOT}/samples/wikipedia/symbols"
 
         # create directory if not existing
         if not exists(self.folder_path):
@@ -136,7 +136,7 @@ class TestWikipediaSymbols:
                     print("Check your internet connection and try again!")
                     break
                 if data:
-                    with io.open(p, "w", encoding='UTF-8') as fh:
+                    with open(p, "w", encoding='UTF-8') as fh:
                         fh.write(data)
 
     def cleanup(self):
@@ -144,16 +144,16 @@ class TestWikipediaSymbols:
 
         paths = glob.glob(join(self.folder_path, '*.pdf'))
         for i, path in enumerate(paths):
-            print("deleting [%d] %s" % (i, path))
+            print(f"deleting [{i}] {path}")
             os.remove(path)
 
     def test_convert_pdf(self):
         "Test converting symbol SVG files to PDF using svglib."
 
-        paths = glob.glob("%s/*" % self.folder_path)
+        paths = glob.glob(f"{self.folder_path}/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):
-            print("working on [%d] %s" % (i, path))
+            print(f"working on [{i}] {path}")
 
             # convert
             drawing = svglib.svg2rlg(path)
@@ -166,11 +166,11 @@ class TestWikipediaSymbols:
     def test_convert_pdf_uniconv(self):
         "Test converting symbol SVG files to PDF using uniconverter."
 
-        paths = glob.glob("%s/*" % self.folder_path)
+        paths = glob.glob(f"{self.folder_path}/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
@@ -219,7 +219,7 @@ class TestWikipediaFlags:
     def setup_method(self):
         "Check if files exists, else download."
 
-        self.folder_path = "%s/samples/wikipedia/flags" % TEST_ROOT
+        self.folder_path = f"{TEST_ROOT}/samples/wikipedia/flags"
 
         # create directory if not already present
         if not exists(self.folder_path):
@@ -231,10 +231,10 @@ class TestWikipediaFlags:
             u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
             data = self.fetch_file(u)
             if data:
-                with io.open(path, "w", encoding='UTF-8') as f:
+                with open(path, "w", encoding='UTF-8') as f:
                     f.write(data)
         else:
-            with io.open(path, 'r', encoding='UTF-8') as f:
+            with open(path, encoding='UTF-8') as f:
                 data = f.read()
 
         # find all flag base filenames
@@ -255,25 +255,25 @@ class TestWikipediaFlags:
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
                 svg_pat = "//upload.wikimedia.org/wikipedia/commons"
-                p = r"(%s/.*?/%s)\"" % (svg_pat, quote(fn))
-                print("check %s" % prefix + fn)
+                p = rf"({svg_pat}/.*?/{quote(fn)})\""
+                print(f"check {prefix}{fn}")
 
                 m = re.search(p, flag_html)
                 if m:
                     flag_url = m.groups()[0]
                     flag_url_map.append((prefix + fn, flag_url))
-            with io.open(json_path, "w", encoding='UTF-8') as fh:
+            with open(json_path, "w", encoding='UTF-8') as fh:
                 json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
-        with io.open(json_path, "r", encoding='UTF-8') as fh:
+        with open(json_path, encoding='UTF-8') as fh:
             flag_url_map = json.load(fh)
         for dummy, flag_url in flag_url_map:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
-                print("fetch %s" % flag_url)
+                print(f"fetch {flag_url}")
                 flag_svg = self.fetch_file(flag_url)
-                with io.open(path, "w", encoding='UTF-8') as f:
+                with open(path, "w", encoding='UTF-8') as f:
                     f.write(flag_svg)
 
     def cleanup(self):
@@ -281,16 +281,16 @@ class TestWikipediaFlags:
 
         paths = glob.glob(join(self.folder_path, '*.pdf'))
         for i, path in enumerate(paths):
-            print("deleting [%d] %s" % (i, path))
+            print(f"deleting [{i}] {path}")
             os.remove(path)
 
     def test_convert_pdf(self):
         "Test converting flag SVG files to PDF using svglib."
 
-        paths = glob.glob("%s/*" % self.folder_path)
+        paths = glob.glob(f"{self.folder_path}/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for i, path in enumerate(paths):
-            print("working on [%d] %s" % (i, path))
+            print(f"working on [{i}] {path}")
 
             # convert
             drawing = svglib.svg2rlg(path)
@@ -303,11 +303,11 @@ class TestWikipediaFlags:
     def test_convert_pdf_uniconv(self):
         "Test converting flag SVG files to PDF using uniconverer."
 
-        paths = glob.glob("%s/*" % self.folder_path)
+        paths = glob.glob(f"{self.folder_path}/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)
@@ -329,21 +329,21 @@ class TestW3CSVG:
         if not exists(self.folder_path):
             if not exists(join(TEST_ROOT, "samples", tar_path)):
                 if not exists(join(TEST_ROOT, "samples", archive_path)):
-                    print("downloading %s" % url)
+                    print(f"downloading {url}")
                     try:
                         data = urlopen(url).read()
-                    except IOError as details:
+                    except OSError as details:
                         print(details)
                         print("Check your internet connection and try again!")
                         return
                     archive_path = basename(url)
                     with open(join(TEST_ROOT, "samples", archive_path), "wb") as f:
                         f.write(data)
-                print("unpacking %s" % archive_path)
+                print(f"unpacking {archive_path}")
                 tar_data = gzip.open(join(TEST_ROOT, "samples", archive_path), "rb").read()
                 with open(join(TEST_ROOT, "samples", tar_path), "wb") as f:
                     f.write(tar_data)
-            print("extracting into %s" % self.folder_path)
+            print(f"extracting into {self.folder_path}")
             os.mkdir(self.folder_path)
             tar_file = tarfile.TarFile(join(TEST_ROOT, "samples", tar_path))
             tar_file.extractall(self.folder_path)
@@ -358,7 +358,7 @@ class TestW3CSVG:
         paths += glob.glob(join(self.folder_path, 'svg/*-uniconv.pdf'))
         paths += glob.glob(join(self.folder_path, 'svg/*-svglib.png'))
         for i, path in enumerate(paths):
-            print("deleting [%d] %s" % (i, path))
+            print(f"deleting [{i}] {path}")
             os.remove(path)
 
     def test_convert_pdf_png(self):
@@ -378,12 +378,12 @@ class TestW3CSVG:
             "coords-trans-09-t.svg",  # renderPDF issue (div by 0)
         ]
 
-        paths = glob.glob("%s/svg/*.svg" % self.folder_path)
-        msg = "Destination folder '%s/svg' not found." % self.folder_path
+        paths = glob.glob(f"{self.folder_path}/svg/*.svg")
+        msg = f"Destination folder '{self.folder_path}/svg' not found."
         assert len(paths) > 0, msg
 
         for i, path in enumerate(paths):
-            print("working on [%d] %s" % (i, path))
+            print(f"working on [{i}] {path}")
 
             if basename(path) in exclude_list:
                 print("excluded (to be tested later)")
@@ -410,11 +410,11 @@ class TestW3CSVG:
     def test_convert_pdf_uniconv(self):
         "Test converting W3C SVG files to PDF using uniconverter."
 
-        paths = glob.glob("%s/svg/*" % self.folder_path)
+        paths = glob.glob(f"{self.folder_path}/svg/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
             out = splitext(path)[0] + '-uniconv.pdf'
-            cmd = "uniconv '%s' '%s'" % (path, out)
+            cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
                 os.remove(out)

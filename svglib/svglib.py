@@ -129,11 +129,11 @@ class CSSMatcher(cssselect2.Matcher):
                 continue
             selectors = cssselect2.compile_selector_list(rule.prelude)
             selector_string = tinycss2.serialize(rule.prelude)
-            content_dict = dict(
-                (attr.split(':')[0].strip(), attr.split(':')[1].strip())
+            content_dict = {
+                attr.split(':')[0].strip(): attr.split(':')[1].strip()
                 for attr in tinycss2.serialize(rule.content).split(';')
                 if ':' in attr
-            )
+            }
             payload = (selector_string, content_dict)
             for selector in selectors:
                 self.add_selector(selector, payload)
@@ -697,7 +697,7 @@ class SvgRenderer:
         getAttr = node.getAttribute
         transform, x, y = map(getAttr, ("transform", "x", "y"))
         if x or y:
-            transform += " translate(%s, %s)" % (x or '0', y or '0')
+            transform += f" translate({x or 0}, {y or 0})"
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
 
@@ -718,7 +718,7 @@ class SvgRenderer:
         if match:
             img_format = match.groups()[0]
             image_data = base64.decodebytes(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
-            file_indicator, path = tempfile.mkstemp(suffix='.%s' % img_format)
+            file_indicator, path = tempfile.mkstemp(suffix=f'.{img_format}')
             with open(path, 'wb') as fh:
                 fh.write(image_data)
             # Close temporary file (as opened by tempfile.mkstemp)
@@ -737,8 +737,9 @@ class SvgRenderer:
             # Only local relative paths are supported yet
             if not isinstance(self.source_path, str):
                 logger.error(
-                    "Unable to resolve image path '%s' as the SVG source is not "
-                    "a file system path." % iri
+                    "Unable to resolve image path %r as the SVG source is not "
+                    "a file system path.",
+                    iri
                 )
                 return None
             path = os.path.normpath(os.path.join(os.path.dirname(self.source_path), iri))
@@ -768,7 +769,7 @@ class SvgRenderer:
                 try:
                     # This will catch invalid images
                     PDFImage(path, 0, 0)
-                except IOError:
+                except OSError:
                     logger.error("Unable to read the image %s. Skipping...", path)
                     return None
                 return path
@@ -802,7 +803,7 @@ class SvgRenderer:
 
     def renderSvg(self, node, outermost=False):
         _saved_preserve_space = self.shape_converter.preserve_space
-        self.shape_converter.preserve_space = node.getAttribute("{%s}space" % XML_NS) == 'preserve'
+        self.shape_converter.preserve_space = node.getAttribute(f"{{{XML_NS}}}space") == 'preserve'
         view_box = self.get_box(node, default_box=True)
         _saved_box = self.attrConverter.main_box
         if view_box:
@@ -810,7 +811,7 @@ class SvgRenderer:
 
         # Rendering all definition nodes first.
         svg_ns = node.nsmap.get(None)
-        for def_node in node.iterdescendants('{%s}defs' % svg_ns if svg_ns else 'defs'):
+        for def_node in node.iterdescendants(f'{{{svg_ns}}}defs' if svg_ns else 'defs'):
             self.renderG(NodeTracker(def_node))
 
         group = Group()
@@ -925,7 +926,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     """Converter from SVG shapes to RLG (ReportLab Graphics) shapes."""
 
     def convertShape(self, name, node, clipping=None):
-        method_name = "convert%s" % name.capitalize()
+        method_name = f"convert{name.capitalize()}"
         shape = getattr(self, method_name)(node)
         if not shape:
             return
@@ -1035,7 +1036,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertText(self, node):
         attrConv = self.attrConverter
-        xml_space = node.getAttribute("{%s}space" % XML_NS)
+        xml_space = node.getAttribute(f"{{{XML_NS}}}space")
         if xml_space:
             preserve_space = xml_space == 'preserve'
         else:
