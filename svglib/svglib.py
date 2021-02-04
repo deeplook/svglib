@@ -697,7 +697,7 @@ class SvgRenderer:
         getAttr = node.getAttribute
         transform, x, y = map(getAttr, ("transform", "x", "y"))
         if x or y:
-            transform += " translate(%s, %s)" % (x or '0', y or '0')
+            transform += f" translate({x or 0}, {y or 0})"
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
 
@@ -718,7 +718,7 @@ class SvgRenderer:
         if match:
             img_format = match.groups()[0]
             image_data = base64.decodebytes(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
-            file_indicator, path = tempfile.mkstemp(suffix='.%s' % img_format)
+            file_indicator, path = tempfile.mkstemp(suffix=f'.{img_format}')
             with open(path, 'wb') as fh:
                 fh.write(image_data)
             # Close temporary file (as opened by tempfile.mkstemp)
@@ -802,7 +802,7 @@ class SvgRenderer:
 
     def renderSvg(self, node, outermost=False):
         _saved_preserve_space = self.shape_converter.preserve_space
-        self.shape_converter.preserve_space = node.getAttribute("{%s}space" % XML_NS) == 'preserve'
+        self.shape_converter.preserve_space = node.getAttribute(f"{{{XML_NS}}}space") == 'preserve'
         view_box = self.get_box(node, default_box=True)
         _saved_box = self.attrConverter.main_box
         if view_box:
@@ -810,7 +810,7 @@ class SvgRenderer:
 
         # Rendering all definition nodes first.
         svg_ns = node.nsmap.get(None)
-        for def_node in node.iterdescendants('{%s}defs' % svg_ns if svg_ns else 'defs'):
+        for def_node in node.iterdescendants(f'{{{svg_ns}}}defs' if svg_ns else 'defs'):
             self.renderG(NodeTracker(def_node))
 
         group = Group()
@@ -925,7 +925,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     """Converter from SVG shapes to RLG (ReportLab Graphics) shapes."""
 
     def convertShape(self, name, node, clipping=None):
-        method_name = "convert%s" % name.capitalize()
+        method_name = f"convert{name.capitalize()}"
         shape = getattr(self, method_name)(node)
         if not shape:
             return
@@ -1035,7 +1035,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
     def convertText(self, node):
         attrConv = self.attrConverter
-        xml_space = node.getAttribute("{%s}space" % XML_NS)
+        xml_space = node.getAttribute(f"{{{XML_NS}}}space")
         if xml_space:
             preserve_space = xml_space == 'preserve'
         else:

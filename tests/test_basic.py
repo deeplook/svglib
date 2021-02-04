@@ -42,7 +42,7 @@ def _testit(func, mapping):
     if failed:
         print("failed tests (input, result, expected):")
         for input, result, expected in failed:
-            print("  %s : %s != %s" % (repr(input), result, expected))
+            print(f"  {input!r} : {result} != {expected}")
 
     return failed
 
