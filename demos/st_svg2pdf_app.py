@@ -6,8 +6,7 @@ A demo for using svglib inside a small Streamlit application.
 This app is running in a webbrowser and allows to open and edit a SVG source file,
 convert it to PDF and display that all on the same page. The PDF rendering happens
 via some browser plugin preinstalled in the browser or installed by the user or
-Streamlit. Svgglib is used here via the svg2pdf command-line tool installed with
-it.
+Streamlit.
 
 Install Streamlit:
 
@@ -19,11 +18,12 @@ Run the app:
 """
 
 import base64
-import os
-import subprocess
-import tempfile
+import io
 
+from reportlab.graphics import renderPDF
 import streamlit as st
+
+from svglib.svglib import svg2rlg
 
 
 # config
@@ -51,7 +51,7 @@ st.markdown(
     "on [reportlab.com](https://reportlab.com))."
 )
 
-pdf_path = ""
+pdf_content = b""
 col1, col2 = st.beta_columns(2)
 with col1:
     with st.beta_expander("SVG"):
@@ -65,15 +65,11 @@ with col1:
         )
         if st.button("Convert", key=2):
             if svg:
-                svg_tmp_path = tempfile.mktemp(suffix=".svg")
-                with open(svg_tmp_path, "w") as f:
-                    f.write(svg)
-                pdf_path = os.path.splitext(svg_tmp_path)[0] + ".pdf"
-                subprocess.check_call(["svg2pdf", svg_tmp_path])
+                drawing = svg2rlg(io.StringIO(svg))
+                pdf_content = renderPDF.drawToString(drawing)
 with col2:
     with st.beta_expander("PDF"):
-        if pdf_path:
-            pdf_content = open(pdf_path, "rb").read()
+        if pdf_content:
             base64_pdf = base64.b64encode(pdf_content).decode("utf-8")
             pdf_display = (
                 f'<embed src="data:application/pdf;base64,{base64_pdf}" '
