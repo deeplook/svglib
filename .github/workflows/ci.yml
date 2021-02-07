@@ -14,6 +14,20 @@ jobs:
 
     steps:
       - uses: "actions/checkout@v2"
+      - name: "Cache for wikipedia flags"
+        uses: actions/cache@v2
+        env:
+          cache-name: "cache-wikipedia-flags"
+        with:
+          path: "tests/samples/wikipedia/flags"
+          key: "wikipedia-flags-${{ matrix.python-version }}-${{ matrix.os }}"
+      - name: "Cache for wikipedia symbols"
+        uses: actions/cache@v2
+        env:
+          cache-name: "cache-wikipedia-symbols"
+        with:
+          path: "tests/samples/wikipedia/symbols"
+          key: "wikipedia-symbols-${{ matrix.python-version }}-${{ matrix.os }}"
       - uses: "actions/setup-python@v2"
         with:
           python-version: "${{ matrix.python-version }}"
