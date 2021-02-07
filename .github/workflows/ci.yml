@@ -24,6 +24,13 @@ jobs:
         with:
           path: "tests/samples/wikipedia/symbols"
           key: "wikipedia-symbols-${{ matrix.python-version }}-${{ matrix.os }}"
+      - name: "Cache for w3c svg12 tinytestsuite"
+        uses: actions/cache@v2
+        env:
+          cache-name: "cache-w3c-svg12-tinytestsuite"
+        with:
+          path: "tests/samples/W3C_SVG_12_TinyTestSuite"
+          key: "w3c-svg12-tinytestsuite-${{ matrix.python-version }}-${{ matrix.os }}"
       - uses: "actions/setup-python@v2"
         with:
           python-version: "${{ matrix.python-version }}"
