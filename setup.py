@@ -30,6 +30,7 @@ setup(
     packages=['svglib'],
     py_modules=[],
     scripts=['scripts/svg2pdf'],
+    data_files = [('share/man/man1', ['svg2pdf.1'])],
     classifiers=[
         # see http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 4 - Beta',
