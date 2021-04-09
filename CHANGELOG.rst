@@ -8,6 +8,10 @@ Unreleased
 
 - honor cascading when applying CSS rules (#253)
 - ignore !important statement in CSS values (#227)
+- svg2rlg accept pathlib.Path input (#97)
+- better handling of font variants (bold, italic)
+- a demo for using svglib inside a Streamlit application in /demos
+- add a svg2pdf man page
 - dropped official support for Python 3.5 and modernized to 3.6+
 - added official support for Python 3.9.
 
