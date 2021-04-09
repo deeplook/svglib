@@ -3,8 +3,8 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+1.1.0 (2021-04-10)
+------------------
 
 - honor cascading when applying CSS rules (#253)
 - ignore !important statement in CSS values (#227)
