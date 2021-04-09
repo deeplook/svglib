@@ -3,6 +3,7 @@ include tox.ini
 include setup.py
 include MANIFEST.in
 include LICENSE.txt README.rst CONTRIBUTORS.rst CHANGELOG.rst
+include demos/*
 include tests/*.py
 include tests/*.rst
 include tests/samples/wikipedia/README.rst
