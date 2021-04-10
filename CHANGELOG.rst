@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+Unreleased
+----------
+
+- improved support for scientific notation in paths (#277)
+
 1.1.0 (2021-04-10)
 ------------------
 
