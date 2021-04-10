@@ -300,7 +300,7 @@ class TestColorAttrConverter:
 class TestLengthAttrConverter:
     "Testing length attribute conversion."
 
-    def test_0(self):
+    def test_length_conversion(self):
         "Test length attribute conversion."
 
         mapping = (
@@ -336,11 +336,7 @@ class TestLengthAttrConverter:
         length = ac.convertLength("1e1%", attr_name='height')
         assert length == 15
 
-
-class TestLengthListAttrConverter:
-    "Testing length attribute conversion."
-
-    def test_0(self):
+    def test_length_list_conversion(self):
         "Test length list attribute conversion."
 
         mapping = (
