@@ -47,7 +47,7 @@ class FontMap:
         if weight != 'normal' or style != 'normal':
             result_name += '-'
         if weight != 'normal':
-            if type(weight) == int:
+            if type(weight) is int:
                 result_name += f'{weight}'
             else:
                 result_name += weight.lower().capitalize()
