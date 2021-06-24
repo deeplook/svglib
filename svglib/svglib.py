@@ -1030,7 +1030,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         else:
             text = text.replace('\r\n', '').replace('\n', '').replace('\t', ' ')
             text = text.strip()
-            while ('  ' in text):
+            while '  ' in text:
                 text = text.replace('  ', ' ')
         return text
 
