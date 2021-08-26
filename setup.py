@@ -12,8 +12,5 @@ pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 setup(
     install_requires=install_requires,
-    setup_requires=[]+pytest_runner,
-    data_files=[
-        ('share/man/man1', ['svg2pdf.1'])
-    ]
+    setup_requires=[]+pytest_runner
 )
