@@ -481,7 +481,7 @@ class NodeTracker(ElementWrapper):
         self.usedAttrs = []
 
     def __repr__(self):
-        return '<NodeTracker for node %s>', self.object
+        return '<NodeTracker for node %s>' % self.object
 
     def getAttribute(self, name):
         # add argument to the history, if not already present
