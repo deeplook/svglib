@@ -6,7 +6,11 @@ __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
 __date__ = '2021-04-10'
 
-install_requires = open('requirements.txt').read().strip().split()
+with open('README.rst', 'r') as f:
+    long_description = f.read()
+
+with open('requirements.txt', 'r') as f:
+    install_requires = f.read().strip().split()
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 pytest_runner = ['pytest-runner'] if needs_pytest else []
@@ -17,7 +21,7 @@ setup(
     author=__author__,
     author_email='@'.join(['gherman', 'darwin.in-berlin.de']),
     description='A pure-Python library for reading and converting SVG',
-    long_description=open('README.rst').read(),
+    long_description=long_description,
     license='LGPL 3',
     platforms=['Posix', 'Windows'],
     keywords='SVG, PDF, reportlab, conversion, graphics',
