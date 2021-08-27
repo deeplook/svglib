@@ -179,7 +179,7 @@ class TestWikipediaSymbols:
 class TestWikipediaFlags:
     "Tests using SVG flags from Wikipedia.org."
 
-    def fetch_file(self, url):
+    def fetch_file(self, url, raise_exc=False):
         "Get content with some given URL, uncompress if needed."
 
         parsed = urlparse(url)
@@ -195,7 +195,11 @@ class TestWikipediaFlags:
                 zfile.close()
             data = data.decode('utf-8')
         else:
-            data = None
+            if raise_exc:
+                conn.close()
+                raise Exception(f"Unable to fetch file {url}, got {r1.status} response ({r1.reason})")
+            else:
+                data = None
         conn.close()
 
         return data
@@ -272,7 +276,7 @@ class TestWikipediaFlags:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print(f"fetch {flag_url}")
-                flag_svg = self.fetch_file(flag_url)
+                flag_svg = self.fetch_file(flag_url, raise_exc=True)
                 with open(path, "w", encoding='UTF-8') as f:
                     f.write(flag_svg)
 
