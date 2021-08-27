@@ -4,4 +4,4 @@
         <image x="200" y="100" xlink:href="to_be_embedded.svg" class="red"/>
         <image x="100" y="200" xlink:href="to_be_embedded.svg#rectangle" class="blue"/>
     </g>
-</svg> 
+</svg>

@@ -96,7 +96,7 @@ def _main():
     )
 
     p.add_argument('-v', '--version',
-        help='Print version number and exit.', 
+        help='Print version number and exit.',
         action='store_true')
 
     p.add_argument('-o', '--output',

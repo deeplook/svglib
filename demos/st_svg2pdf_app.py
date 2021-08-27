@@ -41,7 +41,7 @@ svg_path = st.sidebar.text_input("SVG File Path")
 if st.sidebar.button("Read"):
     pass
 
-# main 
+# main
 
 st.title('SVG to PDF')
 
