@@ -9,5 +9,5 @@ pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 setup(
     install_requires=install_requires,
-    setup_requires=[]+pytest_runner
+    setup_requires=[] + pytest_runner
 )
