@@ -247,7 +247,7 @@ well as the versions of ``svglib``, ReportLab and Python being used!
       https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags
 .. _symbols from Wikipedia:
       https://en.wikipedia.org/wiki/List_of_symbols
-.. _ReportLab: https://www.reportlab.org
+.. _ReportLab: https://www.reportlab.com/opensource/
 .. _RML: https://www.reportlab.com/software/rml-reference/
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
 .. _PyTest: http://pytest.org
