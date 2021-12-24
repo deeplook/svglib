@@ -20,7 +20,6 @@ import textwrap
 from http.client import HTTPSConnection
 from os.path import dirname, splitext, exists, join, basename, getsize
 from urllib.parse import quote, unquote, urlparse
-from urllib.request import urlopen
 
 from reportlab.lib.utils import haveImages
 from reportlab.graphics import renderPDF, renderPM
@@ -38,6 +37,41 @@ def found_uniconv():
 
     res = os.popen("which uniconv").read().strip()
     return len(res) > 0
+
+
+def fetch_file(url, mime_accept='text/svg', uncompress=True, raise_exc=False):
+    """
+    Get given URL content using http.client module, uncompress if needed and
+    `uncompress` is True.
+    """
+
+    parsed = urlparse(url)
+    conn = HTTPSConnection(parsed.netloc)
+    conn.request('GET', parsed.path, headers={
+        'Host': parsed.netloc,
+        'Accept': mime_accept,
+        'User-Agent': 'Python/http.client',
+    })
+    response = conn.getresponse()
+    if (response.status, response.reason) == (200, "OK"):
+        data = response.read()
+        if uncompress and response.getheader("content-encoding") == "gzip":
+            zbuf = io.BytesIO(data)
+            zfile = gzip.GzipFile(mode="rb", fileobj=zbuf)
+            data = zfile.read()
+            zfile.close()
+        if 'text' in mime_accept:
+            data = data.decode('utf-8')
+    else:
+        if raise_exc:
+            conn.close()
+            raise Exception(
+                f"Unable to fetch file {url}, got {response.status} response ({response.reason})"
+            )
+        data = None
+    conn.close()
+
+    return data
 
 
 class TestSVGSamples:
@@ -82,22 +116,6 @@ class TestSVGSamples:
 class TestWikipediaSymbols:
     "Tests on sample symbol SVG files from wikipedia.org."
 
-    def fetch_file(self, server, path):
-        "Fetch file using httplib module."
-
-        print(f"downloading https://{server}{path}")
-
-        req = HTTPSConnection(server)
-        req.putrequest('GET', path)
-        req.putheader('Host', server)
-        req.putheader('Accept', 'text/svg')
-        req.endheaders()
-        r1 = req.getresponse()
-        data = r1.read().decode('utf-8')
-        req.close()
-
-        return data
-
     def setup_method(self):
         "Check if files exists, else download and unpack it."
 
@@ -131,7 +149,7 @@ class TestWikipediaSymbols:
             p = join(os.getcwd(), self.folder_path, basename(path))
             if not exists(p):
                 try:
-                    data = self.fetch_file(server, path)
+                    data = fetch_file(f'https://{server}{path}')
                 except Exception:
                     print("Check your internet connection and try again!")
                     break
@@ -179,31 +197,6 @@ class TestWikipediaSymbols:
 class TestWikipediaFlags:
     "Tests using SVG flags from Wikipedia.org."
 
-    def fetch_file(self, url, raise_exc=False):
-        "Get content with some given URL, uncompress if needed."
-
-        parsed = urlparse(url)
-        conn = HTTPSConnection(parsed.netloc)
-        conn.request("GET", parsed.path)
-        r1 = conn.getresponse()
-        if (r1.status, r1.reason) == (200, "OK"):
-            data = r1.read()
-            if r1.getheader("content-encoding") == "gzip":
-                zbuf = io.BytesIO(data)
-                zfile = gzip.GzipFile(mode="rb", fileobj=zbuf)
-                data = zfile.read()
-                zfile.close()
-            data = data.decode('utf-8')
-        else:
-            if raise_exc:
-                conn.close()
-                raise Exception(f"Unable to fetch file {url}, got {r1.status} response ({r1.reason})")
-            else:
-                data = None
-        conn.close()
-
-        return data
-
     def flag_url2filename(self, url):
         """Convert given flag URL into a local filename.
 
@@ -233,7 +226,7 @@ class TestWikipediaFlags:
         path = join(self.folder_path, "flags.html")
         if not exists(path):
             u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
-            data = self.fetch_file(u)
+            data = fetch_file(u)
             if data:
                 with open(path, "w", encoding='UTF-8') as f:
                     f.write(data)
@@ -254,7 +247,7 @@ class TestWikipediaFlags:
             for i, fn in enumerate(flag_names):
                 # load single flag HTML page, like
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
-                flag_html = self.fetch_file(prefix + quote(fn))
+                flag_html = fetch_file(prefix + quote(fn))
 
                 # search link to single SVG file to download, like
                 # https://upload.wikimedia.org/wikipedia/commons/9/91/Flag_of_Bhutan.svg
@@ -276,7 +269,7 @@ class TestWikipediaFlags:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print(f"fetch {flag_url}")
-                flag_svg = self.fetch_file(flag_url, raise_exc=True)
+                flag_svg = fetch_file(flag_url, raise_exc=True)
                 with open(path, "w", encoding='UTF-8') as f:
                     f.write(flag_svg)
 
@@ -323,7 +316,7 @@ class TestW3CSVG:
     def setup_method(self):
         "Check if testsuite archive exists, else download and unpack it."
 
-        server = "http://www.w3.org"
+        server = "https://www.w3.org"
         path = "/Graphics/SVG/Test/20070907/W3C_SVG_12_TinyTestSuite.tar.gz"
         url = server + path
 
@@ -335,7 +328,7 @@ class TestW3CSVG:
                 if not exists(join(TEST_ROOT, "samples", archive_path)):
                     print(f"downloading {url}")
                     try:
-                        data = urlopen(url).read()
+                        data = fetch_file(url, mime_accept='application/gzip', uncompress=False)
                     except OSError as details:
                         print(details)
                         print("Check your internet connection and try again!")
