@@ -70,7 +70,7 @@ Features
 - test entire `W3C SVG test suite`_ after pulling from the internet
 - test all SVG `flags from Wikipedia`_ after pulling from the internet
 - test selected SVG `symbols from Wikipedia`_ after pulling from the net
-- support Python 3.6+ and PyPy3
+- support Python 3.7+ and PyPy3
 
 
 Known limitations

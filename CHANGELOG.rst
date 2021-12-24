@@ -6,6 +6,7 @@ ChangeLog
 Unreleased
 ----------
 
+- dropped support for Python 3.6 and added official support for Python 3.10.
 - improved support for scientific notation in paths (#277)
 
 1.1.0 (2021-04-10)
