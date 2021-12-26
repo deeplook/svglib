@@ -11,7 +11,7 @@ make suggestions if you have something useful to share with others!
 Streamlit
 ---------
 
-Streamlit-Svglib_ is a small Streamlit_ app and is `live on Streamlit.io`_.
+Streamlit-Svglib_ is a small Streamlit_ app and is running `live on Streamlit.io`_.
 It is expected to include more demos over time. Contributions are welcome! 
 
 .. _Svglib: https://github.com/deeplook/svglib
