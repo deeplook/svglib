@@ -4,9 +4,17 @@
 Demos
 =====
 
-This directory contains a new collection of examples or demos for using ``Svglib``
-in different contexts. At the beginning this only contains an example app for
-using it from Streamlit_. More will hopefully be added over time. Please feel
-free to make suggestsions if you have something useful to share with others!
+This directory contains a collection of examples or demos (or pointers to
+such things) for using Svglib_ in different contexts. Please feel free to
+make suggestions if you have something useful to share with others!
 
+Streamlit
+---------
+
+Streamlit-Svglib_ is a small Streamlit_ app and is `live on Streamlit.io`_.
+It is expected to include more demos over time. Contributions are welcome! 
+
+.. _Svglib: https://github.com/deeplook/svglib
+.. _Streamlit-svglib: https://github.com/deeplook/streamlit-svglib
 .. _Streamlit: https://streamlit.io
+.. _live on Streamlit.io: https://share.streamlit.io/deeplook/streamlit-svglib
