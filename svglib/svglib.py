@@ -1338,6 +1338,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             else:
                 logger.debug("Ignoring transform: %s %s", op, values)
 
+    def safeApplyShapeAttr(self, shape, rlgAttr, value):
+        try:
+            setattr(shape, rlgAttr, value)
+        except (AttributeError, KeyError):
+            pass
+
     def applyStyleOnShape(self, shape, node, only_explicit=False):
         """
         Apply styles from an SVG element to an RLG shape.
@@ -1375,6 +1381,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 self.applyStyleOnShape(subshape, node, only_explicit=only_explicit)
             return
 
+        applied_default_value = {}
         ac = self.attrConverter
         for mapping in (mappingN, mappingF):
             if shape.__class__ != String and mapping == mappingF:
@@ -1388,6 +1395,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                             continue
                         else:
                             svgAttrValue = defaults[index]
+                            applied_default_value[rlgAttr] = True
                     if svgAttrValue == "currentColor":
                         svgAttrValue = ac.findAttr(node.getparent(), "color") or defaults[index]
                     if isinstance(svgAttrValue, str):
@@ -1398,6 +1406,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     setattr(shape, rlgAttr, meth(*svgAttrValues))
                 except (AttributeError, KeyError, ValueError):
                     logger.debug("Exception during applyStyleOnShape")
+        if applied_default_value.get('fillOpacity', False) and getattr(shape, 'fillColor', None) is not None \
+                and getattr(shape.fillColor, 'alpha', 1) != 1:
+            self.safeApplyShapeAttr(shape, 'fillOpacity', shape.fillColor.alpha)
+        if applied_default_value.get('strokeOpacity', False) and getattr(shape, 'strokeColor', None) is not None \
+                and getattr(shape.strokeColor, 'alpha', 1) != 1:
+            self.safeApplyShapeAttr(shape, 'strokeOpacity', shape.strokeColor.alpha)
         if getattr(shape, 'fillOpacity', None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
         if getattr(shape, 'strokeWidth', None) == 0:
