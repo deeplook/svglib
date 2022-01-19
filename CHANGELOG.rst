@@ -8,6 +8,8 @@ Unreleased
 
 - dropped support for Python 3.6 and added official support for Python 3.10.
 - improved support for scientific notation in paths (#277)
+- if some path has a color with alpha value, it also sets the default fill or
+  stroke opacity of the resulting object.
 
 1.1.0 (2021-04-10)
 ------------------
