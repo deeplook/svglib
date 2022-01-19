@@ -33,6 +33,7 @@ from reportlab.graphics.shapes import (
     _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
     Polygon, Rect, SolidShape, String,
 )
+from reportlab.graphics.transform import mmult
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
 from reportlab.lib.utils import haveImages
@@ -1334,7 +1335,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op == "skewY":
                 group.skew(0, values)
             elif op == "matrix":
-                group.transform = values
+                if len(values) == 6:
+                    group.transform = mmult(group.transform, values)
+                else:
+                    group.transform = values
             else:
                 logger.debug("Ignoring transform: %s %s", op, values)
 
