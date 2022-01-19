@@ -368,7 +368,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             if color is None:
                 # Test if text is a predefined color constant
                 try:
-                    color = getattr(colors, text)
+                    color = getattr(colors, text).clone()
                 except AttributeError:
                     pass
         if color is None:
@@ -1386,6 +1386,18 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     if svgAttrValue == '':
                         if only_explicit:
                             continue
+                        if (
+                            svgAttrName == 'fill-opacity'
+                            and getattr(shape, 'fillColor', None) is not None
+                            and getattr(shape.fillColor, 'alpha', 1) != 1
+                        ):
+                            svgAttrValue = shape.fillColor.alpha
+                        elif (
+                            svgAttrName == 'stroke-opacity'
+                            and getattr(shape, 'strokeColor', None) is not None
+                            and getattr(shape.strokeColor, 'alpha', 1) != 1
+                        ):
+                            svgAttrValue = shape.strokeColor.alpha
                         else:
                             svgAttrValue = defaults[index]
                     if svgAttrValue == "currentColor":

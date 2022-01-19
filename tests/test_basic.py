@@ -436,6 +436,22 @@ class TestAttrConverter:
         ''')))
         assert drawing.contents[0].contents[0].fillColor == colors.Color(0, 0, 0, 0)
 
+    def test_fillcolor_alpha_set_fillopacity(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = etree.XML('<polygon fill="#ff000080"/>')
+        poly = Polygon()
+        converter.applyStyleOnShape(poly, node)
+        assert poly.fillOpacity == 128 / 255
+        assert poly.strokeOpacity == 1
+
+    def test_strokecolor_alpha_set_strokeopacity(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = etree.XML('<polygon stroke="#cccccca0"/>')
+        poly = Polygon()
+        converter.applyStyleOnShape(poly, node)
+        assert poly.fillOpacity == 1
+        assert poly.strokeOpacity == 160 / 255
+
     def test_fillrule(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = etree.XML('<polygon fill-rule="evenodd"/>')
