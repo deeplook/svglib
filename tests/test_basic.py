@@ -480,6 +480,27 @@ class TestApplyTransformOnGroup:
         converter.applyTransformOnGroup(transform, group)
         assert group.transform == (1, 0, 0, 1, 10, 0)
 
+    def test_transform_matrix(self):
+        NEUTRAL_TRANSFORM = (1, 0, 0, 1, 0, 0)
+        group = Group()
+        converter = svglib.Svg2RlgShapeConverter(None)
+        # if the values are not 6, ignore
+        transform = "matrix(1 2 3 4 5)"
+        converter.applyTransformOnGroup(transform, group)
+        assert group.transform == NEUTRAL_TRANSFORM
+
+        # Matrix-only
+        group = Group()
+        transform = "matrix(3 1 -1 3 30 40)"
+        converter.applyTransformOnGroup(transform, group)
+        assert group.transform == (3, 1, -1, 3, 30, 40)
+
+        # Combination of matrix and translation
+        group = Group()
+        transform = "translate(40 40) matrix(3 1 -1 3 30 40)"
+        converter.applyTransformOnGroup(transform, group)
+        assert group.transform == (3, 1, -1, 3, 70, 80)
+
 
 class TestStyleSheets:
     def test_css_stylesheet(self):
