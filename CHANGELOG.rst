@@ -3,8 +3,8 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+1.2.0 (2022-01-20)
+------------------
 
 - dropped support for Python 3.6 and added official support for Python 3.10.
 - improved support for scientific notation in paths (#277)

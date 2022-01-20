@@ -64,10 +64,10 @@ def find_font(font_name, weight='normal', style='normal'):
     return _fonts_find_font(font_name, weight, style)
 
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2021-04-10'
+__date__ = '2022-01-20'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 
