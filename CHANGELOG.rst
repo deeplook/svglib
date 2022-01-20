@@ -10,6 +10,8 @@ Unreleased
 - improved support for scientific notation in paths (#277)
 - if some path has a color with alpha value, it also sets the default fill or
   stroke opacity of the resulting object.
+- matrix transforms on groups are combined with other transforms instead of
+  replacing them.
 
 1.1.0 (2021-04-10)
 ------------------
