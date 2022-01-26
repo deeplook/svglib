@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+1.2.1 (2022-01-27)
+------------------
+
+- Revert to scripts usage instead of console_scripts during setup (#313).
+
 1.2.0 (2022-01-20)
 ------------------
 
