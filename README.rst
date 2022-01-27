@@ -38,6 +38,9 @@ A pure-Python library for reading and converting SVG
 .. image:: https://img.shields.io/pypi/l/svglib.svg
   :target: https://pypi.org/project/svglib
 
+.. image:: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
+  :target: https://share.streamlit.io/deeplook/streamlit-svglib/master/streamlit_app.py
+
 
 About
 -----
