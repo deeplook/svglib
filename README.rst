@@ -106,7 +106,7 @@ the system command-line. Here is the output from ``svg2pdf -h``::
 
     usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
 
-    svg2pdf v. 1.2.0
+    svg2pdf v. 1.2.1
     A converter from SVG to PDF (via ReportLab Graphics)
 
     positional arguments:
