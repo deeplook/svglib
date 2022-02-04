@@ -33,10 +33,16 @@ from reportlab.graphics.shapes import (
     _CLOSEPATH, Circle, Drawing, Ellipse, Group, Image, Line, Path, PolyLine,
     Polygon, Rect, SolidShape, String,
 )
-from reportlab.graphics.transform import mmult
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
 from reportlab.lib.utils import haveImages
+
+try:
+    from reportlab.graphics.transform import mmult
+except ImportError:
+    # Before Reportlab 3.5.61
+    from reportlab.graphics.shapes import mmult
+
 from lxml import etree
 import cssselect2
 import tinycss2

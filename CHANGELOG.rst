@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+Unreleased
+----------
+
+- Support mmult import from reportlab < 3.5.61 (#316).
+
 1.2.1 (2022-01-27)
 ------------------
 
