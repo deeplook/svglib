@@ -438,3 +438,8 @@ class TestOtherFiles:
         assert isinstance(img_group.contents[1], Group)
         assert isinstance(img_group.contents[1].contents[0], Rect)
         assert img_group.contents[1].transform, (1, 0, 0, 1, 100.0, 200.0)
+
+    def test_em_unit_svg(self):
+        path = join(TEST_ROOT, "samples", "others", "em_unit.svg")
+        drawing = svglib.svg2rlg(path)
+        assert drawing.contents[0].transform[5] == svglib.DEFAULT_FONT_SIZE
