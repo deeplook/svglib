@@ -54,6 +54,7 @@ from .utils import (
 
 from .fonts import (
     get_global_font_map, DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE,
+    DEFAULT_FONT_SIZE,
 )
 
 # To keep backward compatibility, since those functions where previously part of the svglib module
@@ -291,7 +292,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def split_attr_list(attr):
         return shlex.split(attr.strip().replace(',', ' '))
 
-    def convertLength(self, svgAttr, em_base=12, attr_name=None, default=0.0):
+    def convertLength(self, svgAttr, em_base=DEFAULT_FONT_SIZE, attr_name=None, default=0.0):
         "Convert length to points."
 
         text = svgAttr.replace(',', ' ').strip()
@@ -952,7 +953,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             group.add(shape)
             return group
 
-    def convert_length_attrs(self, node, *attrs, em_base=None, **kwargs):
+    def convert_length_attrs(self, node, *attrs, em_base=DEFAULT_FONT_SIZE, **kwargs):
         # Support node both as NodeTracker or lxml node
         getAttr = (
             node.getAttribute if hasattr(node, 'getAttribute')
@@ -1059,7 +1060,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
         ff = attrConv.convertFontFamily(ff, fw, fstyle)
-        fs = attrConv.findAttr(node, "font-size") or "12"
+        fs = attrConv.findAttr(node, "font-size") or str(DEFAULT_FONT_SIZE)
         fs = attrConv.convertLength(fs)
         x, y = self.convert_length_attrs(node, 'x', 'y', em_base=fs)
         for c in itertools.chain([node], node.getchildren()):
@@ -1372,7 +1373,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 "fontName", "convertFontFamily",
                 [DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE]
             ),
-            (["font-size"], "fontSize", "convertLength", ["12"]),
+            (["font-size"], "fontSize", "convertLength", [str(DEFAULT_FONT_SIZE)]),
             (["text-anchor"], "textAnchor", "id", ["start"]),
         )
 

@@ -18,6 +18,7 @@ STANDARD_FONT_NAMES = (
 DEFAULT_FONT_NAME = "Helvetica"
 DEFAULT_FONT_WEIGHT = 'normal'
 DEFAULT_FONT_STYLE = 'normal'
+DEFAULT_FONT_SIZE = 12
 
 
 class FontMap:
