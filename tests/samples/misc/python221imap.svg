@@ -28,16 +28,16 @@ function showToolTip (evt, info)
     var svgroot = svgdoc.getRootElement ();
     var svgwidth = svgroot.getAttribute ('width');
     var svgobj = svgdoc.getElementById (tooltip);
-    var x = Math.round(offsetX + evt.getClientX()*pixel); 
+    var x = Math.round(offsetX + evt.getClientX()*pixel);
     if ((offsetX + evt.getClientX()*pixel)-txtlen/2 < 0) x = txtlen/2*pixel;
     if ((offsetX + evt.getClientX()*pixel)+txtlen/2 > svgwidth) x = svgwidth - txtlen/2;
     svgobj.setAttribute ('x', x);
     svgobj.setAttribute ('y', Math.max(14/scale, Math.round(offsetY + evt.getClientY()*pixel - 18/scale)));
 
     var svgobj = svgdoc.getElementById (tooltiprect);
-    var x = Math.max(0, (Math.round(offsetX + evt.getClientX()*pixel - txtlen/2))); 
+    var x = Math.max(0, (Math.round(offsetX + evt.getClientX()*pixel - txtlen/2)));
     if (x+txtlen > svgwidth) x = svgwidth-txtlen;
-    svgobj.setAttribute ('x', x); 
+    svgobj.setAttribute ('x', x);
     svgobj.setAttribute ('y', Math.max(0, (Math.round(offsetY + evt.getClientY()*pixel - 32/scale))));
     svgobj.setAttribute ('width', txtlen);
     svgobj.setAttribute ('height', 20/scale);
@@ -2880,14 +2880,14 @@ function get_target (evt)
                 <rect height="400" onmouseout="hideToolTip(evt)" onmouseover="showToolTip(evt, '/install-sh')" style="stroke-width: 0.0127458198982; stroke-linecap: butt; stroke: rgb(0%,0%,0%); fill: rgb(100%,100%,100%);" width="0.127458198982" x="115.30351828" y="0"/>
                 <rect height="400" onmouseout="hideToolTip(evt)" onmouseover="showToolTip(evt, '/pyconfig.h.in')" style="stroke-width: 0.0455894161881; stroke-linecap: butt; stroke: rgb(0%,0%,0%); fill: rgb(100%,100%,100%);" width="0.455894161881" x="552.99440437" y="0"/>
                 <rect height="400" onmouseout="hideToolTip(evt)" onmouseover="showToolTip(evt, '/setup.py')" style="stroke-width: 0.0810149631326; stroke-linecap: butt; stroke: rgb(0%,0%,0%); fill: rgb(19%,80%,19%);" width="0.810149631326" x="572.68503401" y="0"/>
-            </g>   
+            </g>
     </g>
 
   </g>
 
 
     <g id="tooltips">
-        <rect id="TooltipRect" x="0" y="0" width="0" height="0" style="visibility:hidden; fill:yellow; stroke:none; opacity:0.5; pointer-events:none"></rect> 
+        <rect id="TooltipRect" x="0" y="0" width="0" height="0" style="visibility:hidden; fill:yellow; stroke:none; opacity:0.5; pointer-events:none"></rect>
         <text id="Tooltip" x="0" y="0" style="fill:black; visibility:hidden; font-weight:normal; font-family:'Courier'; font-size:60; text-anchor:middle; pointer-events:none"> </text>
         <animate id="fade" attributeName="opacity" begin="texts.mouseover;texts.mouseover;texts.mouseover;texts.mouseover" dur="0.25s" from="0" to="1" fill="freeze" />
     </g>
