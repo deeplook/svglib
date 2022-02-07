@@ -11,6 +11,10 @@ A pure-Python library for reading and converting SVG
 .. image:: https://github.com/deeplook/svglib/workflows/CI/badge.svg
   :target: https://github.com/deeplook/svglib/actions?query=workflow%3ACI
 
+.. image:: https://results.pre-commit.ci/badge/github/deeplook/svglib/master.svg
+  :target: https://results.pre-commit.ci/latest/github/deeplook/svglib/master
+  :alt: pre-commit.ci status
+
 .. image:: https://pyup.io/repos/github/deeplook/svglib/shield.svg
   :target: https://pyup.io/repos/github/deeplook/svglib/
 
@@ -95,7 +99,7 @@ interactive Python session:
 
     >>> from svglib.svglib import svg2rlg
     >>> from reportlab.graphics import renderPDF, renderPM
-    >>> 
+    >>>
     >>> drawing = svg2rlg("file.svg")
     >>> renderPDF.drawToFile(drawing, "file.pdf")
     >>> renderPM.drawToFile(drawing, "file.png", fmt="PNG")
