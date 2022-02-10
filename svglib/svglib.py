@@ -1473,12 +1473,12 @@ def nudge_points(points):
     """
     if not points:
         return
-    if len(points) < 2:
+    if len(points) < 4:
         return
-    x0, y0 = points[:2]
+    x = points[0]
+    y = points[1]
     for i in range(2, len(points)-1, 2):
-        x1, y1 = points[i:i+2]
-        if x1 != x0 or y1 != y0:
+        if x != points[i] or y != points[i+1]:
             break
     else:
         # All points were identical, so we nudge.
