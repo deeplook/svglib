@@ -967,8 +967,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         ]
 
     def convertLine(self, node):
-        x1, y1, x2, y2 = self.convert_length_attrs(node, 'x1', 'y1', 'x2', 'y2')
-        return Line(x1, y1, x2, y2)
+        points = self.convert_length_attrs(node, 'x1', 'y1', 'x2', 'y2')
+        nudge_points(points)
+        return Line(*points)
 
     def convertRect(self, node):
         x, y, width, height, rx, ry = self.convert_length_attrs(
@@ -999,6 +1000,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # Odd number of coordinates or no coordinates, invalid polyline
             return None
 
+        nudge_points(points)
         polyline = PolyLine(points)
         self.applyStyleOnShape(polyline, node)
         has_fill = self.attrConverter.findAttr(node, 'fill') not in ('', 'none')
@@ -1024,6 +1026,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         if len(points) % 2 != 0 or len(points) == 0:
             # Odd number of coordinates or no coordinates, invalid polygon
             return None
+        nudge_points(points)
         shape = Polygon(points)
 
         return shape
@@ -1460,6 +1463,26 @@ def svg2rlg(path, resolve_entities=False, **kwargs):
         os.remove(path)
 
     return drawing
+
+
+def nudge_points(points):
+    """ Nudge first coordinate if all coordinate pairs are identical.
+
+    This works around reportlab's decision to hide shapes of size zero, even
+    when the stroke should be visible.
+    """
+    if not points:
+        return
+    if len(points) < 4:
+        return
+    x = points[0]
+    y = points[1]
+    for i in range(2, len(points)-1, 2):
+        if x != points[i] or y != points[i+1]:
+            break
+    else:
+        # All points were identical, so we nudge.
+        points[0] *= 1.0000001
 
 
 def load_svg_file(path, resolve_entities=False):

@@ -16,7 +16,7 @@ from lxml import etree
 from tempfile import NamedTemporaryFile
 
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect,
+    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect, Line,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -702,6 +702,30 @@ class TestRectNode:
         assert rect.strokeColor is None
 
 
+class TestLineNode:
+    def test_length_zero(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<line stroke="#000000" x1="10" y1="20" x2="10" y2="20" />'
+        ))
+        line = converter.convertLine(node)
+        assert isinstance(line, Line)
+
+        # Force a slight change in the first coordinate, so it's not invisible.
+        assert line.x1 != 10
+
+    def test_length_not_zero(self):
+        """ No change needed when length is not zero. """
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<line stroke="#000000" x1="10" y1="20" x2="10" y2="30" />'
+        ))
+        line = converter.convertLine(node)
+        assert isinstance(line, Line)
+
+        assert line.x1 == 10
+
+
 class TestPolylineNode:
     def test_filling(self):
         converter = svglib.Svg2RlgShapeConverter(None)
@@ -721,6 +745,50 @@ class TestPolylineNode:
         assert isinstance(group.contents[0], Polygon)
         assert group.contents[0].fillColor == colors.white
         assert isinstance(group.contents[1], PolyLine)
+
+    def test_length_zero(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<polyline fill="none" stroke="#000000" '
+            'points="10,50,10,50" />'
+        ))
+        polyline = converter.convertPolyline(node)
+        assert isinstance(polyline, PolyLine)
+
+        # Force a slight change in the first coordinate, so it's not invisible.
+        assert polyline.points[0] != 10
+
+    def test_odd_length(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<polyline fill="none" stroke="#000000" '
+            'points="10,50,10,50,10" />'
+        ))
+        polyline = converter.convertPolyline(node)
+        assert polyline is None
+
+
+class TestPolygonNode:
+    def test_length_zero(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<polygon fill="none" stroke="#000000" '
+            'points="10,50,10,50" />'
+        ))
+        polygon = converter.convertPolygon(node)
+        assert isinstance(polygon, Polygon)
+
+        # Force a slight change in the first coordinate, so it's not invisible.
+        assert polygon.points[0] != 10
+
+    def test_odd_length(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<polygon fill="none" stroke="#000000" '
+            'points="10,50,10,50,10" />'
+        ))
+        polygon = converter.convertPolygon(node)
+        assert polygon is None
 
 
 class TestUseNode:
