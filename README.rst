@@ -87,6 +87,7 @@ Known limitations
   bug or shortcoming on the `svglib issue tracker`_.
 - clipping is limited to single paths, no mask support
 - color gradients are not supported (limitation of reportlab)
+- SVG ``ForeignObject`` elements are not supported.
 
 
 Examples
