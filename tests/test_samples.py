@@ -443,3 +443,7 @@ class TestOtherFiles:
         path = join(TEST_ROOT, "samples", "others", "em_unit.svg")
         drawing = svglib.svg2rlg(path)
         assert drawing.contents[0].transform[5] == svglib.DEFAULT_FONT_SIZE
+
+    def test_empty_style(self):
+        path = join(TEST_ROOT, "samples", "others", "empty_style.svg")
+        svglib.svg2rlg(path)

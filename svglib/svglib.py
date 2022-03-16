@@ -868,7 +868,7 @@ class SvgRenderer:
         return gr
 
     def renderStyle(self, node):
-        self.attrConverter.css_rules = CSSMatcher(node.text)
+        self.attrConverter.css_rules = CSSMatcher(node.text or "")
 
     def renderSymbol(self, node):
         return self.renderG(node, display=0)
