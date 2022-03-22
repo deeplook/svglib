@@ -127,9 +127,6 @@ class ClippingPath(Path):
 
 
 class CSSMatcher(cssselect2.Matcher):
-    def __init__(self):
-        super().__init__()
-
     def add_styles(self, style_content):
         rules = tinycss2.parse_stylesheet(
             style_content, skip_comments=True, skip_whitespace=True
