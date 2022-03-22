@@ -527,6 +527,28 @@ class TestStyleSheets:
         assert main_group.contents[0].contents[1].contents[0].fillColor == colors.black
         assert main_group.contents[0].contents[1].contents[0].strokeWidth == 1.5
 
+    def test_css_stylesheet_multiple_style_tags(self):
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
+            <?xml version="1.0"?>
+            <svg width="777" height="267" xml:space="preserve">
+              <defs>
+                <style type="text/css">
+                #p1 { fill:rgb(255,0,0) }
+                </style>
+                <style type="text/css">
+                #p2 { fill:rgb(0,0,0); }
+                </style>
+              </defs>
+              <g>
+                <path id="p1" d="M 0,-100 V 0 H 50"/>
+                <path id="p2" d="M 0,100 V 0 H 50"/>
+              </g>
+            </svg>
+        ''')))
+        main_group = drawing.contents[0]
+        assert main_group.contents[0].contents[0].contents[0].fillColor == colors.red
+        assert main_group.contents[0].contents[1].contents[0].fillColor == colors.black
+
 
 class TestGroupNode:
     def test_svg_groups_have_svgid(self):
