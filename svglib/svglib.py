@@ -723,7 +723,8 @@ class SvgRenderer:
             - the path to an image file for any raster image targets
             - None if any problem occurs
         """
-        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href')
+        # Bare 'href' was introduced in SVG 2.
+        xlink_href = node.attrib.get('{http://www.w3.org/1999/xlink}href') or node.attrib.get('href')
         if not xlink_href:
             return None
 
