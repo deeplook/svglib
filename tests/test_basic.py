@@ -848,6 +848,19 @@ class TestUseNode:
 
 
 class TestSymbolNode:
+    def test_symbol_unused(self):
+        """<symbol> by itself should not be rendered."""
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="900" height="600" viewBox="0 0 100 100">
+                <symbol id="X">
+                    <path d="M 0,0100 V 0 H 50"/>
+                </symbol>
+            </svg>
+        ''')))
+        assert drawing.contents[0].contents == []
+
     def test_symbol_node(self):
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
             <?xml version="1.0"?>

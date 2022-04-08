@@ -586,7 +586,12 @@ class SvgRenderer:
             self.renderStyle(n)
         elif name == "symbol":
             item = self.renderSymbol(n)
-            parent.add(item)
+            # First time the symbol node is rendered, it should not be part of a group.
+            # It is only rendered to be part of definitions.
+            if n.attrib.get('_rendered'):
+                parent.add(item)
+            else:
+                n.set('_rendered', '1')
         elif name == "use":
             item = self.renderUse(n, clipping=clipping)
             parent.add(item)
@@ -850,16 +855,14 @@ class SvgRenderer:
 
         return group
 
-    def renderG(self, node, clipping=None, display=1):
+    def renderG(self, node, clipping=None):
         getAttr = node.getAttribute
         id, transform = map(getAttr, ("id", "transform"))
         gr = Group()
         if clipping:
             gr.add(clipping)
         for child in node.getchildren():
-            item = self.renderNode(child, parent=gr)
-            if item and display:
-                gr.add(item)
+            self.renderNode(child, parent=gr)
 
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, gr)
@@ -870,7 +873,7 @@ class SvgRenderer:
         self.attrConverter.css_rules = CSSMatcher(node.text)
 
     def renderSymbol(self, node):
-        return self.renderG(node, display=0)
+        return self.renderG(node)
 
     def renderA(self, node):
         # currently nothing but a group...
