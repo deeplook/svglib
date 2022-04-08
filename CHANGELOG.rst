@@ -10,6 +10,7 @@ Unreleased
 - ``<symbol>`` nodes now only appears in documents when they are
   referenced, not on their initial appearance.
 - If only rx or ry is defined on a ``<rect>``, the value is used for both.
+- Support non-prefixed ``href`` attribute added in SVG 2 (#330).
 
 1.2.1 (2022-01-27)
 ------------------

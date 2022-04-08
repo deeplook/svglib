@@ -854,6 +854,20 @@ class TestUseNode:
         assert isinstance(main_group.contents[2].contents[0], Rect)
         assert main_group.contents[2].contents[0].fillColor == colors.red
 
+    def test_use_href_svg2(self):
+        """In SVG 2, xlink:href="" can be simply href=""."""
+        drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="10cm" height="3cm" viewBox="0 0 100 30">
+              <defs>
+                <rect id="MyRect" x=".1" y=".1" width="99.8" height="29.8"
+                      fill="none" stroke="blue" />
+              </defs>
+              <use x="20" y="10" href="#MyRect" />
+            </svg>
+        ''')))
+        assert isinstance(drawing.contents[0].contents[0].contents[0], Rect)
+
     def test_use_with_defs_at_end(self):
         self.test_use(drawing_source='''\
             <?xml version="1.0"?>
