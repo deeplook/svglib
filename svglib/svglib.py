@@ -983,6 +983,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             rx = width / 2
         if ry > (height / 2):
             ry = height / 2
+        if rx and not ry:
+            ry = rx
+        elif ry and not rx:
+            rx = ry
         return Rect(x, y, width, height, rx=rx, ry=ry)
 
     def convertCircle(self, node):
