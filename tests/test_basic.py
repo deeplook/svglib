@@ -710,6 +710,20 @@ class TestRectNode:
         assert rect.rx == 5
         assert rect.ry == 1.5
 
+    def test_rx_ry_lonely(self):
+        """If only rx or ry is present, the other default to the same value."""
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = svglib.NodeTracker(etree.XML(
+            '<rect rx="2.5" width="10" height="3" x="0" y="0"/>'
+        ))
+        rect = converter.convertRect(node)
+        assert rect.ry == 2.5
+        node = svglib.NodeTracker(etree.XML(
+            '<rect ry="1" width="10" height="3" x="0" y="0"/>'
+        ))
+        rect = converter.convertRect(node)
+        assert rect.rx == 1
+
     def test_strokewidth_0(self):
         """
         When strokeWidth = 0, we force strokeColor to None to avoid the stroke
