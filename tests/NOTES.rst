@@ -18,19 +18,13 @@ The remaining issues here are mostly related to gradient fillings.
 wikipedia/flags
 ---------------
 
-The remaining issues here are mostly related to gradient fillings.
+The remaining issues are all related to gradient fillings.
 
-- Belarus.svg
-- Belize.svg (gradient support)
-- Ecuador.svg (gradient support)
-- Guatemala.svg (gradient support)
-- Kyrgyzstan.svg (clipping?)
-- Mexico.svg (gradient support)
-- Nicaragua.svg (gradient support)
-- Singapore.svg
-- Slovenia.svg (svg inside svg)
-- The_republic_of_china.svg
-- Transnistria_(state).svg (missing symbol)
+- Belize.svg
+- Ecuador.svg
+- Guatemala.svg
+- Mexico.svg
+- Nicaragua.svg
 
 
 wikipedia/symbols
