@@ -35,7 +35,6 @@ from reportlab.graphics.shapes import (
 )
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
-from reportlab.lib.utils import haveImages
 
 try:
     from reportlab.graphics.transform import mmult
@@ -1300,12 +1299,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         return gr
 
     def convertImage(self, node):
-        if not haveImages:
-            logger.warning(
-                "Unable to handle embedded images. Maybe the pillow library is missing?"
-            )
-            return None
-
         x, y, width, height = self.convert_length_attrs(node, 'x', 'y', 'width', 'height')
         image = node._resolved_target
         image = Image(int(x), int(y + height), int(width), int(height), image)

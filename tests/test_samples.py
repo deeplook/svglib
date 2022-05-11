@@ -21,7 +21,6 @@ from http.client import HTTPSConnection
 from os.path import dirname, splitext, exists, join, basename, getsize
 from urllib.parse import quote, unquote, urlparse
 
-from reportlab.lib.utils import haveImages
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.graphics.shapes import Group, Rect
 import pytest
@@ -418,7 +417,6 @@ class TestW3CSVG:
 
 
 class TestOtherFiles:
-    @pytest.mark.skipif(not haveImages, reason="missing pillow library")
     def test_png_in_svg(self):
         path = join(TEST_ROOT, "samples", "others", "png_in_svg.svg")
         drawing = svglib.svg2rlg(path)
