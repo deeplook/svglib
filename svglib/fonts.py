@@ -23,15 +23,19 @@ DEFAULT_FONT_SIZE = 12
 
 class FontMap:
     """
-    managing the mapping of svg font names to reportlab fonts and registering them in reportlab
+    Managing the mapping of svg font names to reportlab fonts and registering
+    them in reportlab.
     """
+
     def __init__(self):
-        # the map has the form:
-        # 'internal_name': {
-        #    'svg_family': 'family_name', 'svg_weight': 'font-weight', 'svg_style': 'font-style',
-        #    'rlgFont': 'rlgFontName'
-        # }
-        # for faster searching we use internal keys for finding the matching font
+        """
+        The map has the form:
+        'internal_name': {
+           'svg_family': 'family_name', 'svg_weight': 'font-weight', 'svg_style': 'font-style',
+           'rlgFont': 'rlgFontName'
+        }
+        for faster searching we use internal keys for finding the matching font
+        """
         self._map = {}
 
         self.register_default_fonts()
@@ -75,8 +79,7 @@ class FontMap:
         filename = f'{basename}{prefix}.{extension}'
         return filename
 
-    @staticmethod
-    def use_fontconfig(font_name, weight='normal', style='normal'):
+    def use_fontconfig(self, font_name, weight='normal', style='normal'):
         NOT_FOUND = (None, False)
         # Searching with Fontconfig
         try:
@@ -86,14 +89,26 @@ class FontMap:
                 stderr=subprocess.PIPE,
             )
             output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
-            font_path = output.split('\n')[0]
-            registerFont(TTFont(font_name, font_path))
         except OSError:
             return NOT_FOUND
-        except TTFError:
+        font_paths = output.split('\n')
+        for font_path in font_paths:
+            try:
+                registerFont(TTFont(font_name, font_path))
+            except TTFError:
+                continue
+            else:
+                success_font_path = font_path
+                break
+        else:
             return NOT_FOUND
         # Fontconfig may return a default font totally unrelated with font_name
-        exact = font_name.lower() in os.path.basename(font_path).lower()
+        exact = font_name.lower() in os.path.basename(success_font_path).lower()
+        internal_name = FontMap.build_internal_name(font_name, weight, style)
+        self._map[internal_name] = {
+            'svg_family': font_name, 'svg_weight': weight,
+            'svg_style': style, 'rlgFont': font_name, 'exact': exact,
+        }
         return font_name, exact
 
     def register_default_fonts(self):
@@ -159,8 +174,9 @@ class FontMap:
         self, font_family, font_path=None, weight='normal', style='normal', rlgFontName=None
     ):
         """
-        Register a font identified by its family, weight and style linked to an actual fontfile.
-        Or map an svg font family, weight and style combination to a reportlab fontname.
+        Register a font identified by its family, weight and style linked to an
+        actual fontfile. Or map an svg font family, weight and style combination
+        to a reportlab fontname.
         """
         NOT_FOUND = (None, False)
         internal_name = FontMap.build_internal_name(font_family, weight, style)
@@ -173,7 +189,7 @@ class FontMap:
             # mapping to one of the standard fonts, no need to register
             self._map[internal_name] = {
                 'svg_family': font_family, 'svg_weight': weight,
-                'svg_style': style, 'rlgFont': rlgFontName
+                'svg_style': style, 'rlgFont': rlgFontName, 'exact': True,
             }
             return internal_name, True
 
@@ -182,7 +198,7 @@ class FontMap:
                 registerFont(TTFont(rlgFontName, font_path))
                 self._map[internal_name] = {
                     'svg_family': font_family, 'svg_weight': weight,
-                    'svg_style': style, 'rlgFont': rlgFontName
+                    'svg_style': style, 'rlgFont': rlgFontName, 'exact': True,
                 }
                 return internal_name, True
             except TTFError:
@@ -195,17 +211,15 @@ class FontMap:
         if internal_name in STANDARD_FONT_NAMES:
             return internal_name, True
         # Step 2 Check if font is already registered
-        elif internal_name in self._map.keys():
-            return self._map[internal_name]['rlgFont'], True
+        if internal_name in self._map.keys():
+            return self._map[internal_name]['rlgFont'], self._map[internal_name]['exact']
         # Step 3 Try to auto register the font
-        else:
-            # Try first to register the font if it exists as ttf
-            guessed_filename = FontMap.guess_font_filename(font_name, weight, style)
-            reg_name, exact = self.register_font(font_name, guessed_filename)
-            if reg_name is not None:
-                return reg_name, exact
-            else:
-                return FontMap.use_fontconfig(font_name, weight, style)
+        # Try first to register the font if it exists as ttf
+        guessed_filename = FontMap.guess_font_filename(font_name, weight, style)
+        reg_name, exact = self.register_font(font_name, guessed_filename)
+        if reg_name is not None:
+            return reg_name, exact
+        return self.use_fontconfig(font_name, weight, style)
 
 
 _font_map = FontMap()  # the global font map

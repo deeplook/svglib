@@ -4,7 +4,9 @@ import subprocess
 
 import pytest
 from reportlab.pdfbase.ttfonts import TTFOpenFile, TTFError
-from svglib.fonts import DEFAULT_FONT_NAME, STANDARD_FONT_NAMES, FontMap
+from svglib.fonts import (
+    DEFAULT_FONT_NAME, STANDARD_FONT_NAMES, FontMap, get_global_font_map
+)
 from svglib.svglib import (
     Svg2RlgAttributeConverter, SvgRenderer, find_font, register_font, svg2rlg,
 )
@@ -291,6 +293,8 @@ def test_font_family():
         # Fontconfig will always provide at least a default font and register
         # that font under the provided font name.
         assert converter.convertFontFamily('SomeFont') == 'SomeFont'
+        # Should be cached anyway
+        assert 'SomeFont' in get_global_font_map()._map
     else:
         # Unknown fonts are converted to Helvetica by default.
         assert converter.convertFontFamily('SomeFont') == 'Helvetica'
