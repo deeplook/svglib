@@ -3,14 +3,19 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+1.3.0 (2022-05-18)
+------------------
 
 - Support mmult import from reportlab < 3.5.61 (#316).
+- Make zero-length Line, PolyLine and Polygon appear in PDFs when their stroke
+  value is non-zero (#319).
 - ``<symbol>`` nodes now only appears in documents when they are
-  referenced, not on their initial appearance.
+  referenced, not on their initial appearance (#328).
 - If only rx or ry is defined on a ``<rect>``, the value is used for both.
 - Support non-prefixed ``href`` attribute added in SVG 2 (#330).
+- Fixed parsing of empty SVG style nodes (#325).
+- Handle content of multiple SVG style nodes (#326).
+- Better font caching for some font names (#338).
 
 1.2.1 (2022-01-27)
 ------------------
