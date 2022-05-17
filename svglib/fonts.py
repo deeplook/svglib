@@ -211,7 +211,7 @@ class FontMap:
         if internal_name in STANDARD_FONT_NAMES:
             return internal_name, True
         # Step 2 Check if font is already registered
-        if internal_name in self._map.keys():
+        if internal_name in self._map:
             return self._map[internal_name]['rlgFont'], self._map[internal_name]['exact']
         # Step 3 Try to auto register the font
         # Try first to register the font if it exists as ttf
