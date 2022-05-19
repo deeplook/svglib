@@ -635,9 +635,9 @@ class TestTextNode:
             </svg>
         ''')))
         main_group = drawing.contents[0]
-        # By default, only two tspans produce String objects, the rest
-        # (spaces/newlines) is ignored.
-        assert len(main_group.contents[0].contents) == 2
+        # By default, only two tspans produce String objects + 1 for the space
+        # *between tspans, the start/end spaces/newlines are ignored.
+        assert len(main_group.contents[0].contents) == 3
         assert main_group.contents[0].contents[0].text == "TITLE 1"
 
         drawing = svglib.svg2rlg(io.StringIO(textwrap.dedent('''\
@@ -677,6 +677,7 @@ class TestTextNode:
             <?xml version="1.0"?>
             <svg width="777" height="267">
               <text x="10" y="20" style="fill:#000000; stroke:none; font-size:28;">
+                The start
                 <tspan>TITLE 1</tspan>
                 <!-- x position relative to current text position
                      y position offset in em -->
@@ -685,18 +686,28 @@ class TestTextNode:
                 <tspan x="16.75" y="33.487">Subtitle</tspan>
                 <!-- absolute position + shifting -->
                 <tspan x="10" y="20" dx="3em" dy="1.5em">Complete</tspan>
+                The end
               </text>
             </svg>
         ''')))
         main_group = drawing.contents[0]
         assert main_group.contents[0].contents[0].x == 10
         assert main_group.contents[0].contents[0].y == -20
+        assert main_group.contents[0].contents[0].text == "The start "
         assert main_group.contents[0].contents[1].x > 10
-        assert main_group.contents[0].contents[1].y == -20 - (1.3 * 28)
-        assert main_group.contents[0].contents[2].x == 16.75
-        assert main_group.contents[0].contents[2].y == -33.487
-        assert main_group.contents[0].contents[3].x == 10 + (3 * 28)
-        assert main_group.contents[0].contents[3].y == -20 - (1.5 * 28)
+        assert main_group.contents[0].contents[1].text == "TITLE 1"
+        assert main_group.contents[0].contents[2].text == " "
+        assert main_group.contents[0].contents[3].y == -20 - (1.3 * 28)
+        assert main_group.contents[0].contents[3].text == "(after title)"
+        assert main_group.contents[0].contents[4].text == " "
+        assert main_group.contents[0].contents[5].x == 16.75
+        assert main_group.contents[0].contents[5].y == -33.487
+        assert main_group.contents[0].contents[5].text == "Subtitle"
+        assert main_group.contents[0].contents[6].text == " "
+        assert main_group.contents[0].contents[7].x == 10 + (3 * 28)
+        assert main_group.contents[0].contents[7].y == -20 - (1.5 * 28)
+        assert main_group.contents[0].contents[7].text == 'Complete'
+        assert main_group.contents[0].contents[8].text == ' The end'
 
 
 class TestRectNode:

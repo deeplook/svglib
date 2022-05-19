@@ -1040,20 +1040,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         return shape
 
-    def clean_text(self, text, preserve_space):
-        """Text cleaning as per https://www.w3.org/TR/SVG/text.html#WhiteSpace
-        """
-        if text is None:
-            return
-        if preserve_space:
-            text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\t', ' ')
-        else:
-            text = text.replace('\r\n', '').replace('\n', '').replace('\t', ' ')
-            text = text.strip()
-            while '  ' in text:
-                text = text.replace('  ', ' ')
-        return text
-
     def convertText(self, node):
         attrConv = self.attrConverter
         xml_space = node.getAttribute(f"{{{XML_NS}}}space")
@@ -1075,25 +1061,22 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fs = attrConv.findAttr(node, "font-size") or str(DEFAULT_FONT_SIZE)
         fs = attrConv.convertLength(fs)
         x, y = self.convert_length_attrs(node, 'x', 'y', em_base=fs)
-        for c in itertools.chain([node], node.getchildren()):
+        for subnode, text, is_tail in iter_text_node(node, preserve_space):
+            if not text:
+                continue
             has_x, has_y = False, False
             dx, dy = 0, 0
             baseLineShift = 0
-            if node_name(c) in ('text', 'tspan'):
-                text = self.clean_text(c.text, preserve_space)
-                if not text:
-                    continue
-                x1, y1, dx, dy = self.convert_length_attrs(c, 'x', 'y', 'dx', 'dy', em_base=fs)
-                has_x, has_y = (c.attrib.get('x', '') != '', c.attrib.get('y', '') != '')
+            if not is_tail:
+                x1, y1, dx, dy = self.convert_length_attrs(subnode, 'x', 'y', 'dx', 'dy', em_base=fs)
+                has_x, has_y = (subnode.attrib.get('x', '') != '', subnode.attrib.get('y', '') != '')
                 dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)
                 dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
-                baseLineShift = c.attrib.get("baseline-shift", '0')
-                if baseLineShift in ("sub", "super", "baseline"):
-                    baseLineShift = {"sub": -fs/2, "super": fs/2, "baseline": 0}[baseLineShift]
-                else:
-                    baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)
+            baseLineShift = subnode.attrib.get("baseline-shift", '0')
+            if baseLineShift in ("sub", "super", "baseline"):
+                baseLineShift = {"sub": -fs/2, "super": fs/2, "baseline": 0}[baseLineShift]
             else:
-                continue
+                baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)
 
             frag_lengths.append(stringWidth(text, ff, fs))
 
@@ -1124,8 +1107,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     new_y = char_dy + (last_y if char_y is None else char_y)
                     shape = String(new_x, -(new_y - baseLineShift), char)
                     self.applyStyleOnShape(shape, node)
-                    if node_name(c) == 'tspan':
-                        self.applyStyleOnShape(shape, c)
+                    if node_name(subnode) == 'tspan':
+                        self.applyStyleOnShape(shape, subnode)
                     gr.add(shape)
                     last_x = new_x
                     last_y = new_y
@@ -1135,8 +1118,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 new_y = (y1 + dy) if has_y else (y + dy0)
                 shape = String(new_x, -(new_y - baseLineShift), text)
                 self.applyStyleOnShape(shape, node)
-                if node_name(c) == 'tspan':
-                    self.applyStyleOnShape(shape, c)
+                if node_name(subnode) == 'tspan':
+                    self.applyStyleOnShape(shape, subnode)
                 gr.add(shape)
 
         gr.scale(1, -1)
@@ -1514,6 +1497,42 @@ def node_name(node):
         return node.tag.split('}')[-1]
     except AttributeError:
         pass
+
+
+def iter_text_node(node, preserve_space, level=0):
+    """
+    Recursively iterate through text node and its children, including node tails.
+    """
+    level0 = level == 0
+    text = clean_text(
+        node.text, preserve_space, strip_start=level0, strip_end=(level0 and len(node.getchildren()) == 0)
+    ) if node.text else None
+
+    yield node, text, False
+
+    for child in node.getchildren():
+        yield from iter_text_node(child, preserve_space, level=level + 1)
+
+    if level > 0:  # We are not interested by tail of main node.
+        strip_end = level <= 1 and node.getnext() is None
+        tail = clean_text(node.tail, preserve_space, strip_end=strip_end) if node.tail else None
+        if tail not in (None, ''):
+            yield node.getparent(), tail, True
+
+
+def clean_text(text, preserve_space, strip_start=False, strip_end=False):
+    """Text cleaning as per https://www.w3.org/TR/SVG/text.html#WhiteSpace"""
+    if text is None:
+        return None
+    text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\t', ' ')
+    if not preserve_space:
+        if strip_start:
+            text = text.lstrip()
+        if strip_end:
+            text = text.rstrip()
+        while '  ' in text:
+            text = text.replace('  ', ' ')
+    return text
 
 
 def copy_shape_properties(source_shape, dest_shape):
