@@ -1,5 +1,3 @@
-import io
-import textwrap
 import subprocess
 
 import pytest
@@ -8,8 +6,9 @@ from svglib.fonts import (
     DEFAULT_FONT_NAME, STANDARD_FONT_NAMES, FontMap, get_global_font_map
 )
 from svglib.svglib import (
-    Svg2RlgAttributeConverter, SvgRenderer, find_font, register_font, svg2rlg,
+    Svg2RlgAttributeConverter, SvgRenderer, find_font, register_font,
 )
+from tests.utils import drawing_from_svg
 
 try:
     TTFOpenFile('times.ttf')
@@ -75,32 +74,32 @@ def test_find_font_defaults(fontname):
 
 
 def test_plain_text():
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
-            <?xml version="1.0"?>
-            <svg width="777" height="267" xml:space="preserve">
-              <text style="fill:#000000; stroke:none; font-size:28;">
-                <tspan>TITLE    1</tspan>
-                <tspan x="-10.761" y="33.487">Subtitle</tspan>
-              </text>
-            </svg>
-        ''')))
+    drawing = drawing_from_svg('''
+        <?xml version="1.0"?>
+        <svg width="777" height="267" xml:space="preserve">
+          <text style="fill:#000000; stroke:none; font-size:28;">
+            <tspan>TITLE    1</tspan>
+            <tspan x="-10.761" y="33.487">Subtitle</tspan>
+          </text>
+        </svg>
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == DEFAULT_FONT_NAME
 
 
 def test_fontfamily_text():
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
-            <?xml version="1.0"?>
-            <svg width="777" height="267" xml:space="preserve">
-              <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times-Roman';">
-                <tspan>TITLE    1</tspan>
-                <tspan x="-10.761" y="33.487">Subtitle</tspan>
-              </text>
-            </svg>
-        ''')))
+    drawing = drawing_from_svg('''
+        <?xml version="1.0"?>
+        <svg width="777" height="267" xml:space="preserve">
+          <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times-Roman';">
+            <tspan>TITLE    1</tspan>
+            <tspan x="-10.761" y="33.487">Subtitle</tspan>
+          </text>
+        </svg>
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Times-Roman'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;font-family:'Courier';">
@@ -108,7 +107,7 @@ def test_fontfamily_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier'
 
@@ -118,33 +117,33 @@ def test_fontfamily_reg_text():
     name, exact = register_font('MyFont', 'times.ttf')
     assert name == 'MyFont'
     assert exact is True
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
-            <?xml version="1.0"?>
-            <svg width="777" height="267" xml:space="preserve">
-              <text style="fill:#000000; stroke:none; font-size:28;font-family:'MyFont';">
-                <tspan>TITLE    1</tspan>
-                <tspan x="-10.761" y="33.487">Subtitle</tspan>
-              </text>
-            </svg>
-        ''')))
+    drawing = drawing_from_svg('''
+        <?xml version="1.0"?>
+        <svg width="777" height="267" xml:space="preserve">
+          <text style="fill:#000000; stroke:none; font-size:28;font-family:'MyFont';">
+            <tspan>TITLE    1</tspan>
+            <tspan x="-10.761" y="33.487">Subtitle</tspan>
+          </text>
+        </svg>
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'MyFont'
 
 
 def test_fontfamily_weight_text():
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
-            <?xml version="1.0"?>
-            <svg width="777" height="267" xml:space="preserve">
-              <text style="fill:#000000; stroke:none; font-size:28;
-                           font-family:'Times New Roman';font-weight:bold;">
-                <tspan>TITLE    1</tspan>
-                <tspan x="-10.761" y="33.487">Subtitle</tspan>
-              </text>
-            </svg>
-        ''')))
+    drawing = drawing_from_svg('''
+        <?xml version="1.0"?>
+        <svg width="777" height="267" xml:space="preserve">
+          <text style="fill:#000000; stroke:none; font-size:28;
+                       font-family:'Times New Roman';font-weight:bold;">
+            <tspan>TITLE    1</tspan>
+            <tspan x="-10.761" y="33.487">Subtitle</tspan>
+          </text>
+        </svg>
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Times-Bold'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;
@@ -153,10 +152,10 @@ def test_fontfamily_weight_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-Bold'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
     <?xml version="1.0"?>
     <svg width="777" height="267" xml:space="preserve">
         <text style="fill:#000000; stroke:none; font-size:28;">
@@ -164,10 +163,10 @@ def test_fontfamily_weight_text():
         <tspan x="-10.761" y="33.487">Subtitle</tspan>
         </text>
     </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-Bold'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;">
@@ -175,25 +174,25 @@ def test_fontfamily_weight_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-Bold'
 
 
 def test_fontfamily_style_text():
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
-            <?xml version="1.0"?>
-            <svg width="777" height="267" xml:space="preserve">
-              <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times New Roman';
-                           font-style:italic;">
-                <tspan>TITLE    1</tspan>
-                <tspan x="-10.761" y="33.487">Subtitle</tspan>
-              </text>
-            </svg>
-        ''')))
+    drawing = drawing_from_svg('''
+        <?xml version="1.0"?>
+        <svg width="777" height="267" xml:space="preserve">
+          <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times New Roman';
+                       font-style:italic;">
+            <tspan>TITLE    1</tspan>
+            <tspan x="-10.761" y="33.487">Subtitle</tspan>
+          </text>
+        </svg>
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Times-Italic'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;font-family:'Courier New';
@@ -202,10 +201,10 @@ def test_fontfamily_style_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-Oblique'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;">
@@ -213,25 +212,25 @@ def test_fontfamily_style_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-Oblique'
 
 
 def test_fontfamily_weight_style_text():
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
-            <?xml version="1.0"?>
-            <svg width="777" height="267" xml:space="preserve">
-              <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times New Roman';
-                           font-style:italic;font-weight:bold;">
-                <tspan>TITLE    1</tspan>
-                <tspan x="-10.761" y="33.487">Subtitle</tspan>
-              </text>
-            </svg>
-    ''')))
+    drawing = drawing_from_svg('''
+        <?xml version="1.0"?>
+        <svg width="777" height="267" xml:space="preserve">
+          <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times New Roman';
+                       font-style:italic;font-weight:bold;">
+            <tspan>TITLE    1</tspan>
+            <tspan x="-10.761" y="33.487">Subtitle</tspan>
+          </text>
+        </svg>
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Times-BoldItalic'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;font-family:'Courier New';
@@ -240,10 +239,10 @@ def test_fontfamily_weight_style_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-BoldOblique'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;">
@@ -252,10 +251,10 @@ def test_fontfamily_weight_style_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-BoldOblique'
-    drawing = svg2rlg(io.StringIO(textwrap.dedent('''\
+    drawing = drawing_from_svg('''
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;">
@@ -264,7 +263,7 @@ def test_fontfamily_weight_style_text():
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
-    ''')))
+    ''')
     main_group = drawing.contents[0]
     assert main_group.contents[0].contents[1].fontName == 'Courier-BoldOblique'
 
