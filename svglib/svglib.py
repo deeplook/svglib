@@ -190,10 +190,7 @@ class AttributeConverter:
         if not svgNode.attrib.get('__rules_applied', False):
             # Apply global styles...
             if self.css_rules is not None:
-                if isinstance(svgNode, NodeTracker):
-                    svgNode.apply_rules(self.css_rules)
-                else:
-                    ElementWrapper(svgNode).apply_rules(self.css_rules)
+                svgNode.apply_rules(self.css_rules)
             # ...and locally defined
             if svgNode.attrib.get("style"):
                 attrs = self.parseMultiAttributes(svgNode.attrib.get("style"))
@@ -207,8 +204,8 @@ class AttributeConverter:
 
         if attr_value and attr_value != "inherit":
             return attr_value
-        if svgNode.getparent() is not None:
-            return self.findAttr(svgNode.getparent(), name)
+        if svgNode.parent is not None:
+            return self.findAttr(svgNode.parent, name)
         return ''
 
     def getAllAttributes(self, svgNode):
@@ -421,48 +418,30 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return DEFAULT_FONT_NAME
 
 
-class ElementWrapper:
+class NodeTracker(cssselect2.ElementWrapper):
+    """An object wrapper keeping track of arguments to certain method calls.
+
+    Instances wrap an object and store all arguments to one special
+    method, getAttribute(name), in a list of unique elements, usedAttrs.
     """
-    lxml element wrapper to partially match the API from cssselect2.ElementWrapper
-    so as element can be passed to rules.match().
-    """
-    in_html_document = False
 
-    def __init__(self, obj):
-        self.object = obj
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.usedAttrs = []
 
-    @property
-    def id(self):
-        return self.object.attrib.get('id')
+    def __repr__(self):
+        return f'<NodeTracker for node {self.etree_element}>'
 
-    @property
-    def etree_element(self):
-        return self.object
+    def getAttribute(self, name):
+        # add argument to the history, if not already present
+        if name not in self.usedAttrs:
+            self.usedAttrs.append(name)
+        # forward call to wrapped object
+        return self.etree_element.attrib.get(name, '')
 
-    @property
-    def parent(self):
-        par = self.object.getparent()
-        return ElementWrapper(par) if par is not None else None
-
-    @property
-    def classes(self):
-        cl = self.object.attrib.get('class')
-        return split_whitespace(cl) if cl is not None else []
-
-    @property
-    def local_name(self):
-        return node_name(self.object)
-
-    @property
-    def namespace_url(self):
-        if '}' in self.object.tag:
-            self.object.tag.split('}')[0][1:]
-
-    def iter_ancestors(self):
-        element = self
-        while element.parent is not None:
-            element = element.parent
-            yield element
+    def __getattr__(self, name):
+        # forward attribute access to wrapped object
+        return getattr(self.etree_element, name)
 
     def apply_rules(self, rules):
         matches = rules.match(self)
@@ -470,37 +449,11 @@ class ElementWrapper:
             attr_dict = match[3][1]
             for attr, val in attr_dict.items():
                 try:
-                    self.object.attrib[attr] = val
+                    self.etree_element.attrib[attr] = val
                 except ValueError:
                     pass
         # Set marker on the node to not apply rules more than once
-        self.object.set('__rules_applied', '1')
-
-
-class NodeTracker(ElementWrapper):
-    """An object wrapper keeping track of arguments to certain method calls.
-
-    Instances wrap an object and store all arguments to one special
-    method, getAttribute(name), in a list of unique elements, usedAttrs.
-    """
-
-    def __init__(self, obj):
-        super().__init__(obj)
-        self.usedAttrs = []
-
-    def __repr__(self):
-        return '<NodeTracker for node %s>' % self.object
-
-    def getAttribute(self, name):
-        # add argument to the history, if not already present
-        if name not in self.usedAttrs:
-            self.usedAttrs.append(name)
-        # forward call to wrapped object
-        return self.object.attrib.get(name, '')
-
-    def __getattr__(self, name):
-        # forward attribute access to wrapped object
-        return getattr(self.object, name)
+        self.etree_element.set('__rules_applied', '1')
 
 
 class CircularRefError(Exception):
@@ -545,7 +498,7 @@ class SvgRenderer:
         self.attrConverter.css_rules = CSSMatcher()
 
     def render(self, svg_node):
-        node = NodeTracker(svg_node)
+        node = NodeTracker.from_xml_root(svg_node)
         view_box = self.get_box(node, default_box=True)
         # Knowing the main box is useful for percentage units
         self.attrConverter.set_box(view_box)
@@ -564,62 +517,61 @@ class SvgRenderer:
         return drawing
 
     def renderNode(self, node, parent=None):
-        n = NodeTracker(node)
-        nid = n.getAttribute("id")
+        nid = node.getAttribute("id")
         ignored = False
         item = None
         name = node_name(node)
 
-        clipping = self.get_clippath(n)
+        clipping = self.get_clippath(node)
         if name == "svg":
-            item = self.renderSvg(n)
+            item = self.renderSvg(node)
             parent.add(item)
         elif name == "defs":
             ignored = True  # defs are handled in the initial rendering phase.
         elif name == 'a':
-            item = self.renderA(n)
+            item = self.renderA(node)
             parent.add(item)
         elif name == 'g':
-            display = n.getAttribute("display")
-            item = self.renderG(n, clipping=clipping)
+            display = node.getAttribute("display")
+            item = self.renderG(node, clipping=clipping)
             if display != "none":
                 parent.add(item)
         elif name == "style":
-            self.renderStyle(n)
+            self.renderStyle(node)
         elif name == "symbol":
-            item = self.renderSymbol(n)
+            item = self.renderSymbol(node)
             # First time the symbol node is rendered, it should not be part of a group.
             # It is only rendered to be part of definitions.
-            if n.attrib.get('_rendered'):
+            if node.attrib.get('_rendered'):
                 parent.add(item)
             else:
-                n.set('_rendered', '1')
+                node.set('_rendered', '1')
         elif name == "use":
-            item = self.renderUse(n, clipping=clipping)
+            item = self.renderUse(node, clipping=clipping)
             parent.add(item)
         elif name == "clipPath":
-            item = self.renderG(n)
+            item = self.renderG(node)
         elif name in self.handled_shapes:
             if name == 'image':
                 # We resolve the image target at renderer level because it can point
                 # to another SVG file or node which has to be rendered too.
-                target = self.xlink_href_target(n)
+                target = self.xlink_href_target(node)
                 if target is None:
                     return
                 elif isinstance(target, tuple):
                     # This is SVG content needed to be rendered
                     gr = Group()
-                    renderer, node = target
-                    renderer.renderNode(node, parent=gr)
-                    self.apply_node_attr_to_group(n, gr)
+                    renderer, img_node = target
+                    renderer.renderNode(img_node, parent=gr)
+                    self.apply_node_attr_to_group(node, gr)
                     parent.add(gr)
                     return
                 else:
                     # Attaching target to node, so we can get it back in convertImage
-                    n._resolved_target = target
+                    node._resolved_target = target
 
-            item = self.shape_converter.convertShape(name, n, clipping)
-            display = n.getAttribute("display")
+            item = self.shape_converter.convertShape(name, node, clipping)
+            display = node.getAttribute("display")
             if item and display != "none":
                 parent.add(item)
         else:
@@ -642,7 +594,7 @@ class SvgRenderer:
                 to_render = self.waiting_use_nodes.pop(nid)
                 for use_node, group in to_render:
                     self.renderUse(use_node, group=group)
-            self.print_unused_attributes(node, n)
+            self.print_unused_attributes(node)
 
     def get_clippath(self, node):
         """
@@ -657,15 +609,15 @@ class SvgRenderer:
                     return elem
 
         def get_shape_from_node(node):
-            for child in node.getchildren():
+            for child in node.iter_children():
                 if node_name(child) == 'path':
-                    group = self.shape_converter.convertShape('path', NodeTracker(child))
+                    group = self.shape_converter.convertShape('path', child)
                     return group.contents[-1]
                 elif node_name(child) == 'use':
-                    grp = self.renderUse(NodeTracker(child))
+                    grp = self.renderUse(child)
                     return get_shape_from_group(grp)
                 elif node_name(child) == 'rect':
-                    return self.shape_converter.convertRect(NodeTracker(child))
+                    return self.shape_converter.convertRect(child)
                 else:
                     return get_shape_from_node(child)
 
@@ -699,13 +651,13 @@ class SvgRenderer:
         elif shape:
             logging.error("Unsupported shape type %s for clipping", shape.__class__.__name__)
 
-    def print_unused_attributes(self, node, n):
+    def print_unused_attributes(self, node):
         if logger.level > logging.DEBUG:
             return
-        all_attrs = self.attrConverter.getAllAttributes(node).keys()
-        unused_attrs = [attr for attr in all_attrs if attr not in n.usedAttrs]
+        all_attrs = self.attrConverter.getAllAttributes(node.etree_element).keys()
+        unused_attrs = [attr for attr in all_attrs if attr not in node.usedAttrs]
         if unused_attrs:
-            logger.debug("Unused attrs: %s %s", node_name(n), unused_attrs)
+            logger.debug("Unused attrs: %s %s", node_name(node), unused_attrs)
 
     def apply_node_attr_to_group(self, node, group):
         getAttr = node.getAttribute
@@ -778,7 +730,7 @@ class SvgRenderer:
                         if ext_frag is not None:
                             return ext_svg.renderer, ext_frag
                     else:
-                        return ext_svg.renderer, ext_svg.root_node
+                        return ext_svg.renderer, NodeTracker.from_xml_root(ext_svg.root_node)
             else:
                 # A raster image path
                 try:
@@ -826,11 +778,12 @@ class SvgRenderer:
 
         # Rendering all definition nodes first.
         svg_ns = node.nsmap.get(None)
-        for def_node in node.iterdescendants(f'{{{svg_ns}}}defs' if svg_ns else 'defs'):
-            self.renderG(NodeTracker(def_node))
+        for def_node in node.iter_subtree():
+            if def_node.tag == (f'{{{svg_ns}}}defs' if svg_ns else 'defs'):
+                self.renderG(def_node)
 
         group = Group()
-        for child in node.getchildren():
+        for child in node.iter_children():
             self.renderNode(child, group)
         self.shape_converter.preserve_space = _saved_preserve_space
         self.attrConverter.set_box(_saved_box)
@@ -864,7 +817,7 @@ class SvgRenderer:
         gr = Group()
         if clipping:
             gr.add(clipping)
-        for child in node.getchildren():
+        for child in node.iter_children():
             self.renderNode(child, parent=gr)
 
         if transform:
@@ -890,7 +843,7 @@ class SvgRenderer:
         try:
             item = self.xlink_href_target(node, group=group)
         except CircularRefError:
-            node.parent.object.remove(node.object)
+            node.parent.etree_element.remove(node.etree_element)
             return group
         if item is None:
             return
@@ -907,7 +860,7 @@ class SvgRenderer:
         if len(node.getchildren()) == 0:
             # Append a copy of the referenced node as the <use> child (if not already done)
             node.append(copy.deepcopy(item))
-        self.renderNode(node.getchildren()[-1], parent=group)
+        self.renderNode(list(node.iter_children())[-1], parent=group)
         self.apply_node_attr_to_group(node, group)
         return group
 
@@ -1127,7 +1080,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         return gr
 
     def convertPath(self, node):
-        d = node.getAttribute('d')
+        d = node.get('d')
         if not d:
             return None
         normPath = normalise_svg_path(d)
@@ -1404,7 +1357,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                         else:
                             svgAttrValue = defaults[index]
                     if svgAttrValue == "currentColor":
-                        svgAttrValue = ac.findAttr(node.getparent(), "color") or defaults[index]
+                        svgAttrValue = ac.findAttr(node.parent, "color") or defaults[index]
                     if isinstance(svgAttrValue, str):
                         svgAttrValue = svgAttrValue.replace('!important', '').strip()
                     svgAttrValues.append(svgAttrValue)
@@ -1510,14 +1463,14 @@ def iter_text_node(node, preserve_space, level=0):
 
     yield node, text, False
 
-    for child in node.getchildren():
+    for child in node.iter_children():
         yield from iter_text_node(child, preserve_space, level=level + 1)
 
     if level > 0:  # We are not interested by tail of main node.
         strip_end = level <= 1 and node.getnext() is None
         tail = clean_text(node.tail, preserve_space, strip_end=strip_end) if node.tail else None
         if tail not in (None, ''):
-            yield node.getparent(), tail, True
+            yield node.parent, tail, True
 
 
 def clean_text(text, preserve_space, strip_start=False, strip_end=False):

@@ -401,9 +401,9 @@ class TestAttrConverter:
 
     def test_findAttr_parents(self):
         ac = svglib.Svg2RlgAttributeConverter()
-        rect_node = minimal_svg_node(
+        rect_node = next(minimal_svg_node(
             '<g style="fill:#008000;stroke:#008000;"><rect style="fill:#ff0;"/></g>'
-        ).getchildren()[0]
+        ).iter_children())
         assert ac.findAttr(rect_node, 'fill') == "#ff0"
         assert ac.findAttr(rect_node, 'stroke') == "#008000"
 
@@ -548,6 +548,23 @@ class TestStyleSheets:
         main_group = drawing.contents[0]
         assert main_group.contents[0].contents[0].contents[0].fillColor == colors.red
         assert main_group.contents[0].contents[1].contents[0].fillColor == colors.black
+
+    def test_css_nth_of_type(self):
+        drawing = drawing_from_svg('''
+            <?xml version="1.0"?>
+            <svg viewBox="0 0 649 487">
+              <style type="text/css">.bold1:nth-of-type(2n) { font-weight: bold; font-size: 1.1em; }</style>
+              <g>
+                <text class="bold1" x="324" y="304">A</text>
+                <text class="bold1" x="324" y="384">B</text>
+                <text class="bold1" x="324" y="464">C</text>
+              </g>
+            </svg>
+        ''')
+        main_group = drawing.contents[0]
+        assert main_group.contents[0].contents[0].contents[0].fontName == 'Helvetica'
+        assert main_group.contents[0].contents[1].contents[0].fontName == 'Helvetica-Bold'
+        assert main_group.contents[0].contents[2].contents[0].fontName == 'Helvetica'
 
 
 class TestGroupNode:

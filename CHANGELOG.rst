@@ -7,6 +7,8 @@ Unreleased
 ----------
 
 - Include ``tests/samples/others/*.svg`` in source distribution (#341).
+- Better integration with cssselect2 to support a wider range of CSS selectors
+  (#346).
 
 1.3.0 (2022-05-18)
 ------------------
