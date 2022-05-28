@@ -12,7 +12,6 @@ import io
 import os
 import pathlib
 import textwrap
-from lxml import etree
 from tempfile import NamedTemporaryFile
 
 from reportlab.graphics.shapes import (
@@ -23,7 +22,7 @@ from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 from svglib import svglib, utils
-from tests.utils import drawing_from_svg
+from tests.utils import drawing_from_svg, minimal_svg_node
 
 import pytest
 
@@ -172,9 +171,9 @@ class TestPaths:
         closePath op (which is not recorded in path.points).
         """
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<path d="M0 0,0 1,1 1z m-1-1 0 1 1 0z"/>'
-        ))
+        )
         # last point of this path should be 0 0
         path = converter.convertPath(node).contents[0]
         assert path.points[-2:] == [0, 0]
@@ -184,9 +183,9 @@ class TestPaths:
         # an C, c, S or s, assume the first control point is coincident with
         # the current point.
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<path d="M3,4c-0.5-0.25-1.3-0.77-1.3-1.8h2.5s0.04,0.46,0.04,1.48z"/>'
-        ))
+        )
         path = converter.convertPath(node).contents[0]
         assert path.operators == [_MOVETO, _CURVETO, _LINETO, _CURVETO, _CLOSEPATH]
         assert path.points == [
@@ -196,17 +195,17 @@ class TestPaths:
 
     def test_elliptical_arc(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<path d="M334.500000 0.000000 A185.000000 185.000000 0 0 1 334.500000 0.000000 '
             'L334.500000 185.000000 A0.000000 0.000000 0 0 0 334.500000 185.000000 z"/>'
-        ))
+        )
         # First elliptical arc with identical start/end points, ignored
         path = converter.convertPath(node).contents[0]
         assert path.points == [334.5, 0.0, 334.5, 185.0, 334.5, 185.0]
 
     def test_unclosed_paths(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML('<path d="M0,0 4.5,3 0,6M4.5,3H9" id="W"/>'))
+        node = minimal_svg_node('<path d="M0,0 4.5,3 0,6M4.5,3H9" id="W"/>')
         group = converter.convertPath(node)
         assert len(group.contents) == 2
         closed_path = group.contents[0]
@@ -219,7 +218,7 @@ class TestPaths:
 
     def test_empty_path(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML('<path id="W"/>'))
+        node = minimal_svg_node('<path id="W"/>')
         group = converter.convertPath(node)
         assert group is None
 
@@ -393,16 +392,16 @@ class TestAttrConverter:
         """
         ac = svglib.Svg2RlgAttributeConverter()
         # Whitespace in attribute values shouldn't disturb parsing.
-        node = etree.XML('<rect fill=" #00A1DE\n"/>')
+        node = minimal_svg_node('<rect fill=" #00A1DE\n"/>')
         assert ac.findAttr(node, 'fill') == "#00A1DE"
 
         # Attributes starting with '-' are not supported.
-        node = etree.XML('<text style="-inkscape-font-specification:Arial"/>')
+        node = minimal_svg_node('<text style="-inkscape-font-specification:Arial"/>')
         assert ac.findAttr(node, '-inkscape-font-specification') == ""
 
     def test_findAttr_parents(self):
         ac = svglib.Svg2RlgAttributeConverter()
-        rect_node = etree.XML(
+        rect_node = minimal_svg_node(
             '<g style="fill:#008000;stroke:#008000;"><rect style="fill:#ff0;"/></g>'
         ).getchildren()[0]
         assert ac.findAttr(rect_node, 'fill') == "#ff0"
@@ -439,7 +438,7 @@ class TestAttrConverter:
 
     def test_fillcolor_alpha_set_fillopacity(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = etree.XML('<polygon fill="#ff000080"/>')
+        node = minimal_svg_node('<polygon fill="#ff000080"/>')
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
         assert poly.fillOpacity == 128 / 255
@@ -447,7 +446,7 @@ class TestAttrConverter:
 
     def test_strokecolor_alpha_set_strokeopacity(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = etree.XML('<polygon stroke="#cccccca0"/>')
+        node = minimal_svg_node('<polygon stroke="#cccccca0"/>')
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
         assert poly.fillOpacity == 1
@@ -455,14 +454,14 @@ class TestAttrConverter:
 
     def test_fillrule(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = etree.XML('<polygon fill-rule="evenodd"/>')
+        node = minimal_svg_node('<polygon fill-rule="evenodd"/>')
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
         assert poly._fillRule == FILL_EVEN_ODD
 
     def test_stroke(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = etree.XML('<path d="m0,6.5h27m0,5H0" stroke="#FFF" stroke-opacity="0.5"/>')
+        node = minimal_svg_node('<path d="m0,6.5h27m0,5H0" stroke="#FFF" stroke-opacity="0.5"/>')
         path = Path()
         converter.applyStyleOnShape(path, node)
         assert path.strokeColor == colors.white
@@ -714,9 +713,9 @@ class TestTextNode:
 class TestRectNode:
     def test_rx_ry(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<rect rx="10" ry="4" width="10" height="3" x="0" y="0"/>'
-        ))
+        )
         rect = converter.convertRect(node)
         # rx/ry cannot be more than half the rect lengths.
         assert rect.rx == 5
@@ -725,14 +724,14 @@ class TestRectNode:
     def test_rx_ry_lonely(self):
         """If only rx or ry is present, the other default to the same value."""
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<rect rx="2.5" width="10" height="3" x="0" y="0"/>'
-        ))
+        )
         rect = converter.convertRect(node)
         assert rect.ry == 2.5
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<rect ry="1" width="10" height="3" x="0" y="0"/>'
-        ))
+        )
         rect = converter.convertRect(node)
         assert rect.rx == 1
 
@@ -742,10 +741,10 @@ class TestRectNode:
         to be displayed.
         """
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<rect style="stroke: rgb(100, 84, 0); fill: rgb(255, 255, 255); '
             'fill-opacity: 1; stroke-width: 0;" width="135" height="86" x="10" y="10"/>'
-        ))
+        )
         rect = converter.convertShape('rect', node)
         assert rect.strokeColor is None
 
@@ -753,9 +752,9 @@ class TestRectNode:
 class TestLineNode:
     def test_length_zero(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<line stroke="#000000" x1="10" y1="20" x2="10" y2="20" />'
-        ))
+        )
         line = converter.convertLine(node)
         assert isinstance(line, Line)
 
@@ -765,9 +764,9 @@ class TestLineNode:
     def test_length_not_zero(self):
         """ No change needed when length is not zero. """
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<line stroke="#000000" x1="10" y1="20" x2="10" y2="30" />'
-        ))
+        )
         line = converter.convertLine(node)
         assert isinstance(line, Line)
 
@@ -777,18 +776,18 @@ class TestLineNode:
 class TestPolylineNode:
     def test_filling(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<polyline fill="none" stroke="#000000" '
             'points="10,50,35,150,60,50,85,150,110,50,135,150" />'
-        ))
+        )
         polyline = converter.convertPolyline(node)
         assert isinstance(polyline, PolyLine)
 
         # svglib simulates polyline filling by a fake polygon.
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<polyline fill="#fff" stroke="#000000" '
             'points="10,50,35,150,60,50,85,150,110,50,135,150" />'
-        ))
+        )
         group = converter.convertPolyline(node)
         assert isinstance(group.contents[0], Polygon)
         assert group.contents[0].fillColor == colors.white
@@ -796,10 +795,10 @@ class TestPolylineNode:
 
     def test_length_zero(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<polyline fill="none" stroke="#000000" '
             'points="10,50,10,50" />'
-        ))
+        )
         polyline = converter.convertPolyline(node)
         assert isinstance(polyline, PolyLine)
 
@@ -808,10 +807,10 @@ class TestPolylineNode:
 
     def test_odd_length(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<polyline fill="none" stroke="#000000" '
             'points="10,50,10,50,10" />'
-        ))
+        )
         polyline = converter.convertPolyline(node)
         assert polyline is None
 
@@ -819,10 +818,10 @@ class TestPolylineNode:
 class TestPolygonNode:
     def test_length_zero(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<polygon fill="none" stroke="#000000" '
             'points="10,50,10,50" />'
-        ))
+        )
         polygon = converter.convertPolygon(node)
         assert isinstance(polygon, Polygon)
 
@@ -831,10 +830,10 @@ class TestPolygonNode:
 
     def test_odd_length(self):
         converter = svglib.Svg2RlgShapeConverter(None)
-        node = svglib.NodeTracker(etree.XML(
+        node = minimal_svg_node(
             '<polygon fill="none" stroke="#000000" '
             'points="10,50,10,50,10" />'
-        ))
+        )
         polygon = converter.convertPolygon(node)
         assert polygon is None
 
