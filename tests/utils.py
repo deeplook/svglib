@@ -11,4 +11,4 @@ def drawing_from_svg(content):
 
 
 def minimal_svg_node(content):
-    return NodeTracker(XML(content))
+    return NodeTracker(XML(content), None, 0, None, False)
