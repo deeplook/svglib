@@ -3,10 +3,10 @@
 ChangeLog
 =========
 
-Unreleased
-----------
-
+1.4.0 (2022-08-05)
+------------------
 - Include ``tests/samples/others/*.svg`` in source distribution (#341).
+- Render leading and trailing text content in text nodes (#343).
 - Better integration with cssselect2 to support a wider range of CSS selectors
   (#346).
 
