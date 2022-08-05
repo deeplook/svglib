@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+1.4.1 (2022-08-05)
+------------------
+- No source code changes, only fixed a leftover set_trace() in the released code
+  (#352).
+
 1.4.0 (2022-08-05)
 ------------------
 - Include ``tests/samples/others/*.svg`` in source distribution (#341).
