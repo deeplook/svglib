@@ -325,10 +325,14 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * em_base
         elif text.endswith("px"):
             return float(text[:-2])
-
-        if "ex" in text:
-            logger.warning("Ignoring unit ex")
-            text = text.replace("ex", '')
+        elif text.endswith("ex"):
+            # The x-height of the text must be assumed to be 0.5em tall when the
+            # text cannot be measured.
+            return float(text[:-2]) * em_base / 2
+        elif text.endswith("ch"):
+            # The advance measure of the "0" glyph must be assumed to be 0.5em
+            # wide when the text cannot be measured.
+            return float(text[:-2]) * em_base / 2
 
         text = text.strip()
         length = toLength(text)  # this does the default measurements such as mm and cm

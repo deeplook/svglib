@@ -439,10 +439,17 @@ class TestOtherFiles:
         assert isinstance(img_group.contents[1].contents[0], Rect)
         assert img_group.contents[1].transform, (1, 0, 0, 1, 100.0, 200.0)
 
-    def test_em_unit_svg(self):
-        path = join(TEST_ROOT, "samples", "others", "em_unit.svg")
+    def test_units_svg(self):
+        path = join(TEST_ROOT, "samples", "others", "units.svg")
         drawing = svglib.svg2rlg(path)
-        assert drawing.contents[0].transform[5] == svglib.DEFAULT_FONT_SIZE
+        unit_widths = [line.getBounds()[0] for line in drawing.contents[0].contents]
+        assert unit_widths == sorted(unit_widths)
+        unit_names = ["px", "pt", "mm", "ex", "ch", "em", "pc", "cm"]
+        lengths_by_name = dict(zip(unit_names, unit_widths))
+        assert lengths_by_name["px"] == 1 # 1px == 1px
+        assert lengths_by_name["em"] == svglib.DEFAULT_FONT_SIZE # 1 em == font size
+        assert lengths_by_name["ex"] == lengths_by_name["em"] / 2
+        assert lengths_by_name["ch"] == lengths_by_name["ex"]
 
     def test_empty_style(self):
         path = join(TEST_ROOT, "samples", "others", "empty_style.svg")

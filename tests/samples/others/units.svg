@@ -1,0 +1,10 @@
+<svg width="100px" height="100px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <line x1="1px" y1="10px" x2="2px" y2="10px" stroke="black" />
+  <line x1="1pt" y1="20px" x2="2pt" y2="20px" stroke="black" />
+  <line x1="1mm" y1="30px" x2="2mm" y2="30px" stroke="black" />
+  <line x1="1ex" y1="40px" x2="2ex" y2="40px" stroke="black" />
+  <line x1="1ch" y1="50px" x2="2ch" y2="50px" stroke="black" />
+  <line x1="1em" y1="60px" x2="2em" y2="60px" stroke="black" />
+  <line x1="1pc" y1="70px" x2="2pc" y2="70px" stroke="black" />
+  <line x1="1cm" y1="80px" x2="2cm" y2="80px" stroke="black" />
+</svg>
