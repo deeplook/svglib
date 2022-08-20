@@ -566,6 +566,18 @@ class TestStyleSheets:
         assert main_group.contents[0].contents[1].contents[0].fontName == 'Helvetica-Bold'
         assert main_group.contents[0].contents[2].contents[0].fontName == 'Helvetica'
 
+    def test_import_rule_no_crash(self):
+        # Just test that svglib does not crash. Import rules are currently ignored.
+        drawing = drawing_from_svg('''
+            <svg>
+              <defs>
+                <style type="text/css">
+                  @import url('https://fonts.example.org/css2?family=Ubuntu+Condensed');
+                </style>
+              </defs>
+            </svg>
+        ''')
+
 
 class TestGroupNode:
     def test_svg_groups_have_svgid(self):

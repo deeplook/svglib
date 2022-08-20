@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+Unreleased
+----------
+- Avoid crash on ``@import`` rules in stylesheets. The rules are simply ignored
+  (#285).
+
 1.4.1 (2022-08-05)
 ------------------
 - No source code changes, only fixed a leftover set_trace() in the released code
