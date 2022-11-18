@@ -685,7 +685,7 @@ class SvgRenderer:
             return None
 
         # First handle any raster embedded image data
-        match = re.match(r"^data:image/(jpeg|jpg|png);base64", xlink_href)
+        match = re.match(r"^data:image/(jpe?g|png);base64", xlink_href)
         if match:
             img_format = match.groups()[0]
             image_data = base64.decodebytes(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
