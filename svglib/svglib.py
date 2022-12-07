@@ -1094,6 +1094,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         unclosed_subpath_pointers = []
         subpath_start = []
         lastop = ''
+        last_quadratic_cp = None
 
         for i in range(0, len(normPath), 2):
             op, nums = normPath[i:i+2]
@@ -1171,16 +1172,19 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
+                last_quadratic_cp = (x1, y1)
             elif op == 'T':
-                if len(points) < 4:
-                    xp, yp, x0, y0 = points[-2:] * 2
+                if last_quadratic_cp is not None:
+                    xp, yp = last_quadratic_cp
                 else:
-                    xp, yp, x0, y0 = points[-4:]
+                    xp, yp = points[-2:]
+                x0, y0 = points[-2:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 xn, yn = nums
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
+                last_quadratic_cp = (xi, yi)
 
             # quadratic bezier, relative
             elif op == 'q':
@@ -1190,11 +1194,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
+                last_quadratic_cp = (x1, y1)
             elif op == 't':
-                if len(points) < 4:
-                    xp, yp, x0, y0 = points[-2:] * 2
+                if last_quadratic_cp is not None:
+                    xp, yp = last_quadratic_cp
                 else:
-                    xp, yp, x0, y0 = points[-4:]
+                    xp, yp = points[-2:]
                 x0, y0 = points[-2:]
                 xn, yn = nums
                 xn, yn = x0 + xn, y0 + yn
@@ -1202,6 +1207,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
+                last_quadratic_cp = (xi, yi)
 
             # elliptical arc
             elif op in ('A', 'a'):
@@ -1223,6 +1229,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             else:
                 logger.debug("Suspicious path operator: %s", op)
+
+            if op not in ('Q', 'q', 'T', 't'):
+                last_quadratic_cp = None
             lastop = op
 
         gr = Group()
