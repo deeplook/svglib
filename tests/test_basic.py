@@ -250,6 +250,48 @@ class TestPaths:
         assert rect_clip.getProperties()['fillColor'] is None
         assert rect_clip.getProperties()['strokeColor'] is None
 
+    def test_clip_path_with_transform(self):
+        without_transform = drawing_from_svg("""
+            <svg namespace="http://www.w3.org/XML/1998/namespace" 
+                 xmlns="http://www.w3.org/2000/svg" 
+                 xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" 
+                 viewBox="0 0 100 100">
+                 
+                <defs>
+                    <clipPath id="clip-1">
+                        <path d="M 50, 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0"/>
+                    </clipPath>
+                </defs>
+                <g>
+                    <g clip-path="url(#clip-1)">
+                        <path d="M50,50H0V0h50V50z"/>
+                    </g>
+                </g>
+            </svg>
+        """)
+
+        with_transform = drawing_from_svg("""
+            <svg namespace="http://www.w3.org/XML/1998/namespace" 
+                 xmlns="http://www.w3.org/2000/svg" 
+                 xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" 
+                 viewBox="0 0 100 100">
+
+                <defs>
+                    <clipPath id="clip-1">
+                        <path transform="scale(0.5, 1)" d="M 50, 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0"/>
+                    </clipPath>
+                </defs>
+                <g>
+                    <g clip-path="url(#clip-1)">
+                        <path d="M50,50H0V0h50V50z"/>
+                    </g>
+                </g>
+            </svg>
+        """)
+
+        assert with_transform.contents[0].contents[0].contents[0].contents[0].transform == (0.5, 0.0, 0.0, 1.0, 0, 0)
+        assert without_transform.contents[0].contents[0].contents[0].contents[0].transform == (1, 0, 0, 1, 0, 0)
+
 
 def force_cmyk(rgb):
     c, m, y, k = colors.rgb2cmyk(rgb.red, rgb.green, rgb.blue)

@@ -615,15 +615,17 @@ class SvgRenderer:
         def get_shape_from_node(node):
             for child in node.iter_children():
                 if node_name(child) == 'path':
-                    group = self.shape_converter.convertShape('path', child)
-                    return group.contents[-1]
+                    group = self.shape_converter.convertShape('path', child, transform_shape=True)
+                    return group.contents[-1], group.transform
                 elif node_name(child) == 'use':
                     grp = self.renderUse(child)
-                    return get_shape_from_group(grp)
+                    return get_shape_from_group(grp), None
                 elif node_name(child) == 'rect':
-                    return self.shape_converter.convertRect(child)
+                    return self.shape_converter.convertRect(child), None
                 else:
                     return get_shape_from_node(child)
+
+            return None, None
 
         clip_path = node.getAttribute('clip-path')
         if not clip_path:
@@ -636,7 +638,7 @@ class SvgRenderer:
             logger.warning("Unable to find a clipping path with id %s", ref)
             return
 
-        shape = get_shape_from_node(self.definitions[ref])
+        shape, transform = get_shape_from_node(self.definitions[ref])
         if isinstance(shape, Rect):
             # It is possible to use a rect as a clipping path in an svg, so we
             # need to convert it to a path for rlg.
@@ -651,7 +653,7 @@ class SvgRenderer:
             copy_shape_properties(shape, cp)
             return cp
         elif isinstance(shape, Path):
-            return ClippingPath(copy_from=shape)
+            return ClippingPath(copy_from=shape, transform=transform)
         elif shape:
             logging.error("Unsupported shape type %s for clipping", shape.__class__.__name__)
 
@@ -895,7 +897,7 @@ class SvgShapeConverter:
 class Svg2RlgShapeConverter(SvgShapeConverter):
     """Converter from SVG shapes to RLG (ReportLab Graphics) shapes."""
 
-    def convertShape(self, name, node, clipping=None):
+    def convertShape(self, name, node, clipping=None, transform_shape=False):
         method_name = f"convert{name.capitalize()}"
         shape = getattr(self, method_name)(node)
         if not shape:
@@ -906,6 +908,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         transform = node.getAttribute("transform")
         if not (transform or clipping):
             return shape
+
+        if transform_shape:
+            self.applyTransformOnGroup(transform, shape)
+            return shape
+
         else:
             group = Group()
             if transform:
