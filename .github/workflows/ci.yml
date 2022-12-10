@@ -9,29 +9,29 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     steps:
-      - uses: "actions/checkout@v2"
+      - uses: "actions/checkout@v3"
       - name: "Cache for wikipedia flags"
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: "cache-wikipedia-flags"
         with:
           path: "tests/samples/wikipedia/flags"
           key: "wikipedia-flags-${{ matrix.python-version }}-${{ matrix.os }}"
       - name: "Cache for wikipedia symbols"
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: "cache-wikipedia-symbols"
         with:
           path: "tests/samples/wikipedia/symbols"
           key: "wikipedia-symbols-${{ matrix.python-version }}-${{ matrix.os }}"
       - name: "Cache for w3c svg12 tinytestsuite"
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: "cache-w3c-svg12-tinytestsuite"
         with:
           path: "tests/samples/W3C_SVG_12_TinyTestSuite"
           key: "w3c-svg12-tinytestsuite-${{ matrix.python-version }}-${{ matrix.os }}"
-      - uses: "actions/setup-python@v2"
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "${{ matrix.python-version }}"
       - name: "Install dependencies"
