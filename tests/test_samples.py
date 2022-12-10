@@ -55,11 +55,14 @@ def fetch_file(url, mime_accept='text/svg', uncompress=True, raise_exc=False):
     response = conn.getresponse()
     if (response.status, response.reason) == (200, "OK"):
         data = response.read()
-        if uncompress and response.getheader("content-encoding") == "gzip":
-            zbuf = io.BytesIO(data)
-            zfile = gzip.GzipFile(mode="rb", fileobj=zbuf)
-            data = zfile.read()
-            zfile.close()
+        if (
+            uncompress and (
+                response.getheader("content-encoding") == "gzip" or
+                "gzip" in response.getheader("content-type")
+            ) and data[:2] == b'\x1f\x8b'
+        ):
+            with gzip.open(io.BytesIO(data), mode="rb") as zfile:
+                data = zfile.read()
         if 'text' in mime_accept:
             data = data.decode('utf-8')
     else:
@@ -324,22 +327,15 @@ class TestW3CSVG:
         tar_path = splitext(archive_path)[0]
         self.folder_path = join(TEST_ROOT, "samples", splitext(tar_path)[0])
         if not exists(self.folder_path):
-            if not exists(join(TEST_ROOT, "samples", tar_path)):
-                if not exists(join(TEST_ROOT, "samples", archive_path)):
-                    print(f"downloading {url}")
-                    try:
-                        data = fetch_file(url, mime_accept='application/gzip', uncompress=False)
-                    except OSError as details:
-                        print(details)
-                        print("Check your internet connection and try again!")
-                        return
-                    archive_path = basename(url)
-                    with open(join(TEST_ROOT, "samples", archive_path), "wb") as f:
-                        f.write(data)
-                print(f"unpacking {archive_path}")
-                tar_data = gzip.open(join(TEST_ROOT, "samples", archive_path), "rb").read()
-                with open(join(TEST_ROOT, "samples", tar_path), "wb") as f:
-                    f.write(tar_data)
+            print(f"downloading {url}")
+            try:
+                data = fetch_file(url, mime_accept='application/gzip', uncompress=True)
+            except OSError as details:
+                print(details)
+                print("Check your internet connection and try again!")
+                return
+            with open(join(TEST_ROOT, "samples", tar_path), "wb") as f:
+                f.write(data)
             print(f"extracting into {self.folder_path}")
             os.mkdir(self.folder_path)
             tar_file = tarfile.TarFile(join(TEST_ROOT, "samples", tar_path))
