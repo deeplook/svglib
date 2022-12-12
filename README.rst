@@ -83,8 +83,8 @@ Features
 Known limitations
 -----------------
 
-- support for stylesheets is still experimental. Please report any
-  bug or shortcoming on the `svglib issue tracker`_.
+- @import rules in stylesheets are ignored. CSS is supported, but the range
+  of supported attributes is still limited
 - clipping is limited to single paths, no mask support
 - color gradients are not supported (limitation of reportlab)
 - SVG ``ForeignObject`` elements are not supported.

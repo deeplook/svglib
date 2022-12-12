@@ -133,7 +133,7 @@ class CSSMatcher(cssselect2.Matcher):
         )
 
         for rule in rules:
-            if not rule.prelude:
+            if not rule.prelude or rule.type == 'at-rule':
                 continue
             selectors = cssselect2.compile_selector_list(rule.prelude)
             selector_string = tinycss2.serialize(rule.prelude)
