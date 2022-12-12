@@ -337,18 +337,7 @@ class TestW3CSVG:
                     with open(join(TEST_ROOT, "samples", archive_path), "wb") as f:
                         f.write(data)
                 print(f"unpacking {archive_path}")
-
-                # Open normally or use gzip if compressed
-                def opener(filename):
-                    f = open(filename, 'rb')
-                    if f.read(2) == '\x1f\x8b':
-                        f.seek(0)
-                        return gzip.GzipFile(fileobj=f)
-                    else:
-                        f.seek(0)
-                        return f
-
-                tar_data = opener(join(TEST_ROOT, "samples", archive_path)).read()
+                tar_data = gzip.open(join(TEST_ROOT, "samples", archive_path), "rb").read()
                 with open(join(TEST_ROOT, "samples", tar_path), "wb") as f:
                     f.write(tar_data)
             print(f"extracting into {self.folder_path}")
