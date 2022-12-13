@@ -15,9 +15,10 @@ import textwrap
 from tempfile import NamedTemporaryFile
 
 from reportlab.graphics.shapes import (
-    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect, Line,
+    _CLOSEPATH, _CURVETO, _LINETO, _MOVETO, Group, Path, Polygon, PolyLine, Rect, Line, Drawing,
 )
 from reportlab.lib import colors
+from reportlab.lib.colors import Color
 from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
@@ -251,7 +252,7 @@ class TestPaths:
         assert rect_clip.getProperties()['strokeColor'] is None
 
     def test_clip_path_with_transform(self):
-        without_transform = drawing_from_svg("""
+        drawing = drawing_from_svg("""
             <svg namespace="http://www.w3.org/XML/1998/namespace" 
                  xmlns="http://www.w3.org/2000/svg" 
                  xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" 
@@ -261,36 +262,34 @@ class TestPaths:
                     <clipPath id="clip-1">
                         <path d="M 50, 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0"/>
                     </clipPath>
-                </defs>
-                <g>
-                    <g clip-path="url(#clip-1)">
-                        <path d="M50,50H0V0h50V50z"/>
-                    </g>
-                </g>
-            </svg>
-        """)
-
-        with_transform = drawing_from_svg("""
-            <svg namespace="http://www.w3.org/XML/1998/namespace" 
-                 xmlns="http://www.w3.org/2000/svg" 
-                 xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" 
-                 viewBox="0 0 100 100">
-
-                <defs>
-                    <clipPath id="clip-1">
+                    <clipPath id="clip-2">
                         <path transform="scale(0.5, 1)" d="M 50, 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0"/>
+                    </clipPath>
+                    <clipPath id="clip-3">
+                        <rect transform="scale(0.5,0.5)" height="50" width="50" x="0" y="0"/>
                     </clipPath>
                 </defs>
                 <g>
                     <g clip-path="url(#clip-1)">
                         <path d="M50,50H0V0h50V50z"/>
                     </g>
+                    <g clip-path="url(#clip-2)">
+                        <path d="M50,50H0V0h50V50z"/>
+                    </g>
+                    <g clip-path="url(#clip-3)">
+                        <path d="M50,50H0V0h50V50z"/>
+                    </g>
                 </g>
             </svg>
         """)
+        assert len(drawing.contents[0].contents[0].contents[0].contents) == 2
+        assert drawing.contents[0].contents[0].contents[0].contents[0].transform in [None, (1, 0, 0, 1, 0, 0)]
 
-        assert with_transform.contents[0].contents[0].contents[0].contents[0].transform == (0.5, 0.0, 0.0, 1.0, 0, 0)
-        assert without_transform.contents[0].contents[0].contents[0].contents[0].transform == (1, 0, 0, 1, 0, 0)
+        assert len(drawing.contents[0].contents[0].contents[1].contents) == 2
+        assert drawing.contents[0].contents[0].contents[1].contents[0].transform == (0.5, 0.0, 0.0, 1.0, 0, 0)
+
+        assert len(drawing.contents[0].contents[0].contents[2].contents) == 2
+        assert drawing.contents[0].contents[0].contents[2].contents[0].transform == (0.5, 0.0, 0.0, 0.5, 0, 0)
 
 
 def force_cmyk(rgb):

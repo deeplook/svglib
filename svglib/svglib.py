@@ -38,7 +38,7 @@ from reportlab.lib.units import pica, toLength
 from reportlab.lib.utils import haveImages
 
 try:
-    from reportlab.graphics.transform import mmult
+    from reportlab.graphics.transform import mmult, nullTransform
 except ImportError:
     # Before Reportlab 3.5.61
     from reportlab.graphics.shapes import mmult
@@ -112,6 +112,9 @@ class NoStrokePath(Path):
 class ClippingPath(Path):
     def __init__(self, *args, **kwargs):
         copy_from = kwargs.pop('copy_from', None)
+
+        kwargs['transform'] = kwargs.get('transform') or nullTransform()
+
         Path.__init__(self, *args, **kwargs)
         if copy_from:
             self.__dict__.update(copy.deepcopy(copy_from.__dict__))
@@ -612,16 +615,25 @@ class SvgRenderer:
                 elif isinstance(elem, SolidShape):
                     return elem
 
+        def get_transform_from_node(node):
+            node_transform = node.getAttribute("transform")
+            if node_transform:
+                g = Group()
+                self.shape_converter.applyTransformOnGroup(node_transform, g)
+                return g.transform
+
+            return None
+
         def get_shape_from_node(node):
             for child in node.iter_children():
                 if node_name(child) == 'path':
                     group = self.shape_converter.convertShape('path', child, transform_shape=True)
-                    return group.contents[-1], group.transform
+                    return group.contents[-1], get_transform_from_node(child)
                 elif node_name(child) == 'use':
                     grp = self.renderUse(child)
-                    return get_shape_from_group(grp), None
+                    return get_shape_from_group(grp), get_transform_from_node(child)
                 elif node_name(child) == 'rect':
-                    return self.shape_converter.convertRect(child), None
+                    return self.shape_converter.convertRect(child), get_transform_from_node(child)
                 else:
                     return get_shape_from_node(child)
 
@@ -643,7 +655,7 @@ class SvgRenderer:
             # It is possible to use a rect as a clipping path in an svg, so we
             # need to convert it to a path for rlg.
             x1, y1, x2, y2 = shape.getBounds()
-            cp = ClippingPath()
+            cp = ClippingPath(transform=transform)
             cp.moveTo(x1, y1)
             cp.lineTo(x2, y1)
             cp.lineTo(x2, y2)
