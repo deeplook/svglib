@@ -3,10 +3,13 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+1.5.1 (2023-01-05)
+------------------
+- Add support for ``ex`` units (assuming for em/2).
+- Add support for ``image/jpg`` embedded images (in addition to ``image/jpeg``).
 - Avoid crash on ``@import`` rules in stylesheets. The rules are simply ignored
   (#285).
+- Fix conversion from shorthand quadratic to cubic bézier (#364).
 
 1.4.1 (2022-08-05)
 ------------------
