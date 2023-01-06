@@ -1169,10 +1169,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             elif op == 'Q':
                 x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
+                last_quadratic_cp = (x1, y1)
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
-                last_quadratic_cp = (x1, y1)
             elif op == 'T':
                 if last_quadratic_cp is not None:
                     xp, yp = last_quadratic_cp
@@ -1180,21 +1180,21 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     xp, yp = points[-2:]
                 x0, y0 = points[-2:]
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
+                last_quadratic_cp = (xi, yi)
                 xn, yn = nums
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
-                last_quadratic_cp = (xi, yi)
 
             # quadratic bezier, relative
             elif op == 'q':
                 x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
+                last_quadratic_cp = (x1, y1)
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
-                last_quadratic_cp = (x1, y1)
             elif op == 't':
                 if last_quadratic_cp is not None:
                     xp, yp = last_quadratic_cp
@@ -1204,10 +1204,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 xn, yn = nums
                 xn, yn = x0 + xn, y0 + yn
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
+                last_quadratic_cp = (xi, yi)
                 (x0, y0), (x1, y1), (x2, y2), (xn, yn) = \
                     convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
-                last_quadratic_cp = (xi, yi)
 
             # elliptical arc
             elif op in ('A', 'a'):
