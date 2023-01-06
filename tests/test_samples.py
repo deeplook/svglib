@@ -450,3 +450,11 @@ class TestOtherFiles:
     def test_empty_style(self):
         path = join(TEST_ROOT, "samples", "others", "empty_style.svg")
         svglib.svg2rlg(path)
+
+    def test_convert_quadratic_to_cubic(self):
+        path = join(TEST_ROOT, "samples", "others", "quadratic_path.svg")
+        svg_root = svglib.load_svg_file(path, resolve_entities=False)
+        renderer = svglib.SvgRenderer(path)
+        drawing = renderer.render(svg_root)
+        cubic_path = "M 0 5 C 0 8.333333 1.666667 10 5 10 C 8.333333 10 10 8.333333 10 5 C 10 1.666667 8.333333 0 5 0 C 1.666667 0 0 1.666667 0 5 Z"
+        assert cubic_path in drawing.asString("svg")
