@@ -3,7 +3,11 @@
 ChangeLog
 =========
 
-1.5.1 (2023-01-05)
+1.5.1 (2023-01-07)
+------------------
+- Final fix to conversion from shorthand quadratic to cubic bézier (#372).
+
+1.5.0 (2023-01-05)
 ------------------
 - Add support for ``ex`` units (assuming for em/2).
 - Add support for ``image/jpg`` embedded images (in addition to ``image/jpeg``).
