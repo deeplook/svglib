@@ -417,7 +417,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         else:
             logger.warning(
                 f"Unable to find a suitable font for 'font-family:{fontAttr}', "
-                f"weight:{weightAttr}, style:{styleAttr}"
+                f"weight:{weightAttr}, style:{styleAttr}; try registering it with register_font()"
             )
             return DEFAULT_FONT_NAME
 
