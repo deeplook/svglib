@@ -24,31 +24,6 @@ which is a simple ``pip install pytest``)::
 
     =============== 32 passed, 4 skipped in 49.18 seconds ================
 
-If for any reason you don't want to install ``pytest`` you can also
-run the following (which installs ``pytest-runner`` during testing)::
-
-    $ PYTHONPATH=. python setup.py test
-    running pytest
-    running egg_info
-    writing dependency_links to svglib.egg-info/dependency_links.txt
-    writing svglib.egg-info/PKG-INFO
-    writing requirements to svglib.egg-info/requires.txt
-    writing top-level names to svglib.egg-info/top_level.txt
-    reading manifest file 'svglib.egg-info/SOURCES.txt'
-    reading manifest template 'MANIFEST.in'
-    writing manifest file 'svglib.egg-info/SOURCES.txt'
-    running build_ext
-    ======================== test session starts =========================
-    platform darwin -- Python 3…, pytest-3…, py-1…, pluggy-0…
-    rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-    plugins: cov-2…
-    collected 33 items
-
-    tests/test_basic.py .........................
-    tests/test_samples.py .s.s.s.s
-
-    =============== 29 passed, 4 skipped in 38.95 seconds ================
-
 If you have ``tox`` installed (``pip install tox``) you can simply
 run the testsuite on Python 3.8 (assuming you have it installed) or on a
 single version (this will not run with ``conda``, yet, though)::
