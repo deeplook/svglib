@@ -24,6 +24,7 @@ import re
 import tempfile
 import shlex
 import shutil
+import sys
 from collections import defaultdict, namedtuple
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -1320,7 +1321,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         mappingN = (
             (["fill"], "fillColor", "convertColor", ["black"]),
             (["fill-opacity"], "fillOpacity", "convertOpacity", [1]),
-            (["fill-rule"], "_fillRule", "convertFillRule", ["nonzero"]),
+            (["fill-rule"], "fillMode", "convertFillRule", ["nonzero"]),
             (["stroke"], "strokeColor", "convertColor", ["none"]),
             (["stroke-width"], "strokeWidth", "convertLength", ["1"]),
             (["stroke-opacity"], "strokeOpacity", "convertOpacity", [1]),
@@ -1378,7 +1379,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(*svgAttrValues))
                 except (AttributeError, KeyError, ValueError):
-                    logger.debug("Exception during applyStyleOnShape")
+                    logger.debug("applyStyleOnShape setattr(%s,%r,%s(*%r)) caused %s exception" % (
+                                shape.__class__.__name__,rlgAttr,meth.__name__,svgAttrValues,
+                                sys.exc_info()[0].__class__.__name__))
         if getattr(shape, 'fillOpacity', None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
         if getattr(shape, 'strokeWidth', None) == 0:
@@ -1507,40 +1510,3 @@ def copy_shape_properties(source_shape, dest_shape):
             setattr(dest_shape, prop, val)
         except AttributeError:
             pass
-
-
-def monkeypatch_reportlab():
-    """
-    https://bitbucket.org/rptlab/reportlab/issues/95/
-    ReportLab always use 'Even-Odd' filling mode for paths, this patch forces
-    RL to honor the path fill rule mode (possibly 'Non-Zero Winding') instead.
-    """
-    from reportlab.pdfgen.canvas import Canvas
-    from reportlab.graphics import shapes
-
-    original_renderPath = shapes._renderPath
-
-    def patchedRenderPath(path, drawFuncs, **kwargs):
-        # Patched method to transfer fillRule from Path to PDFPathObject
-        # Get back from bound method to instance
-        try:
-            drawFuncs[0].__self__.fillMode = path._fillRule
-        except AttributeError:
-            pass
-        return original_renderPath(path, drawFuncs, **kwargs)
-    shapes._renderPath = patchedRenderPath
-
-    original_drawPath = Canvas.drawPath
-
-    def patchedDrawPath(self, path, **kwargs):
-        current = self._fillMode
-        if hasattr(path, 'fillMode'):
-            self._fillMode = path.fillMode
-        else:
-            self._fillMode = FILL_NON_ZERO
-        original_drawPath(self, path, **kwargs)
-        self._fillMode = current
-    Canvas.drawPath = patchedDrawPath
-
-
-monkeypatch_reportlab()

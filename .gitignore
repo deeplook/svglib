@@ -17,7 +17,8 @@ docs/_build
 env/
 .workon
 dist/
-tests/samples/misc/*-svglib.pdf
+tests/samples/misc/*.pdf
+tests/samples/others/*.pdf
 tests/samples/wikipedia/flags
 tests/samples/wikipedia/symbols
 tests/samples/W3C_SVG_12_TinyTestSuite.tar.gz

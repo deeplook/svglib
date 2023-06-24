@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:lang="en"
+     viewBox="0 0 540 170">
+  <title>Fill-rule shapes, with nonzero fill</title>
+  <style>
+path {
+  fill: #87cefa;
+  stroke: #8b0000;
+  stroke-width: 4;
+  fill-rule: nonzero;
+}
+text {
+  fill: indigo;
+  font: bold 18px Segoe UI, sans-serif;
+}
+  </style>
+  <g>
+    <text x="70" y="164">one sub-path</text>
+    
+    <path d="M 10,5 
+             l 100,10 -80,80 0,-60 80,80 -100,10 z"/>
+    <text x="5" y="144">crossing</text>
+
+    <path d="M 150,5 
+             l 100,10 -50,50 -30,-30 0,60 30,-30 50,50 -100,10 z"/>
+    <text x="145" y="144">reversing</text>
+  </g>
+  <g>
+    <text x="350" y="164">two sub-paths</text>
+    
+    <path d="M 290,5 
+             l 100,10 -50,50 50,50 -100,10 z
+             m 50,60 
+             l-30,30 0,-60 z" />
+    <text x="285" y="144">same-direction</text>
+
+    <path d="M 430,5 
+             l 100,10 -50,50 50,50 -100,10 z
+             m 50,60 
+             l -30,-30 0,60 z" />
+    <text x="425" y="144">opposite</text>
+  </g>
+</svg>
