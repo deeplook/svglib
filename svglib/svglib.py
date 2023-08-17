@@ -653,7 +653,7 @@ class SvgRenderer:
         elif isinstance(shape, Path):
             return ClippingPath(copy_from=shape)
         elif shape:
-            logging.error("Unsupported shape type %s for clipping", shape.__class__.__name__)
+            logger.error("Unsupported shape type %s for clipping", shape.__class__.__name__)
 
     def print_unused_attributes(self, node):
         if logger.level > logging.DEBUG:
