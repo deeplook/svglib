@@ -320,11 +320,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         elif text.endswith("pc"):
             return float(text[:-2]) * pica
         elif text.endswith("pt"):
-            return float(text[:-2]) * 1.25
+            return float(text[:-2])
         elif text.endswith("em"):
             return float(text[:-2]) * em_base
         elif text.endswith("px"):
-            return float(text[:-2])
+            return float(text[:-2]) * 0.75
         elif text.endswith("ex"):
             # The x-height of the text must be assumed to be 0.5em tall when the
             # text cannot be measured.
