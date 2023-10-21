@@ -442,7 +442,7 @@ class TestOtherFiles:
         assert unit_widths == sorted(unit_widths)
         unit_names = ["px", "pt", "mm", "ex", "ch", "em", "pc", "cm"]
         lengths_by_name = dict(zip(unit_names, unit_widths))
-        assert lengths_by_name["px"] == 1 # 1px == 1px
+        assert lengths_by_name["px"] == lengths_by_name["pt"] * 0.75
         assert lengths_by_name["em"] == svglib.DEFAULT_FONT_SIZE # 1 em == font size
         assert lengths_by_name["ex"] == lengths_by_name["em"] / 2
         assert lengths_by_name["ch"] == lengths_by_name["ex"]
