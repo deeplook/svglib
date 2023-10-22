@@ -457,7 +457,7 @@ class TestAttrConverter:
         node = minimal_svg_node('<polygon fill-rule="evenodd"/>')
         poly = Polygon()
         converter.applyStyleOnShape(poly, node)
-        assert poly._fillRule == FILL_EVEN_ODD
+        assert poly.fillMode == FILL_EVEN_ODD
 
     def test_stroke(self):
         converter = svglib.Svg2RlgShapeConverter(None)
