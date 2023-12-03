@@ -117,11 +117,11 @@ You can convert a svg file to pillow image object as following snippet:
     from reportlab.graphics import renderPM
     from PIL import Image
     import io
-    
+
     drawing = svg2rlg("SVG_Logo.svg")
     place_holder = io.BytesIO()
     renderPM.drawToFile(drawing, place_holder, fmt="PNG")
-    
+
     image = Image.open(place_holder)
     image.show()
 
