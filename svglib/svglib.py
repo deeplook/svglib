@@ -21,10 +21,11 @@ import logging
 import os
 import pathlib
 import re
-import tempfile
 import shlex
 import shutil
+from io import BytesIO
 from collections import defaultdict, namedtuple
+from PIL import Image as PILImage
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
@@ -679,7 +680,7 @@ class SvgRenderer:
         Return either:
             - a tuple (renderer, node) when the the xlink:href attribute targets
               a vector file or node
-            - the path to an image file for any raster image targets
+            - a PIL Image object representing the image file
             - None if any problem occurs
         """
         # Bare 'href' was introduced in SVG 2.
@@ -690,16 +691,10 @@ class SvgRenderer:
         # First handle any raster embedded image data
         match = re.match(r"^data:image/(jpe?g|png);base64", xlink_href)
         if match:
-            img_format = match.groups()[0]
             image_data = base64.decodebytes(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
-            file_indicator, path = tempfile.mkstemp(suffix=f'.{img_format}')
-            with open(path, 'wb') as fh:
-                fh.write(image_data)
-            # Close temporary file (as opened by tempfile.mkstemp)
-            os.close(file_indicator)
-            # this needs to be removed later, not here...
-            # if exists(path): os.remove(path)
-            return path
+            bytes_stream = BytesIO(image_data)
+
+            return PILImage.open(bytes_stream)
 
         # From here, we can assume this is a path.
         if '#' in xlink_href:
