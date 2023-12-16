@@ -109,6 +109,22 @@ Note that the second parameter of ``drawToFile`` can be any
 `Python file object`_, like a ``BytesIO`` buffer if you don't want the result
 to be written on disk for example.
 
+You can convert a svg file to pillow image object as following snippet:
+
+.. code:: python
+
+    from svglib.svglib import svg2rlg
+    from reportlab.graphics import renderPM
+    from PIL import Image
+    import io
+
+    drawing = svg2rlg("SVG_Logo.svg")
+    place_holder = io.BytesIO()
+    renderPM.drawToFile(drawing, place_holder, fmt="PNG")
+
+    image = Image.open(place_holder)
+    image.show()
+
 In addition a script named ``svg2pdf`` can be used more easily from
 the system command-line. Here is the output from ``svg2pdf -h``::
 
@@ -175,7 +191,7 @@ With the ``pip`` command on your system and a working internet
 connection you can install the newest version of ``svglib`` with only
 one command in a terminal::
 
-    $ pip install svglib
+    $ pip install svglib rlPyCairo reportlab
 
 You can also use ``pip`` to install the very latest version of the
 repository from GitHub, but then you won't be able to conveniently
