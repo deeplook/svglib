@@ -166,7 +166,7 @@ CSS stylesheets.
 Installation
 ------------
 
-There are three ways to install ``svglib``.
+Here are two ways to install ``svglib``.
 
 1. Using ``pip``
 ++++++++++++++++
@@ -196,24 +196,6 @@ using these simple commands::
 
 ``Svglib`` was kindly packaged for ``conda`` by nicoddemus_. See here more about
 `svglib with conda`_.
-
-
-3. Manual installation
-+++++++++++++++++++++++
-
-Alternatively, you can install a tarball like ``svglib-<version>.tar.gz``
-after downloading it from the `svglib page on PyPI`_ or the
-`svglib releases page on GitHub`_ and executing a sequence of commands
-like shown here::
-
-    $ tar xfz svglib-<version>.tar.gz
-    $ cd svglib-<version>
-    $ python setup.py install
-
-This will install a Python package named ``svglib`` in the
-``site-packages`` subfolder of your Python installation and a script
-tool named ``svg2pdf`` in your ``bin`` directory, e.g. in
-``/usr/local/bin``.
 
 
 Testing
@@ -259,8 +241,6 @@ well as the versions of ``svglib``, ReportLab and Python being used!
 .. _RML: https://www.reportlab.com/software/rml-reference/
 .. _svglib issue tracker: https://github.com/deeplook/svglib/issues
 .. _PyTest: http://pytest.org
-.. _svglib page on PyPI: https://pypi.org/project/svglib/
-.. _svglib releases page on GitHub: https://github.com/deeplook/svglib/releases
 .. _Python file object: https://docs.python.org/3/glossary.html#term-file-object
 .. _Anaconda: https://www.anaconda.com/download/
 .. _Miniconda: https://conda.io/miniconda.html
