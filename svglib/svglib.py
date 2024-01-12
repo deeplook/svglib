@@ -21,11 +21,10 @@ import logging
 import os
 import pathlib
 import re
+import tempfile
 import shlex
 import shutil
-from io import BytesIO
 from collections import defaultdict, namedtuple
-from PIL import Image as PILImage
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
@@ -36,6 +35,7 @@ from reportlab.graphics.shapes import (
 )
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
+from reportlab.lib.utils import haveImages
 
 try:
     from reportlab.graphics.transform import mmult
@@ -320,11 +320,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         elif text.endswith("pc"):
             return float(text[:-2]) * pica
         elif text.endswith("pt"):
-            return float(text[:-2])
+            return float(text[:-2]) * 1.25
         elif text.endswith("em"):
             return float(text[:-2]) * em_base
         elif text.endswith("px"):
-            return float(text[:-2]) * 0.75
+            return float(text[:-2])
         elif text.endswith("ex"):
             # The x-height of the text must be assumed to be 0.5em tall when the
             # text cannot be measured.
@@ -555,6 +555,9 @@ class SvgRenderer:
             parent.add(item)
         elif name == "clipPath":
             item = self.renderG(node)
+        elif name == "switch": # process only default case
+            item = self.renderSwitch(node)
+            parent.add(item)
         elif name in self.handled_shapes:
             if name == 'image':
                 # We resolve the image target at renderer level because it can point
@@ -653,10 +656,7 @@ class SvgRenderer:
         elif isinstance(shape, Path):
             return ClippingPath(copy_from=shape)
         elif shape:
-            logger.error(
-                "Unsupported shape type %s for clipping",
-                shape.__class__.__name__
-            )
+            logging.error("Unsupported shape type %s for clipping", shape.__class__.__name__)
 
     def print_unused_attributes(self, node):
         if logger.level > logging.DEBUG:
@@ -679,7 +679,7 @@ class SvgRenderer:
         Return either:
             - a tuple (renderer, node) when the the xlink:href attribute targets
               a vector file or node
-            - a PIL Image object representing the image file
+            - the path to an image file for any raster image targets
             - None if any problem occurs
         """
         # Bare 'href' was introduced in SVG 2.
@@ -690,10 +690,16 @@ class SvgRenderer:
         # First handle any raster embedded image data
         match = re.match(r"^data:image/(jpe?g|png);base64", xlink_href)
         if match:
+            img_format = match.groups()[0]
             image_data = base64.decodebytes(xlink_href[(match.span(0)[1] + 1):].encode('ascii'))
-            bytes_stream = BytesIO(image_data)
-
-            return PILImage.open(bytes_stream)
+            file_indicator, path = tempfile.mkstemp(suffix=f'.{img_format}')
+            with open(path, 'wb') as fh:
+                fh.write(image_data)
+            # Close temporary file (as opened by tempfile.mkstemp)
+            os.close(file_indicator)
+            # this needs to be removed later, not here...
+            # if exists(path): os.remove(path)
+            return path
 
         # From here, we can assume this is a path.
         if '#' in xlink_href:
@@ -824,6 +830,14 @@ class SvgRenderer:
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, gr)
 
+        return gr
+
+    def renderSwitch(self, node):
+        gr = Group()
+        for child in node.iter_children():
+            if child.getAttribute('requiredFeatures') == '':
+                self.renderNode(child, parent=gr)
+                break
         return gr
 
     def renderStyle(self, node):
@@ -1251,6 +1265,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         return gr
 
     def convertImage(self, node):
+        if not haveImages:
+            logger.warning(
+                "Unable to handle embedded images. Maybe the pillow library is missing?"
+            )
+            return None
+
         x, y, width, height = self.convert_length_attrs(node, 'x', 'y', 'width', 'height')
         image = node._resolved_target
         image = Image(int(x), int(y + height), int(width), int(height), image)
