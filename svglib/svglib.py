@@ -555,6 +555,9 @@ class SvgRenderer:
             parent.add(item)
         elif name == "clipPath":
             item = self.renderG(node)
+        elif name == "switch": # process only default case
+            item = self.renderSwitch(node)
+            parent.add(item)
         elif name in self.handled_shapes:
             if name == 'image':
                 # We resolve the image target at renderer level because it can point
@@ -824,6 +827,14 @@ class SvgRenderer:
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, gr)
 
+        return gr
+
+    def renderSwitch(self, node):
+        gr = Group()
+        for child in node.iter_children():
+            if child.getAttribute('requiredFeatures') == '':
+                self.renderNode(child, parent=gr)
+                break
         return gr
 
     def renderStyle(self, node):

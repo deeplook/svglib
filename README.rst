@@ -87,7 +87,8 @@ Known limitations
   of supported attributes is still limited
 - clipping is limited to single paths, no mask support
 - color gradients are not supported (limitation of reportlab)
-- SVG ``ForeignObject`` elements are not supported.
+- SVG ``ForeignObject`` elements are not supported
+- limited support for SVG ``switch`` elements.
 
 
 Examples
