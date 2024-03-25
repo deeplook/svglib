@@ -1,7 +1,7 @@
 import sys
 from setuptools import setup
 
-with open('requirements.txt', 'r') as f:
+with open('requirements.txt') as f:
     install_requires = f.read().strip().split()
 
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
