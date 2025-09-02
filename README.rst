@@ -49,7 +49,7 @@ A pure-Python library for reading and converting SVG
 About
 -----
 
-``Svglib`` is a pure-Python library for reading SVG_ files and converting
+``Svglib`` is a Python library for reading SVG_ files and converting
 them (to a reasonable degree) to other formats using the ReportLab_ Open
 Source toolkit.
 
@@ -162,6 +162,12 @@ into different fileformats, including PDF, EPS, SVG and various bitmaps
 ones. Other dependancies are ``lxml`` which is used in the context of SVG
 CSS stylesheets.
 
+Previous versions of this package included a way to run `cairo` without explicit
+installation by the user; the dependency that took care of that no longer does
+this installation, and as such, the user must install `cairo` themselves. For
+installation instructions, see the official website:
+https://www.cairographics.org/download/
+
 
 Installation
 ------------
@@ -203,20 +209,25 @@ using these simple commands::
 
 Alternatively, you can install a tarball like ``svglib-<version>.tar.gz``
 after downloading it from the `svglib page on PyPI`_ or the
-`svglib releases page on GitHub`_ and executing a sequence of commands
-like shown here::
+`svglib releases page on GitHub`_ and installing it via ``pip``:
 
-    $ tar xfz svglib-<version>.tar.gz
-    $ cd svglib-<version>
-    $ python setup.py install
+    $ pip install svglib-<version>.tar.gz
 
 This will install a Python package named ``svglib`` in the
 ``site-packages`` subfolder of your Python installation and a script
 tool named ``svg2pdf`` in your ``bin`` directory, e.g. in
 ``/usr/local/bin``.
 
+Development and Testing
+-------
 
-Testing
+To develop ``svglib``, install `uv`_ and run ``uv sync`` to install the
+requirements and development dependencies. To run the test suite with
+``pytest``, run: ``uv run pytest``.
+
+.. _uv: https://docs.astral.sh/uv/
+
+Distribution Testing
 -------
 
 The ``svglib`` tarball distribution contains a PyTest_ test suite
