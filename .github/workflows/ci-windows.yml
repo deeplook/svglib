@@ -1,0 +1,55 @@
+name: Run Matrix Tests on Windows (Placeholder)
+# on: [push, pull_request, workflow_dispatch]
+jobs:
+  tests:
+    name: "Python Tests for Windows"
+    runs-on: "windows-latest"
+    # strategy:
+    #   matrix:
+    #     python-version: ["3.9", "3.10", "3.11", "pypy-3.9"]
+    steps:
+      - uses: "actions/checkout@v4"
+
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install gvsbuild
+        run: uv tool install gvsbuild
+
+      - name: Install gtk3 (includes Cairo)
+        run: gvsbuild build gtk3
+
+      - name: "Cache for wikipedia flags"
+        uses: actions/cache@v3
+        env:
+          cache-name: "cache-wikipedia-flags"
+        with:
+          path: "tests/samples/wikipedia/flags"
+          key: "wikipedia-flags-"  # just use single cache for windows
+      - name: "Cache for wikipedia symbols"
+        uses: actions/cache@v3
+        env:
+          cache-name: "cache-wikipedia-symbols"
+        with:
+          path: "tests/samples/wikipedia/symbols"
+          key: "wikipedia-symbols-"
+      - name: "Cache for w3c svg12 tinytestsuite"
+        uses: actions/cache@v3
+        env:
+          cache-name: "cache-w3c-svg12-tinytestsuite"
+        with:
+          path: "tests/samples/W3C_SVG_12_TinyTestSuite"
+          key: "w3c-svg12-tinytestsuite-"
+      - name: "Run tests for 3.9"
+        run: uv run --python 3.9 pytest
+      - name: "Run tests for 3.10"
+        run: uv run --python 3.10 pytest
+      - name: "Run tests for 3.11"
+        run: uv run --python 3.11 pytest
+      - name: "Run tests for 3.13"
+        run: uv run --python 3.13 pytest
+      - name: "Run tests for pypy-3.9"
+        run: uv run --python pypy-3.9 pytest
