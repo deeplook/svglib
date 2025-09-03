@@ -1,0 +1,68 @@
+[project]
+name = "svglib"
+version = "1.6.0"
+description = "A pure-Python library for reading and converting SVG"
+readme = "README.rst"
+authors = [
+    { name = "Dinu Gherman", email = "gherman@darwin.in-berlin.de" },
+]
+keywords = [
+    "SVG",
+    "PDF",
+    "reportlab",
+    "conversion",
+    "graphics",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Documentation",
+    "Topic :: Utilities",
+    "Topic :: Printing",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+license = "LGPL-3.0-or-later"
+license-files = [
+    "LICENSE.txt",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "cssselect2>=0.2.0",
+    "lxml>=6.0.0",
+    "reportlab>=4.4.3",
+    "rlpycairo>=0.4.0",
+    "tinycss2>=0.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/deeplook/svglib"
+
+[project.scripts]
+svg2pdf = "svglib:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.5",
+    "pytest-runner>=6.0.1",
+]
+
+[tool.flake8]
+max-line-length = "99"

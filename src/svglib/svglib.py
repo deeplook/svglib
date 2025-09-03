@@ -25,6 +25,7 @@ import shlex
 import shutil
 from io import BytesIO
 from collections import defaultdict, namedtuple
+from importlib.metadata import version
 from PIL import Image as PILImage
 
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -71,10 +72,12 @@ def find_font(font_name, weight='normal', style='normal'):
     return _fonts_find_font(font_name, weight, style)
 
 
-__version__ = '1.5.1'
+try:
+    __version__ = version("svglib")
+except ImportError:  # pragma: no cover
+    __version__ = "unknown"
 __license__ = 'LGPL 3'
 __author__ = 'Dinu Gherman'
-__date__ = '2023-01-07'
 
 XML_NS = 'http://www.w3.org/XML/1998/namespace'
 

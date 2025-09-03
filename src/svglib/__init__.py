@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """A simple converter from SVG to PDF.
 
 For further information please check the file README.txt!
@@ -46,8 +45,7 @@ def svg2pdf(path, outputPat=None):
 
 
 # command-line usage stuff
-
-def _main():
+def main():
     ext = 'pdf'
     ext_caps = ext.upper()
     args = dict(
@@ -55,7 +53,7 @@ def _main():
         version=svglib.__version__,
         author=svglib.__author__,
         license=svglib.__license__,
-        copyleft_year=svglib.__date__[:svglib.__date__.find('-')],
+        copyleft_year=str(datetime.now().year),
         ts_pattern="{{dirname}}/out-"\
                    "{{now.hour}}-{{now.minute}}-{{now.second}}-"\
                    "%(base)s",
@@ -123,7 +121,3 @@ def _main():
     paths = [a for a in args.input if exists(a)]
     for path in paths:
         svg2pdf(path, outputPat=args.output)
-
-
-if __name__ == '__main__':
-    _main()
