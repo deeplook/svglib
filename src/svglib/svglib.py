@@ -175,7 +175,7 @@ class AttributeConverter:
         new_attrs = {}
         for a in attrs:
             k, v = a.split(':')
-            k, v = [s.strip() for s in (k, v)]
+            k, v = (s.strip() for s in (k, v))
             new_attrs[k] = v
 
         return new_attrs
