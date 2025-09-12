@@ -1228,12 +1228,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 last_quadratic_cp = (x1, y1)
-                (
-                    (x0, y0),
-                    (x1, y1),
-                    (x2, y2),
-                    (xn, yn),
-                ) = convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
+                (_, _), (x1, y1), (x2, y2), (_, _) = convert_quadratic_to_cubic_path(
+                    (x0, y0), (x1, y1), (xn, yn)
+                )
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == "T":
                 if last_quadratic_cp is not None:
@@ -1258,12 +1255,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 x1, y1, xn, yn = nums
                 x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
                 last_quadratic_cp = (x1, y1)
-                (
-                    (x0, y0),
-                    (x1, y1),
-                    (x2, y2),
-                    (xn, yn),
-                ) = convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
+                (_, _), (x1, y1), (x2, y2), (_, _) = convert_quadratic_to_cubic_path(
+                    (x0, y0), (x1, y1), (xn, yn)
+                )
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == "t":
                 if last_quadratic_cp is not None:
