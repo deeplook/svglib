@@ -41,5 +41,8 @@ jobs:
         with:
           path: "tests/samples/W3C_SVG_12_TinyTestSuite"
           key: "w3c-svg12-tinytestsuite-${{ matrix.python-version }}-${{ matrix.os }}"
+      - name: "Install dependencies"
+        run: uv pip install -e .[dev]
+
       - name: "Run tests for ${{ matrix.python-version }}"
-        run: uv run --python ${{ matrix.python-version }} pytest
+        run: pytest
