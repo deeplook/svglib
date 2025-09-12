@@ -48,4 +48,4 @@ jobs:
         run: uv pip install -e .[dev]
 
       - name: "Run tests for ${{ matrix.python-version }}"
-        run: pytest
+        run: uv run pytest
