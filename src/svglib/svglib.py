@@ -432,6 +432,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             logger.warning("Can't handle color: %s", text)
         else:
             return self.color_converter(color)
+        return None
 
     def convertLineJoin(self, svgAttr: str) -> int:
         return {"miter": 0, "round": 1, "bevel": 2}[svgAttr]
