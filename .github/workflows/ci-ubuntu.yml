@@ -13,7 +13,7 @@ jobs:
       - name: Setup Cairo
         run: |
           sudo apt-get update && \
-          sudo apt-get install -y libcairo2-dev libffi-dev pkg-config libxml2-dev libxslt1-dev
+          sudo apt-get install -y libcairo2-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libjpeg-dev
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
