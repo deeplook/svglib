@@ -20,6 +20,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create Virtual Environment
+        run: uv venv
+
       - name: "Cache for wikipedia flags"
         uses: actions/cache@v3
         env:
