@@ -85,5 +85,6 @@ quote-style = "double"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.18.1",
     "tox>=4.30.2",
 ]

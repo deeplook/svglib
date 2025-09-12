@@ -8,13 +8,14 @@ import sys
 import textwrap
 from datetime import datetime
 from os.path import basename, dirname, exists, splitext
+from typing import Optional
 
 from reportlab.graphics import renderPDF
 
 from svglib import svglib
 
 
-def svg2pdf(path, outputPat=None):
+def svg2pdf(path: str, outputPat: Optional[str] = None) -> None:
     "Convert an SVG file to a PDF one."
 
     # derive output filename from output pattern
@@ -45,11 +46,11 @@ def svg2pdf(path, outputPat=None):
 
 
 # command-line usage stuff
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     ext = "pdf"
     ext_caps = ext.upper()
-    args = dict(
+    format_args = dict(
         prog=basename(sys.argv[0]),
         version=svglib.__version__,
         author=svglib.__author__,
@@ -61,8 +62,8 @@ def main():
         ext=ext,
         ext_caps=ext_caps,
     )
-    args["ts_pattern"] += ".%s" % args["ext"]
-    desc = "{prog} v. {version}\n".format(**args)
+    format_args["ts_pattern"] += ".%s" % format_args["ext"]
+    desc = "{prog} v. {version}\n".format(**format_args)
     desc += "A converter from SVG to {} (via ReportLab Graphics)\n".format(ext_caps)
     epilog = textwrap.dedent(
         """\
@@ -88,7 +89,7 @@ def main():
             https://github.com/deeplook/svglib
 
         Copyleft by {author}, 2008-{copyleft_year} ({license}):
-            https://www.gnu.org/licenses/lgpl-3.0.html""".format(**args)
+            https://www.gnu.org/licenses/lgpl-3.0.html""".format(**format_args)
     )
     p = argparse.ArgumentParser(
         description=desc,

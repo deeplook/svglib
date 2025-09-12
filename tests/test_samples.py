@@ -17,6 +17,7 @@ import tarfile
 import textwrap
 from http.client import HTTPSConnection
 from os.path import basename, dirname, exists, getsize, join, splitext
+from typing import Any
 from urllib.parse import quote, unquote, urlparse
 
 import pytest
@@ -28,14 +29,19 @@ from svglib import svglib
 TEST_ROOT = dirname(__file__)
 
 
-def found_uniconv():
+def found_uniconv() -> bool:
     "Do we have uniconv installed?"
 
     res = os.popen("which uniconv").read().strip()
     return len(res) > 0
 
 
-def fetch_file(url, mime_accept="text/svg", uncompress=True, raise_exc=False):
+def fetch_file(
+    url: str,
+    mime_accept: str = "text/svg",
+    uncompress: bool = True,
+    raise_exc: bool = False,
+) -> Any:
     """
     Get given URL content using http.client module, uncompress if needed and
     `uncompress` is True.
@@ -54,12 +60,13 @@ def fetch_file(url, mime_accept="text/svg", uncompress=True, raise_exc=False):
     )
     response = conn.getresponse()
     if (response.status, response.reason) == (200, "OK"):
-        data = response.read()
+        data: Any = response.read()
+        content_type = response.getheader("content-type")
         if (
             uncompress
             and (
                 response.getheader("content-encoding") == "gzip"
-                or "gzip" in response.getheader("content-type")
+                or (content_type is not None and "gzip" in content_type)
             )
             and data[:2] == b"\x1f\x8b"
         ):

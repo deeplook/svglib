@@ -4,11 +4,12 @@ This is a collection of utilities used by the ``svglib`` code module.
 
 import re
 from math import acos, ceil, copysign, cos, degrees, fabs, hypot, radians, sin, sqrt
+from typing import List, Tuple, Union, cast
 
 from reportlab.graphics.shapes import mmult, rotate, transformPoint, translate
 
 
-def split_floats(op, min_num, value):
+def split_floats(op: str, min_num: int, value: str) -> List[Union[str, List[float]]]:
     """Split `value`, a list of numbers as a string, to a list of float numbers.
 
     Also optionally insert a `l` or `L` operation depending on the operation
@@ -22,15 +23,15 @@ def split_floats(op, min_num, value):
         for seq in re.findall(r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)", value)
         if seq
     ]
-    res = []
+    res: List[Union[str, List[float]]] = []
     for i in range(0, len(floats), min_num):
         if i > 0 and op in {"m", "M"}:
             op = "l" if op == "m" else "L"
-        res.extend([op, floats[i : i + min_num]])
+        res.extend([op, cast(List[float], list(floats[i : i + min_num]))])
     return res
 
 
-def split_arc_values(op, value):
+def split_arc_values(op: str, value: str) -> List[Union[str, List[float]]]:
     float_re = r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)"
     flag_re = r"([1|0])"
     # 3 numb, 2 flags, 1 coord pair
@@ -40,13 +41,13 @@ def split_arc_values(op, value):
         )
         + r"[\s,]*"
     )
-    res = []
+    res: List[Union[str, List[float]]] = []
     for seq in re.finditer(a_seq_re, value.strip()):
-        res.extend([op, [float(num) for num in seq.groups()]])
+        res.extend([op, cast(List[float], list(float(num) for num in seq.groups()))])
     return res
 
 
-def normalise_svg_path(attr):
+def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
     """Normalise SVG path.
 
     This basically introduces operator codes for multi-argument
@@ -85,18 +86,18 @@ def normalise_svg_path(attr):
     op_keys = ops.keys()
 
     # do some preprocessing
-    result = []
+    result: List[Union[str, List[float]]] = []
     groups = re.split("([achlmqstvz])", attr.strip(), flags=re.I)
-    op = None
+    op = ""
     for item in groups:
         if item.strip() == "":
             continue
         if item in op_keys:
             # fix sequences of M to one M plus a sequence of L operators,
             # same for m and l.
-            if item == "M" and item == op:
+            if item == "M" and op == "M":
                 op = "L"
-            elif item == "m" and item == op:
+            elif item == "m" and op == "m":
                 op = "l"
             else:
                 op = item
@@ -107,12 +108,16 @@ def normalise_svg_path(attr):
                 result.extend(split_arc_values(op, item))
             else:
                 result.extend(split_floats(op, ops[op], item))
-            op = result[-2]  # Remember last op
+            op = cast(str, result[-2])  # Remember last op
 
     return result
 
 
-def convert_quadratic_to_cubic_path(q0, q1, q2):
+def convert_quadratic_to_cubic_path(
+    q0: Tuple[float, float], q1: Tuple[float, float], q2: Tuple[float, float]
+) -> Tuple[
+    Tuple[float, float], Tuple[float, float], Tuple[float, float], Tuple[float, float]
+]:
     """
     Convert a quadratic Bezier curve through q0, q1, q2 to a cubic one.
     """
@@ -128,7 +133,7 @@ def convert_quadratic_to_cubic_path(q0, q1, q2):
 # ***********************************************
 
 
-def vector_angle(u, v):
+def vector_angle(u: Tuple[float, float], v: Tuple[float, float]) -> float:
     d = hypot(*u) * hypot(*v)
     if d == 0:
         return 0
@@ -141,7 +146,17 @@ def vector_angle(u, v):
     return degrees(copysign(acos(c), s))
 
 
-def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
+def end_point_to_center_parameters(
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    fA: int,
+    fS: int,
+    rx: float,
+    ry: float,
+    phi: float = 0,
+) -> Tuple[float, float, float, float, float, float]:
     """
     See http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes F.6.5
     note that we reduce phi to zero outside this routine
@@ -222,7 +237,9 @@ def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
     return cx, cy, rx, ry, -theta1, -dtheta
 
 
-def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
+def bezier_arc_from_centre(
+    cx: float, cy: float, rx: float, ry: float, start_ang: float = 0, extent: float = 90
+) -> List[Tuple[float, float, float, float, float, float, float, float]]:
     if abs(extent) <= 90:
         nfrag = 1
         frag_angle = extent
@@ -266,7 +283,17 @@ def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
     return point_list
 
 
-def bezier_arc_from_end_points(x1, y1, rx, ry, phi, fA, fS, x2, y2):
+def bezier_arc_from_end_points(
+    x1: float,
+    y1: float,
+    rx: float,
+    ry: float,
+    phi: float,
+    fA: int,
+    fS: int,
+    x2: float,
+    y2: float,
+) -> List[Tuple[float, float, float, float, float, float, float, float]]:
     if x1 == x2 and y1 == y2:
         # From https://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes:
         # If the endpoints (x1, y1) and (x2, y2) are identical, then this is
