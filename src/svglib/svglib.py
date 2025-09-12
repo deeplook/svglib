@@ -1242,10 +1242,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 last_quadratic_cp = (xi, yi)
                 xn, yn = nums
                 (
-                    (x0, y0),
+                    (_, _),
                     (x1, y1),
                     (x2, y2),
-                    (xn, yn),
+                    (_, _),
                 ) = convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
 
@@ -1270,10 +1270,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 last_quadratic_cp = (xi, yi)
                 (
-                    (x0, y0),
+                    (_, _),
                     (x1, y1),
                     (x2, y2),
-                    (xn, yn),
+                    (_, _),
                 ) = convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
 
