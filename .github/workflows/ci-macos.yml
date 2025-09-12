@@ -16,7 +16,7 @@ jobs:
 
       - name: Setup Cairo
         run: |
-          brew install cairo pkg-config
+          brew install cairo pkg-config libxml2 libxslt
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
