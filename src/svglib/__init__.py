@@ -3,8 +3,8 @@
 For further information please check the file README.txt!
 """
 
-import sys
 import argparse
+import sys
 import textwrap
 from datetime import datetime
 from os.path import dirname, basename, splitext, exists
@@ -19,14 +19,14 @@ def svg2pdf(path, outputPat=None):
 
     # derive output filename from output pattern
     file_info = {
-        'dirname': dirname(path) or '.',
-        'basename': basename(path),
-        'base': basename(splitext(path)[0]),
-        'ext': splitext(path)[1],
-        'now': datetime.now(),
-        'format': 'pdf'
+        "dirname": dirname(path) or ".",
+        "basename": basename(path),
+        "base": basename(splitext(path)[0]),
+        "ext": splitext(path)[1],
+        "now": datetime.now(),
+        "format": "pdf",
     }
-    out_pattern = outputPat or '%(dirname)s/%(base)s.%(format)s'
+    out_pattern = outputPat or "%(dirname)s/%(base)s.%(format)s"
     # allow classic %%(name)s notation
     out_path = out_pattern % file_info
     # allow also newer {name} notation
@@ -36,7 +36,7 @@ def svg2pdf(path, outputPat=None):
     try:
         drawing = svglib.svg2rlg(path)
     except:
-        print('Rendering failed.')
+        print("Rendering failed.")
         raise
 
     # save converted file
@@ -46,7 +46,8 @@ def svg2pdf(path, outputPat=None):
 
 # command-line usage stuff
 def main():
-    ext = 'pdf'
+    """Main entry point for the CLI."""
+    ext = "pdf"
     ext_caps = ext.upper()
     args = dict(
         prog=basename(sys.argv[0]),
@@ -54,16 +55,17 @@ def main():
         author=svglib.__author__,
         license=svglib.__license__,
         copyleft_year=str(datetime.now().year),
-        ts_pattern="{{dirname}}/out-"\
-                   "{{now.hour}}-{{now.minute}}-{{now.second}}-"\
-                   "%(base)s",
+        ts_pattern="{{dirname}}/out-"
+        "{{now.hour}}-{{now.minute}}-{{now.second}}-"
+        "%(base)s",
         ext=ext,
-        ext_caps=ext_caps
+        ext_caps=ext_caps,
     )
-    args['ts_pattern'] += ('.%s' % args['ext'])
-    desc = '{prog} v. {version}\n'.format(**args)
-    desc += 'A converter from SVG to {} (via ReportLab Graphics)\n'.format(ext_caps)
-    epilog = textwrap.dedent('''\
+    args["ts_pattern"] += ".%s" % args["ext"]
+    desc = "{prog} v. {version}\n".format(**args)
+    desc += "A converter from SVG to {} (via ReportLab Graphics)\n".format(ext_caps)
+    epilog = textwrap.dedent(
+        """\
         examples:
           # convert path/file.svg to path/file.{ext}
           {prog} path/file.svg
@@ -86,27 +88,34 @@ def main():
             https://github.com/deeplook/svglib
 
         Copyleft by {author}, 2008-{copyleft_year} ({license}):
-            https://www.gnu.org/licenses/lgpl-3.0.html'''.format(**args))
+            https://www.gnu.org/licenses/lgpl-3.0.html""".format(
+            **args
+        )
+    )
     p = argparse.ArgumentParser(
         description=desc,
         epilog=epilog,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    p.add_argument('-v', '--version',
-        help='Print version number and exit.',
-        action='store_true')
-
-    p.add_argument('-o', '--output',
-        metavar='PATH_PAT',
-        help='Set output path (incl. the placeholders: dirname, basename,'
-             'base, ext, now) in both, %%(name)s and {name} notations.'
+    p.add_argument(
+        "-v", "--version", help="Print version number and exit.", action="store_true"
     )
 
-    p.add_argument('input',
-        metavar='PATH',
-        nargs='*',
-        help='Input SVG file path with extension .svg or .svgz.')
+    p.add_argument(
+        "-o",
+        "--output",
+        metavar="PATH_PAT",
+        help="Set output path (incl. the placeholders: dirname, basename,"
+        "base, ext, now) in both, %%(name)s and {name} notations.",
+    )
+
+    p.add_argument(
+        "input",
+        metavar="PATH",
+        nargs="*",
+        help="Input SVG file path with extension .svg or .svgz.",
+    )
 
     args = p.parse_args()
 

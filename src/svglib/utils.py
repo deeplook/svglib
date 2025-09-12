@@ -13,25 +13,33 @@ def split_floats(op, min_num, value):
 
     Also optionally insert a `l` or `L` operation depending on the operation
     and the length of values.
+
     Example: with op='m' and value='10,20 30,40,' the returned value will be
-             ['m', [10.0, 20.0], 'l', [30.0, 40.0]]
+        ['m', [10.0, 20.0], 'l', [30.0, 40.0]]
     """
-    floats = [float(seq) for seq in re.findall(r'(-?\d*\.?\d*(?:[eE][+-]?\d+)?)', value) if seq]
+    floats = [
+        float(seq)
+        for seq in re.findall(r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)", value)
+        if seq
+    ]
     res = []
     for i in range(0, len(floats), min_num):
-        if i > 0 and op in {'m', 'M'}:
-            op = 'l' if op == 'm' else 'L'
-        res.extend([op, floats[i:i + min_num]])
+        if i > 0 and op in {"m", "M"}:
+            op = "l" if op == "m" else "L"
+        res.extend([op, floats[i : i + min_num]])
     return res
 
 
 def split_arc_values(op, value):
-    float_re = r'(-?\d*\.?\d*(?:[eE][+-]?\d+)?)'
-    flag_re = r'([1|0])'
+    float_re = r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)"
+    flag_re = r"([1|0])"
     # 3 numb, 2 flags, 1 coord pair
-    a_seq_re = r'[\s,]*'.join([
-        float_re, float_re, float_re, flag_re, flag_re, float_re, float_re
-    ]) + r'[\s,]*'
+    a_seq_re = (
+        r"[\s,]*".join(
+            [float_re, float_re, float_re, flag_re, flag_re, float_re, float_re]
+        )
+        + r"[\s,]*"
+    )
     res = []
     for seq in re.finditer(a_seq_re, value.strip()):
         res.extend([op, [float(num) for num in seq.groups()]])
@@ -53,33 +61,49 @@ def normalise_svg_path(attr):
 
     # operator codes mapped to the minimum number of expected arguments
     ops = {
-        'A': 7, 'a': 7,
-        'Q': 4, 'q': 4, 'T': 2, 't': 2, 'S': 4, 's': 4,
-        'M': 2, 'L': 2, 'm': 2, 'l': 2, 'H': 1, 'V': 1,
-        'h': 1, 'v': 1, 'C': 6, 'c': 6, 'Z': 0, 'z': 0,
+        "A": 7,
+        "a": 7,
+        "Q": 4,
+        "q": 4,
+        "T": 2,
+        "t": 2,
+        "S": 4,
+        "s": 4,
+        "M": 2,
+        "L": 2,
+        "m": 2,
+        "l": 2,
+        "H": 1,
+        "V": 1,
+        "h": 1,
+        "v": 1,
+        "C": 6,
+        "c": 6,
+        "Z": 0,
+        "z": 0,
     }
     op_keys = ops.keys()
 
     # do some preprocessing
     result = []
-    groups = re.split('([achlmqstvz])', attr.strip(), flags=re.I)
+    groups = re.split("([achlmqstvz])", attr.strip(), flags=re.I)
     op = None
     for item in groups:
-        if item.strip() == '':
+        if item.strip() == "":
             continue
         if item in op_keys:
             # fix sequences of M to one M plus a sequence of L operators,
             # same for m and l.
-            if item == 'M' and item == op:
-                op = 'L'
-            elif item == 'm' and item == op:
-                op = 'l'
+            if item == "M" and item == op:
+                op = "L"
+            elif item == "m" and item == op:
+                op = "l"
             else:
                 op = item
             if ops[op] == 0:  # Z, z
                 result.extend([op, []])
         else:
-            if op.lower() == 'a':
+            if op.lower() == "a":
                 result.extend(split_arc_values(op, item))
             else:
                 result.extend(split_floats(op, ops[op], item))
@@ -103,6 +127,7 @@ def convert_quadratic_to_cubic_path(q0, q1, q2):
 # Helper functions for elliptical arc conversion.
 # ***********************************************
 
+
 def vector_angle(u, v):
     d = hypot(*u) * hypot(*v)
     if d == 0:
@@ -117,10 +142,10 @@ def vector_angle(u, v):
 
 
 def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
-    '''
+    """
     See http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes F.6.5
     note that we reduce phi to zero outside this routine
-    '''
+    """
     rx = fabs(rx)
     ry = fabs(ry)
 
@@ -184,10 +209,12 @@ def end_point_to_center_parameters(x1, y1, x2, y2, fA, fS, rx, ry, phi=0):
 
     # step 4
     theta1 = vector_angle((1, 0), ((x1d - cxd) / rx, (y1d - cyd) / ry))
-    dtheta = vector_angle(
-        ((x1d - cxd) / rx, (y1d - cyd) / ry),
-        ((-x1d - cxd) / rx, (-y1d - cyd) / ry)
-    ) % 360
+    dtheta = (
+        vector_angle(
+            ((x1d - cxd) / rx, (y1d - cyd) / ry), ((-x1d - cxd) / rx, (-y1d - cyd) / ry)
+        )
+        % 360
+    )
     if fS == 0 and dtheta > 0:
         dtheta -= 360
     elif fS == 1 and dtheta < 0:
@@ -224,19 +251,23 @@ def bezier_arc_from_centre(cx, cy, rx, ry, start_ang=0, extent=90):
         theta1 = start_rad + i * frag_rad
         c1 = cos(theta1)
         s1 = sin(theta1)
-        point_list.append((cx + rx * c0,
-                          cy - ry * s0,
-                          cx + rx * (c0 - kappa * s0),
-                          cy - ry * (s0 + kappa * c0),
-                          cx + rx * (c1 + kappa * s1),
-                          cy - ry * (s1 - kappa * c1),
-                          cx + rx * c1,
-                          cy - ry * s1))
+        point_list.append(
+            (
+                cx + rx * c0,
+                cy - ry * s0,
+                cx + rx * (c0 - kappa * s0),
+                cy - ry * (s0 + kappa * c0),
+                cx + rx * (c1 + kappa * s1),
+                cy - ry * (s1 - kappa * c1),
+                cx + rx * c1,
+                cy - ry * s1,
+            )
+        )
     return point_list
 
 
 def bezier_arc_from_end_points(x1, y1, rx, ry, phi, fA, fS, x2, y2):
-    if (x1 == x2 and y1 == y2):
+    if x1 == x2 and y1 == y2:
         # From https://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes:
         # If the endpoints (x1, y1) and (x2, y2) are identical, then this is
         # equivalent to omitting the elliptical arc segment entirely.
@@ -256,8 +287,10 @@ def bezier_arc_from_end_points(x1, y1, rx, ry, phi, fA, fS, x2, y2):
         res = []
         for x1, y1, x2, y2, x3, y3, x4, y4 in bp:
             res.append(
-                transformPoint(mx, (x1, y1)) + transformPoint(mx, (x2, y2)) +
-                transformPoint(mx, (x3, y3)) + transformPoint(mx, (x4, y4))
+                transformPoint(mx, (x1, y1))
+                + transformPoint(mx, (x2, y2))
+                + transformPoint(mx, (x3, y3))
+                + transformPoint(mx, (x4, y4))
             )
         return res
     else:

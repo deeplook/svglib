@@ -38,7 +38,7 @@ def found_uniconv():
     return len(res) > 0
 
 
-def fetch_file(url, mime_accept='text/svg', uncompress=True, raise_exc=False):
+def fetch_file(url, mime_accept="text/svg", uncompress=True, raise_exc=False):
     """
     Get given URL content using http.client module, uncompress if needed and
     `uncompress` is True.
@@ -46,24 +46,30 @@ def fetch_file(url, mime_accept='text/svg', uncompress=True, raise_exc=False):
 
     parsed = urlparse(url)
     conn = HTTPSConnection(parsed.netloc)
-    conn.request('GET', parsed.path, headers={
-        'Host': parsed.netloc,
-        'Accept': mime_accept,
-        'User-Agent': 'Python/http.client',
-    })
+    conn.request(
+        "GET",
+        parsed.path,
+        headers={
+            "Host": parsed.netloc,
+            "Accept": mime_accept,
+            "User-Agent": "Python/http.client",
+        },
+    )
     response = conn.getresponse()
     if (response.status, response.reason) == (200, "OK"):
         data = response.read()
         if (
-            uncompress and (
-                response.getheader("content-encoding") == "gzip" or
-                "gzip" in response.getheader("content-type")
-            ) and data[:2] == b'\x1f\x8b'
+            uncompress
+            and (
+                response.getheader("content-encoding") == "gzip"
+                or "gzip" in response.getheader("content-type")
+            )
+            and data[:2] == b"\x1f\x8b"
         ):
             with gzip.open(io.BytesIO(data), mode="rb") as zfile:
                 data = zfile.read()
-        if 'text' in mime_accept:
-            data = data.decode('utf-8')
+        if "text" in mime_accept:
+            data = data.decode("utf-8")
     else:
         if raise_exc:
             conn.close()
@@ -99,7 +105,7 @@ class TestSVGSamples:
             drawing = svglib.svg2rlg(path)
 
             # save as PDF
-            base = splitext(path)[0] + '-svglib.pdf'
+            base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
@@ -108,7 +114,7 @@ class TestSVGSamples:
 
         paths = glob.glob(f"{TEST_ROOT}/samples/misc/*.svg")
         for path in paths:
-            out = splitext(path)[0] + '-uniconv.pdf'
+            out = splitext(path)[0] + "-uniconv.pdf"
             cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
@@ -130,7 +136,9 @@ class TestWikipediaSymbols:
         # list sample files, found on:
         # http://en.wikipedia.org/wiki/List_of_symbols
         server = "upload.wikimedia.org"
-        paths = textwrap.dedent("""\
+        paths = (
+            textwrap.dedent(
+                """\
             /wikipedia/commons/f/f7/Biohazard.svg
             /wikipedia/commons/1/11/No_smoking_symbol.svg
             /wikipedia/commons/b/b0/Dharma_wheel.svg
@@ -143,7 +151,11 @@ class TestWikipediaSymbols:
             /wikipedia/commons/0/08/Flower-of-Life-small.svg
             /wikipedia/commons/d/d0/Countries_by_Population_Density_in_2015.svg
             /wikipedia/commons/8/84/CO2_responsibility_1950-2000.svg
-        """).strip().split()
+        """
+            )
+            .strip()
+            .split()
+        )
 
         # convert
         for path in paths:
@@ -151,18 +163,18 @@ class TestWikipediaSymbols:
             p = join(os.getcwd(), self.folder_path, basename(path))
             if not exists(p):
                 try:
-                    data = fetch_file(f'https://{server}{path}')
+                    data = fetch_file(f"https://{server}{path}")
                 except Exception:
                     print("Check your internet connection and try again!")
                     break
                 if data:
-                    with open(p, "w", encoding='UTF-8') as fh:
+                    with open(p, "w", encoding="UTF-8") as fh:
                         fh.write(data)
 
     def cleanup(self):
         "Remove generated files when running this test class."
 
-        paths = glob.glob(join(self.folder_path, '*.pdf'))
+        paths = glob.glob(join(self.folder_path, "*.pdf"))
         for i, path in enumerate(paths):
             print(f"deleting [{i}] {path}")
             os.remove(path)
@@ -179,7 +191,7 @@ class TestWikipediaSymbols:
             drawing = svglib.svg2rlg(path)
 
             # save as PDF
-            base = splitext(path)[0] + '-svglib.pdf'
+            base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
@@ -189,7 +201,7 @@ class TestWikipediaSymbols:
         paths = glob.glob(f"{self.folder_path}/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
-            out = splitext(path)[0] + '-uniconv.pdf'
+            out = splitext(path)[0] + "-uniconv.pdf"
             cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
@@ -209,7 +221,7 @@ class TestWikipediaFlags:
         -> The_People's_Republic_of_China.svg
         """
 
-        path = basename(url)[len("Flag_of_"):]
+        path = basename(url)[len("Flag_of_") :]
         path = path.capitalize()  # capitalise leading "the_"
         path = unquote(path)
 
@@ -230,10 +242,10 @@ class TestWikipediaFlags:
             u = "https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags"
             data = fetch_file(u)
             if data:
-                with open(path, "w", encoding='UTF-8') as f:
+                with open(path, "w", encoding="UTF-8") as f:
                     f.write(data)
         else:
-            with open(path, encoding='UTF-8') as f:
+            with open(path, encoding="UTF-8") as f:
                 data = f.read()
 
         # find all flag base filenames
@@ -261,24 +273,24 @@ class TestWikipediaFlags:
                 if m:
                     flag_url = m.groups()[0]
                     flag_url_map.append((prefix + fn, flag_url))
-            with open(json_path, "w", encoding='UTF-8') as fh:
+            with open(json_path, "w", encoding="UTF-8") as fh:
                 json.dump(flag_url_map, fh)
 
         # download flags in SVG format, if not present already
-        with open(json_path, encoding='UTF-8') as fh:
+        with open(json_path, encoding="UTF-8") as fh:
             flag_url_map = json.load(fh)
         for dummy, flag_url in flag_url_map:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print(f"fetch {flag_url}")
                 flag_svg = fetch_file(flag_url, raise_exc=True)
-                with open(path, "w", encoding='UTF-8') as f:
+                with open(path, "w", encoding="UTF-8") as f:
                     f.write(flag_svg)
 
     def cleanup(self):
         "Remove generated files when running this test class."
 
-        paths = glob.glob(join(self.folder_path, '*.pdf'))
+        paths = glob.glob(join(self.folder_path, "*.pdf"))
         for i, path in enumerate(paths):
             print(f"deleting [{i}] {path}")
             os.remove(path)
@@ -295,7 +307,7 @@ class TestWikipediaFlags:
             drawing = svglib.svg2rlg(path)
 
             # save as PDF
-            base = splitext(path)[0] + '-svglib.pdf'
+            base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
@@ -305,7 +317,7 @@ class TestWikipediaFlags:
         paths = glob.glob(f"{self.folder_path}/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
-            out = splitext(path)[0] + '-uniconv.pdf'
+            out = splitext(path)[0] + "-uniconv.pdf"
             cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
@@ -328,7 +340,7 @@ class TestW3CSVG:
         if not exists(self.folder_path):
             print(f"downloading {url}")
             try:
-                data = fetch_file(url, mime_accept='application/gzip', uncompress=True)
+                data = fetch_file(url, mime_accept="application/gzip", uncompress=True)
             except OSError as details:
                 print(details)
                 print("Check your internet connection and try again!")
@@ -346,9 +358,9 @@ class TestW3CSVG:
     def cleanup(self):
         "Remove generated files when running this test class."
 
-        paths = glob.glob(join(self.folder_path, 'svg/*-svglib.pdf'))
-        paths += glob.glob(join(self.folder_path, 'svg/*-uniconv.pdf'))
-        paths += glob.glob(join(self.folder_path, 'svg/*-svglib.png'))
+        paths = glob.glob(join(self.folder_path, "svg/*-svglib.pdf"))
+        paths += glob.glob(join(self.folder_path, "svg/*-uniconv.pdf"))
+        paths += glob.glob(join(self.folder_path, "svg/*-svglib.png"))
         for i, path in enumerate(paths):
             print(f"deleting [{i}] {path}")
             os.remove(path)
@@ -385,17 +397,17 @@ class TestW3CSVG:
             drawing = svglib.svg2rlg(path)
 
             # save as PDF
-            base = splitext(path)[0] + '-svglib.pdf'
+            base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
             # save as PNG
             # (endless loop for file paint-stroke-06-t.svg)
-            base = splitext(path)[0] + '-svglib.png'
+            base = splitext(path)[0] + "-svglib.png"
             try:
                 # Can trigger an error in reportlab < 3.3.26.
-                renderPM.drawToFile(drawing, base, 'PNG')
+                renderPM.drawToFile(drawing, base, "PNG")
             except TypeError:
-                print('Svglib: Consider upgrading reportlab to version >= 3.3.26!')
+                print("Svglib: Consider upgrading reportlab to version >= 3.3.26!")
                 raise
 
     @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
@@ -405,7 +417,7 @@ class TestW3CSVG:
         paths = glob.glob(f"{self.folder_path}/svg/*")
         paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
         for path in paths:
-            out = splitext(path)[0] + '-uniconv.pdf'
+            out = splitext(path)[0] + "-uniconv.pdf"
             cmd = f"uniconv '{path}' '{out}'"
             os.popen(cmd).read()
             if exists(out) and getsize(out) == 0:
@@ -441,7 +453,7 @@ class TestOtherFiles:
         unit_names = ["px", "pt", "mm", "ex", "ch", "em", "pc", "cm"]
         lengths_by_name = dict(zip(unit_names, unit_widths))
         assert lengths_by_name["px"] == lengths_by_name["pt"] * 0.75
-        assert lengths_by_name["em"] == svglib.DEFAULT_FONT_SIZE # 1 em == font size
+        assert lengths_by_name["em"] == svglib.DEFAULT_FONT_SIZE  # 1 em == font size
         assert lengths_by_name["ex"] == lengths_by_name["em"] / 2
         assert lengths_by_name["ch"] == lengths_by_name["ex"]
 
