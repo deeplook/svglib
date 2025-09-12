@@ -11,6 +11,7 @@ import os
 import pathlib
 import textwrap
 from tempfile import NamedTemporaryFile
+from typing import Any, Callable, List, Tuple
 
 import pytest
 from reportlab.graphics.shapes import (
@@ -33,10 +34,12 @@ from svglib import svglib, utils
 from tests.utils import drawing_from_svg, minimal_svg_node
 
 
-def _testit(func, mapping):
+def _testit(
+    func: Callable[..., Any], mapping: List[Tuple[Any, Any]]
+) -> List[Tuple[Any, Any, Any]]:
     "Call `func` on input in mapping and return list of failed tests."
 
-    failed = []
+    failed: List[Tuple[Any, Any, Any]] = []
     for input, expected in mapping:
         if isinstance(input, dict):
             result = func(**input)
@@ -326,7 +329,7 @@ class TestPaths:
         assert rect_clip.getProperties()["strokeColor"] is None
 
 
-def force_cmyk(rgb):
+def force_cmyk(rgb: Any) -> Any:
     c, m, y, k = colors.rgb2cmyk(rgb.red, rgb.green, rgb.blue)
     return colors.CMYKColor(c, m, y, k, alpha=rgb.alpha)
 

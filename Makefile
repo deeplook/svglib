@@ -29,6 +29,10 @@ lint: ## Run the formatter and linter.
 	uv run ruff format .
 	uv run ruff check --fix .
 
+.PHONY: typecheck
+typecheck: ## Run the type checker.
+	uv run mypy --ignore-missing-imports src tests
+
 .PHONY: hooks
 hooks:  ## Run all pre-commit hooks.
 	uv run pre-commit run --all-files

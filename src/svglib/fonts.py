@@ -5,6 +5,7 @@ This is a collection for all the font-related code used by ``svglib`` module.
 import os
 import subprocess
 import sys
+from typing import Dict, Optional, Tuple, Union
 
 from reportlab.pdfbase.pdfmetrics import registerFont
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
@@ -37,7 +38,7 @@ class FontMap:
     them in reportlab.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         The map has the form:
         'internal_name': {
@@ -46,12 +47,14 @@ class FontMap:
         }
         for faster searching we use internal keys for finding the matching font
         """
-        self._map = {}
+        self._map: Dict[str, Dict[str, Union[str, bool, int]]] = {}
 
         self.register_default_fonts()
 
     @staticmethod
-    def build_internal_name(family, weight="normal", style="normal"):
+    def build_internal_name(
+        family: str, weight: str = "normal", style: str = "normal"
+    ) -> str:
         """
         If the weight or style is given, append the capitalized weight and style
         to the font name. E.g. family="Arial", weight="bold" and style="italic"
@@ -71,7 +74,12 @@ class FontMap:
         return result_name
 
     @staticmethod
-    def guess_font_filename(basename, weight="normal", style="normal", extension="ttf"):
+    def guess_font_filename(
+        basename: str,
+        weight: str = "normal",
+        style: str = "normal",
+        extension: str = "ttf",
+    ) -> str:
         """
         Try to guess the actual font filename depending on family, weight and style,
         this works at least for windows on the "default" fonts like, Arial,
@@ -89,7 +97,9 @@ class FontMap:
         filename = f"{basename}{prefix}.{extension}"
         return filename
 
-    def use_fontconfig(self, font_name, weight="normal", style="normal"):
+    def use_fontconfig(
+        self, font_name: str, weight: str = "normal", style: str = "normal"
+    ) -> Tuple[Optional[str], bool]:
         NOT_FOUND = (None, False)
         # Searching with Fontconfig
         try:
@@ -124,7 +134,7 @@ class FontMap:
         }
         return font_name, exact
 
-    def register_default_fonts(self):
+    def register_default_fonts(self) -> None:
         self.register_font("Times New Roman", rlgFontName="Times-Roman")
         self.register_font("Times New Roman", weight="bold", rlgFontName="Times-Bold")
         self.register_font(
@@ -198,8 +208,13 @@ class FontMap:
         )
 
     def register_font_family(
-        self, family, normal, bold=None, italic=None, bolditalic=None
-    ):
+        self,
+        family: str,
+        normal: str,
+        bold: Optional[str] = None,
+        italic: Optional[str] = None,
+        bolditalic: Optional[str] = None,
+    ) -> None:
         self.register_font(family, normal)
         if bold is not None:
             self.register_font(family, bold, weight="bold")
@@ -210,12 +225,12 @@ class FontMap:
 
     def register_font(
         self,
-        font_family,
-        font_path=None,
-        weight="normal",
-        style="normal",
-        rlgFontName=None,
-    ):
+        font_family: str,
+        font_path: Optional[str] = None,
+        weight: str = "normal",
+        style: str = "normal",
+        rlgFontName: Optional[str] = None,
+    ) -> Tuple[Optional[str], bool]:
         """
         Register a font identified by its family, weight and style linked to an
         actual fontfile. Or map an svg font family, weight and style combination
@@ -253,7 +268,12 @@ class FontMap:
             except TTFError:
                 return NOT_FOUND
 
-    def find_font(self, font_name, weight="normal", style="normal"):
+        # If we reach here, no registration was possible
+        return NOT_FOUND
+
+    def find_font(
+        self, font_name: str, weight: str = "normal", style: str = "normal"
+    ) -> Tuple[str, bool]:
         """Return the font and a Boolean indicating if the match is exact."""
         internal_name = FontMap.build_internal_name(font_name, weight, style)
         # Step 1 check if the font is one of the buildin standard fonts
@@ -261,9 +281,10 @@ class FontMap:
             return internal_name, True
         # Step 2 Check if font is already registered
         if internal_name in self._map:
+            font_entry = self._map[internal_name]
             return (
-                self._map[internal_name]["rlgFont"],
-                self._map[internal_name]["exact"],
+                str(font_entry["rlgFont"]),
+                bool(font_entry["exact"]),
             )
         # Step 3 Try to auto register the font
         # Try first to register the font if it exists as ttf
@@ -271,29 +292,45 @@ class FontMap:
         reg_name, exact = self.register_font(font_name, guessed_filename)
         if reg_name is not None:
             return reg_name, exact
-        return self.use_fontconfig(font_name, weight, style)
+        fontconfig_result = self.use_fontconfig(font_name, weight, style)
+        if fontconfig_result[0] is not None:
+            return fontconfig_result[0], fontconfig_result[1]
+        # Fallback to default font if nothing found
+        return DEFAULT_FONT_NAME, False
 
 
 _font_map = FontMap()  # the global font map
 
 
 def register_font(
-    font_name, font_path=None, weight="normal", style="normal", rlgFontName=None
-):
+    font_name: str,
+    font_path: Optional[str] = None,
+    weight: str = "normal",
+    style: str = "normal",
+    rlgFontName: Optional[str] = None,
+) -> Tuple[Optional[str], bool]:
     """
     Register a font by name or alias and path to font including file extension.
     """
     return _font_map.register_font(font_name, font_path, weight, style, rlgFontName)
 
 
-def find_font(font_name, weight="normal", style="normal"):
+def find_font(
+    font_name: str, weight: str = "normal", style: str = "normal"
+) -> Tuple[str, bool]:
     """Return the font and a Boolean indicating if the match is exact."""
     return _font_map.find_font(font_name, weight, style)
 
 
-def register_font_family(self, family, normal, bold=None, italic=None, bolditalic=None):
+def register_font_family(
+    family: str,
+    normal: str,
+    bold: Optional[str] = None,
+    italic: Optional[str] = None,
+    bolditalic: Optional[str] = None,
+) -> None:
     _font_map.register_font_family(family, normal, bold, italic, bolditalic)
 
 
-def get_global_font_map():
+def get_global_font_map() -> FontMap:
     return _font_map

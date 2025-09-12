@@ -1,4 +1,5 @@
 import subprocess
+from typing import Any, Optional, Tuple
 
 import pytest
 from reportlab.pdfbase.ttfonts import TTFError, TTFOpenFile
@@ -43,7 +44,7 @@ except TTFError:
         ("Courier New", "bold", "normal", "Courier New-Bold"),
     ],
 )
-def test_internal_names(family, weight, style, expected):
+def test_internal_names(family: str, weight: Any, style: str, expected: str) -> None:
     assert FontMap.build_internal_name(family, weight, style) == expected
 
 
@@ -51,7 +52,7 @@ def test_internal_names(family, weight, style, expected):
     "family, path, weight, style, rlgName, expected",
     [
         # no path, no reportlab name -> None result
-        ("Times New Roman", None, "normal", "normal", None, None),
+        ("Times New Roman", None, "normal", "normal", None, (None, False)),
         # mapping to standard font
         (
             "Times New Roman",
@@ -82,16 +83,25 @@ def test_internal_names(family, weight, style, expected):
         ("Unknown Font", "unknown_font.ttf", "normal", "normal", None, (None, False)),
     ],
 )
-def test_register_return(family, path, weight, style, rlgName, expected):
+def test_register_return(
+    family: str,
+    path: Optional[str],
+    weight: str,
+    style: str,
+    rlgName: Optional[str],
+    expected: Tuple[Optional[str], bool],
+) -> None:
     """
     Check if the result of the register_font function matches the expected results
     """
     if path == "times.ttf" and not HAS_TIMES_FONT:
         pytest.skip("times.ttf is not installed on this system")
     converter = SvgRenderer("../")
-    converter.font_map = FontMap()
+    converter.attrConverter._font_map = FontMap()
     assert (
-        converter.font_map.register_font(family, path, weight, style, rlgName)
+        converter.attrConverter._font_map.register_font(
+            family, path, weight, style, rlgName
+        )
         == expected
     )
 
@@ -105,20 +115,20 @@ def test_register_return(family, path, weight, style, rlgName, expected):
         ("monospace", "Courier"),
     ],
 )
-def test_convertFontFamily_defaults(svgname, fontname):
+def test_convertFontFamily_defaults(svgname: str, fontname: str) -> None:
     attrib_converter = Svg2RlgAttributeConverter()
     name = attrib_converter.convertFontFamily(svgname)
     assert name == fontname
 
 
 @pytest.mark.parametrize("fontname", list(STANDARD_FONT_NAMES))
-def test_find_font_defaults(fontname):
+def test_find_font_defaults(fontname: str) -> None:
     name, exact = find_font(fontname)
     assert name == fontname
     assert exact is True
 
 
-def test_plain_text():
+def test_plain_text() -> None:
     drawing = drawing_from_svg(
         """
         <?xml version="1.0"?>
@@ -349,7 +359,7 @@ def test_fontfamily_weight_style_text():
     assert main_group.contents[0].contents[1].fontName == "Courier-BoldOblique"
 
 
-def test_failed_registration():
+def test_failed_registration() -> None:
     fontname, exact = register_font(
         font_name="unknown path", font_path="/home/unknown_font.tff"
     )
@@ -357,7 +367,7 @@ def test_failed_registration():
     assert exact is False
 
 
-def test_font_family():
+def test_font_family() -> None:
     def font_config_available():
         try:
             subprocess.call(["fc-match"])
