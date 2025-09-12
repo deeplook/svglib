@@ -82,6 +82,22 @@ from .utils import (
 )
 
 
+def _convert_palette_to_rgba(image: PILImage.Image) -> PILImage.Image:
+    """
+    Convert palette images with transparency to RGBA to avoid PIL warnings.
+
+    Args:
+        image: PIL Image object
+
+    Returns:
+        PIL Image object converted to RGBA if it was a palette image with transparency
+    """
+    if image.mode == "P" and "transparency" in image.info:
+        # Convert palette image with transparency to RGBA
+        return image.convert("RGBA")
+    return image
+
+
 def register_font(
     font_name: str,
     font_path: Optional[str] = None,
@@ -770,7 +786,7 @@ class SvgRenderer:
             )
             bytes_stream = BytesIO(image_data)
 
-            return PILImage.open(bytes_stream)
+            return _convert_palette_to_rgba(PILImage.open(bytes_stream))
 
         # From here, we can assume this is a path.
         if "#" in xlink_href:
