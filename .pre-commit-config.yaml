@@ -1,11 +1,22 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-    -   id: trailing-whitespace
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.20.0
-    hooks:
-    -   id: pyupgrade
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  - id: trailing-whitespace
+
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.20.0
+  hooks:
+  - id: pyupgrade
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.13.0
+  hooks:
+  - id: ruff-format
+    types_or: ["python"]
+  - id: ruff
+    types_or: ["python"]
+    args: ["--fix"]

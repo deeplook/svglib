@@ -41,7 +41,7 @@ license = "LGPL-3.0-or-later"
 license-files = [
     "LICENSE.txt",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "cssselect2>=0.2.0",
     "lxml>=6.0.0",
@@ -60,11 +60,30 @@ svg2pdf = "svglib:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=4.3.0",
     "pytest>=8.3.5",
+    "pytest-cov>=7.0.0",
     "pytest-runner>=6.0.1",
+    "ruff>=0.13.0",
+    "tox>=4.0.0",
 ]
 
-[tool.flake8]
-max-line-length = "99"
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors (essential syntax and style issues)
+    "F",  # Pyflakes messages (e.g., undefined names, unused imports)
+    "I",  # isort rules for enforcing import order
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[dependency-groups]
+dev = [
+    "tox>=4.30.2",
+]

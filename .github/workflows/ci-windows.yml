@@ -16,6 +16,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create Virtual Environment
+        run: uv venv
+
       - name: Install gvsbuild
         run: uv tool install gvsbuild
 
@@ -43,13 +46,16 @@ jobs:
         with:
           path: "tests/samples/W3C_SVG_12_TinyTestSuite"
           key: "w3c-svg12-tinytestsuite-"
+      - name: "Install dependencies"
+        run: uv pip install -e .[dev]
+
       - name: "Run tests for 3.9"
-        run: uv run --python 3.9 pytest
+        run: uv run pytest
       - name: "Run tests for 3.10"
-        run: uv run --python 3.10 pytest
+        run: uv run pytest
       - name: "Run tests for 3.11"
-        run: uv run --python 3.11 pytest
+        run: uv run pytest
       - name: "Run tests for 3.13"
-        run: uv run --python 3.13 pytest
+        run: uv run pytest
       - name: "Run tests for pypy-3.9"
-        run: uv run --python pypy-3.9 pytest
+        run: uv run pytest
