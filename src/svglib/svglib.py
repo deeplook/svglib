@@ -831,6 +831,7 @@ class SvgRenderer:
                 # The missing definition should appear later in the file
                 self.waiting_use_nodes[fragment].append((node, group))
                 return DELAYED
+            return None
 
     def renderTitle_(self, node: NodeTracker) -> None:
         # Main SVG title attr. could be used in the PDF document info field.
