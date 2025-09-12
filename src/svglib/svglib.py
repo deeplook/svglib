@@ -956,7 +956,7 @@ class SvgRenderer:
         self.renderNode(list(node.iter_children())[-1], parent=group)
         self.apply_node_attr_to_group(node, group)
         return group
-
+        return None
 
 class SvgShapeConverter:
     """An abstract SVG shape converter.
