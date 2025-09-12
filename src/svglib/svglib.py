@@ -958,6 +958,7 @@ class SvgRenderer:
         return group
         return None
 
+
 class SvgShapeConverter:
     """An abstract SVG shape converter.
 
