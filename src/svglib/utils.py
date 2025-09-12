@@ -5,7 +5,7 @@ This is a collection of utilities used by the ``svglib`` code module.
 import re
 from math import acos, ceil, copysign, cos, degrees, fabs, hypot, radians, sin, sqrt
 
-from reportlab.graphics.shapes import mmult, rotate, translate, transformPoint
+from reportlab.graphics.shapes import mmult, rotate, transformPoint, translate
 
 
 def split_floats(op, min_num, value):

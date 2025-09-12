@@ -9,7 +9,6 @@ import sys
 from reportlab.pdfbase.pdfmetrics import registerFont
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
 
-
 STANDARD_FONT_NAMES = (
     "Times-Roman",
     "Times-Italic",
@@ -42,8 +41,8 @@ class FontMap:
         """
         The map has the form:
         'internal_name': {
-           'svg_family': 'family_name', 'svg_weight': 'font-weight', 'svg_style': 'font-style',
-           'rlgFont': 'rlgFontName'
+            'svg_family': 'family_name', 'svg_weight': 'font-weight',
+            'svg_style': 'font-style', 'rlgFont': 'rlgFontName'
         }
         for faster searching we use internal keys for finding the matching font
         """
@@ -63,7 +62,7 @@ class FontMap:
         if weight != "normal" or style != "normal":
             result_name += "-"
         if weight != "normal":
-            if type(weight) is int:
+            if isinstance(weight, int):
                 result_name += f"{weight}"
             else:
                 result_name += weight.lower().capitalize()

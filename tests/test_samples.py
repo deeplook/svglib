@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Testsuite for svglib.
 
 This tests conversion of sample SVG files into PDF files.
@@ -9,24 +7,23 @@ to convert SVG files into PDF for comparision with svglib.
 Read ``tests/README.rst`` for more information on testing!
 """
 
-import os
 import glob
-import re
 import gzip
 import io
 import json
+import os
+import re
 import tarfile
 import textwrap
 from http.client import HTTPSConnection
-from os.path import dirname, splitext, exists, join, basename, getsize
+from os.path import basename, dirname, exists, getsize, join, splitext
 from urllib.parse import quote, unquote, urlparse
 
+import pytest
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.graphics.shapes import Group, Rect
-import pytest
 
 from svglib import svglib
-
 
 TEST_ROOT = dirname(__file__)
 
@@ -74,7 +71,8 @@ def fetch_file(url, mime_accept="text/svg", uncompress=True, raise_exc=False):
         if raise_exc:
             conn.close()
             raise Exception(
-                f"Unable to fetch file {url}, got {response.status} response ({response.reason})"
+                f"Unable to fetch file {url}, got {response.status} response "
+                f"({response.reason})"
             )
         data = None
     conn.close()
@@ -466,5 +464,8 @@ class TestOtherFiles:
         svg_root = svglib.load_svg_file(path, resolve_entities=False)
         renderer = svglib.SvgRenderer(path)
         drawing = renderer.render(svg_root)
-        cubic_path = "M 0 5 C 0 8.333333 1.666667 10 5 10 C 8.333333 10 10 8.333333 10 5 C 10 1.666667 8.333333 0 5 0 C 1.666667 0 0 1.666667 0 5 Z"
+        cubic_path = (
+            "M 0 5 C 0 8.333333 1.666667 10 5 10 C 8.333333 10 10 8.333333 10 5 C 10 "
+            "1.666667 8.333333 0 5 0 C 1.666667 0 0 1.666667 0 5 Z"
+        )
         assert cubic_path in drawing.asString("svg")

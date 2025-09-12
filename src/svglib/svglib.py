@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """A library for reading and converting SVG.
 
 This is a converter from SVG to RLG (ReportLab Graphics) drawings.
@@ -24,14 +23,10 @@ import re
 import shlex
 import shutil
 from collections import defaultdict, namedtuple
-from io import BytesIO
 from importlib.metadata import version
+from io import BytesIO
 
 from PIL import Image as PILImage
-
-from reportlab.pdfbase.pdfmetrics import stringWidth
-from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
-from reportlab.pdfgen.pdfimages import PDFImage
 from reportlab.graphics.shapes import (
     _CLOSEPATH,
     Circle,
@@ -41,14 +36,17 @@ from reportlab.graphics.shapes import (
     Image,
     Line,
     Path,
-    PolyLine,
     Polygon,
+    PolyLine,
     Rect,
     SolidShape,
     String,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
+from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
+from reportlab.pdfgen.pdfimages import PDFImage
 
 try:
     from reportlab.graphics.transform import mmult
@@ -56,28 +54,30 @@ except ImportError:
     # Before Reportlab 3.5.61
     from reportlab.graphics.shapes import mmult
 
-from lxml import etree
 import cssselect2
 import tinycss2
+from lxml import etree
 
+from .fonts import (
+    DEFAULT_FONT_NAME,
+    DEFAULT_FONT_SIZE,
+    DEFAULT_FONT_STYLE,
+    DEFAULT_FONT_WEIGHT,
+    get_global_font_map,
+)
+from .fonts import (
+    find_font as _fonts_find_font,
+)
+
+# To keep backward compatibility, since those functions where previously part of
+# the svglib module
+from .fonts import (
+    register_font as _fonts_register_font,
+)
 from .utils import (
     bezier_arc_from_end_points,
     convert_quadratic_to_cubic_path,
     normalise_svg_path,
-)
-
-from .fonts import (
-    get_global_font_map,
-    DEFAULT_FONT_NAME,
-    DEFAULT_FONT_WEIGHT,
-    DEFAULT_FONT_STYLE,
-    DEFAULT_FONT_SIZE,
-)
-
-# To keep backward compatibility, since those functions where previously part of the svglib module
-from .fonts import (
-    register_font as _fonts_register_font,
-    find_font as _fonts_find_font,
 )
 
 
@@ -625,7 +625,8 @@ class SvgRenderer:
                 # and simplify further analyses of generated document
                 item.setProperties({"svgid": nid})
                 # labels are used in inkscape to name specific groups as layers
-                # preserving them simplify extraction of feature from the generated document
+                # preserving them simplify extraction of feature from the generated
+                # document
                 label_attrs = [v for k, v in node.attrib.items() if "label" in k]
                 if len(label_attrs) == 1:
                     (label,) = label_attrs
@@ -905,7 +906,8 @@ class SvgRenderer:
         if clipping:
             group.add(clipping)
         if len(node.getchildren()) == 0:
-            # Append a copy of the referenced node as the <use> child (if not already done)
+            # Append a copy of the referenced node as the <use> child (if not
+            # already done)
             node.append(copy.deepcopy(item))
         self.renderNode(list(node.iter_children())[-1], parent=group)
         self.apply_node_attr_to_group(node, group)
@@ -1089,7 +1091,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             frag_lengths.append(stringWidth(text, ff, fs))
 
-            # When x, y, dx, or dy is a list, we calculate position for each char of text.
+            # When x, y, dx, or dy is a list, we calculate position for each char of
+            # text.
             if any(isinstance(val, list) for val in (x1, y1, dx, dy)):
                 if has_x:
                     xlist = x1 if isinstance(x1, list) else [x1]
@@ -1225,9 +1228,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 x0, y0 = points[-2:]
                 x1, y1, xn, yn = nums
                 last_quadratic_cp = (x1, y1)
-                (x0, y0), (x1, y1), (x2, y2), (xn, yn) = (
-                    convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
-                )
+                (
+                    (x0, y0),
+                    (x1, y1),
+                    (x2, y2),
+                    (xn, yn),
+                ) = convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == "T":
                 if last_quadratic_cp is not None:
@@ -1238,9 +1244,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 last_quadratic_cp = (xi, yi)
                 xn, yn = nums
-                (x0, y0), (x1, y1), (x2, y2), (xn, yn) = (
-                    convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
-                )
+                (
+                    (x0, y0),
+                    (x1, y1),
+                    (x2, y2),
+                    (xn, yn),
+                ) = convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
 
             # quadratic bezier, relative
@@ -1249,9 +1258,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 x1, y1, xn, yn = nums
                 x1, y1, xn, yn = x0 + x1, y0 + y1, x0 + xn, y0 + yn
                 last_quadratic_cp = (x1, y1)
-                (x0, y0), (x1, y1), (x2, y2), (xn, yn) = (
-                    convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
-                )
+                (
+                    (x0, y0),
+                    (x1, y1),
+                    (x2, y2),
+                    (xn, yn),
+                ) = convert_quadratic_to_cubic_path((x0, y0), (x1, y1), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
             elif op == "t":
                 if last_quadratic_cp is not None:
@@ -1263,9 +1275,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 xn, yn = x0 + xn, y0 + yn
                 xi, yi = x0 + (x0 - xp), y0 + (y0 - yp)
                 last_quadratic_cp = (xi, yi)
-                (x0, y0), (x1, y1), (x2, y2), (xn, yn) = (
-                    convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
-                )
+                (
+                    (x0, y0),
+                    (x1, y1),
+                    (x2, y2),
+                    (xn, yn),
+                ) = convert_quadratic_to_cubic_path((x0, y0), (xi, yi), (xn, yn))
                 path.curveTo(x1, y1, x2, y2, xn, yn)
 
             # elliptical arc
@@ -1342,7 +1357,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 group.scale(*values)
             elif op == "translate":
                 if isinstance(values, (int, float)):
-                    # From the SVG spec: If <ty> is not provided, it is assumed to be zero.
+                    # From the SVG spec: If <ty> is not provided, it is assumed to
+                    # be zero.
                     values = values, 0
                 group.translate(*values)
             elif op == "rotate":
@@ -1441,11 +1457,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             shape.fillColor.alpha = shape.fillOpacity
         if getattr(shape, "strokeWidth", None) == 0:
             # Quoting from the PDF 1.7 spec:
-            # A line width of 0 denotes the thinnest line that can be rendered at device
-            # resolution: 1 device pixel wide. However, some devices cannot reproduce 1-pixel
-            # lines, and on high-resolution devices, they are nearly invisible. Since the
-            # results of rendering such zero-width lines are device-dependent, their use
-            # is not recommended.
+            # A line width of 0 denotes the thinnest line that can be rendered at
+            # device resolution: 1 device pixel wide. However, some devices cannot
+            # reproduce 1-pixel lines, and on high-resolution devices, they are
+            # nearly invisible. Since the results of rendering such zero-width
+            # lines are device-dependent, their use is not recommended.
             shape.strokeColor = None
 
 
@@ -1584,8 +1600,8 @@ def monkeypatch_reportlab():
     ReportLab always use 'Even-Odd' filling mode for paths, this patch forces
     RL to honor the path fill rule mode (possibly 'Non-Zero Winding') instead.
     """
-    from reportlab.pdfgen.canvas import Canvas
     from reportlab.graphics import shapes
+    from reportlab.pdfgen.canvas import Canvas
 
     original_renderPath = shapes._renderPath
 

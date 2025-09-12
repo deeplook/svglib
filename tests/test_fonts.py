@@ -1,7 +1,8 @@
 import subprocess
 
 import pytest
-from reportlab.pdfbase.ttfonts import TTFOpenFile, TTFError
+from reportlab.pdfbase.ttfonts import TTFError, TTFOpenFile
+
 from svglib.fonts import (
     DEFAULT_FONT_NAME,
     STANDARD_FONT_NAMES,
@@ -138,7 +139,8 @@ def test_fontfamily_text():
         """
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
-          <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times-Roman';">
+          <text style="fill:#000000; stroke:none; font-size:28;
+                      font-family:'Times-Roman';">
             <tspan>TITLE    1</tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
           </text>
@@ -151,7 +153,8 @@ def test_fontfamily_text():
         """
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
-            <text style="fill:#000000; stroke:none; font-size:28;font-family:'Courier';">
+            <text style="fill:#000000; stroke:none; font-size:28;
+                        font-family:'Courier';">
             <tspan>TITLE    1</tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
@@ -244,8 +247,8 @@ def test_fontfamily_style_text():
         """
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
-          <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times New Roman';
-                       font-style:italic;">
+          <text style="fill:#000000; stroke:none; font-size:28;
+                       font-family:'Times New Roman'; font-style:italic;">
             <tspan>TITLE    1</tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
           </text>
@@ -258,8 +261,8 @@ def test_fontfamily_style_text():
         """
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
-            <text style="fill:#000000; stroke:none; font-size:28;font-family:'Courier New';
-                         font-style:Italic;">
+            <text style="fill:#000000; stroke:none; font-size:28;
+                         font-family:'Courier New'; font-style:Italic;">
             <tspan>TITLE    1</tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
@@ -273,7 +276,9 @@ def test_fontfamily_style_text():
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
             <text style="fill:#000000; stroke:none; font-size:28;">
-            <tspan style="font-family:'Courier New';font-style:italic;">TITLE    1</tspan>
+            <tspan style="font-family:'Courier New';font-style:italic;">
+                TITLE    1
+            </tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>
         </svg>
@@ -288,8 +293,9 @@ def test_fontfamily_weight_style_text():
         """
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
-          <text style="fill:#000000; stroke:none; font-size:28;font-family:'Times New Roman';
-                       font-style:italic;font-weight:bold;">
+          <text style="fill:#000000; stroke:none; font-size:28;
+                       font-family:'Times New Roman'; font-style:italic;
+                       font-weight:bold;">
             <tspan>TITLE    1</tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
           </text>
@@ -302,8 +308,9 @@ def test_fontfamily_weight_style_text():
         """
         <?xml version="1.0"?>
         <svg width="777" height="267" xml:space="preserve">
-            <text style="fill:#000000; stroke:none; font-size:28;font-family:'Courier New';
-                         font-style:Italic;font-weight:BOLD;">
+            <text style="fill:#000000; stroke:none; font-size:28;
+                         font-family:'Courier New'; font-style:Italic;
+                         font-weight:BOLD;">
             <tspan>TITLE    1</tspan>
             <tspan x="-10.761" y="33.487">Subtitle</tspan>
             </text>

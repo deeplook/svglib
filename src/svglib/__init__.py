@@ -7,7 +7,7 @@ import argparse
 import sys
 import textwrap
 from datetime import datetime
-from os.path import dirname, basename, splitext, exists
+from os.path import basename, dirname, exists, splitext
 
 from reportlab.graphics import renderPDF
 
@@ -88,9 +88,7 @@ def main():
             https://github.com/deeplook/svglib
 
         Copyleft by {author}, 2008-{copyleft_year} ({license}):
-            https://www.gnu.org/licenses/lgpl-3.0.html""".format(
-            **args
-        )
+            https://www.gnu.org/licenses/lgpl-3.0.html""".format(**args)
     )
     p = argparse.ArgumentParser(
         description=desc,

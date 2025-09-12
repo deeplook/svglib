@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Testsuite for svglib.
 
 This tests basic functionality. Run with one of these lines from
@@ -14,17 +12,18 @@ import pathlib
 import textwrap
 from tempfile import NamedTemporaryFile
 
+import pytest
 from reportlab.graphics.shapes import (
     _CLOSEPATH,
     _CURVETO,
     _LINETO,
     _MOVETO,
     Group,
+    Line,
     Path,
     Polygon,
     PolyLine,
     Rect,
-    Line,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
@@ -32,8 +31,6 @@ from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 from svglib import svglib, utils
 from tests.utils import drawing_from_svg, minimal_svg_node
-
-import pytest
 
 
 def _testit(func, mapping):
@@ -168,11 +165,14 @@ class TestPaths:
                 ],
             ),
             (
-                "m246.026 120.178c-.558-.295-1.186-.768-1.395-1.054-.314-.438-.132-.456 1.163-.104 "
-                "2.318.629 3.814.383 5.298-.873l1.308-1.103 1.54.784c.848.428 1.748.725 "
-                "2.008.656.667-.176 2.05-1.95 2.005-2.564-.054-.759.587-.568.896.264.615 1.631-.281 "
-                "3.502-1.865 3.918-.773.201-1.488.127-2.659-.281-1.438-.502-1.684-.494-2.405.058"
-                "-1.618 1.239-3.869 1.355-5.894.299z",
+                (
+                    "m246.026 120.178c-.558-.295-1.186-.768-1.395-1.054-.314-.438"
+                    "-.132-.456 1.163-.104 2.318.629 3.814.383 5.298-.873l1.308"
+                    "-1.103 1.54.784c.848.428 1.748.725 2.008.656.667-.176 2.05"
+                    "-1.95 2.005-2.564-.054-.759.587-.568.896.264.615 1.631-.281 "
+                    "3.502-1.865 3.918-.773.201-1.488.127-2.659-.281-1.438-.502"
+                    "-1.684-.494-2.405.058-1.618 1.239-3.869 1.355-5.894.299z"
+                ),
                 [
                     "m",
                     [246.026, 120.178],
@@ -260,8 +260,9 @@ class TestPaths:
     def test_elliptical_arc(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
-            '<path d="M334.500000 0.000000 A185.000000 185.000000 0 0 1 334.500000 0.000000 '
-            'L334.500000 185.000000 A0.000000 0.000000 0 0 0 334.500000 185.000000 z"/>'
+            '<path d="M334.500000 0.000000 A185.000000 185.000000 0 0 1 '
+            "334.500000 0.000000 L334.500000 185.000000 A0.000000 0.000000 0 0 0 "
+            '334.500000 185.000000 z"/>'
         )
         # First elliptical arc with identical start/end points, ignored
         path = converter.convertPath(node).contents[0]
@@ -300,8 +301,8 @@ class TestPaths:
                  xmlns:xlink="http://www.w3.org/1999/xlink" width="660" height="480">
                 <defs>
                     <path id="my-clipping-path" d="M99,176 L 110 170 112 172Z"/>
-                    <rect id="my-clipping-rect" x="88.155" y="163" width="419.69" height="20.68"
-                          fill="red" stroke="blue"/>
+                    <rect id="my-clipping-rect" x="88.155" y="163" width="419.69"
+                          height="20.68" fill="red" stroke="blue"/>
                 </defs>
                 <clipPath id="my-clip-path">
                     <use xlink:href="#my-clipping-path"/>
@@ -600,7 +601,8 @@ class TestStyleSheets:
               </defs>
               <g id="g1">
                 <path id="p1" class="paths" d="M 0,-100 V 0 H 50"/>
-                <path id="p2" class="paths other" style="fill: #000000" d="M 0,100 V 0 H 50"/>
+                <path id="p2" class="paths other" style="fill: #000000"
+                      d="M 0,100 V 0 H 50"/>
               </g>
             </svg>
         """
@@ -640,7 +642,9 @@ class TestStyleSheets:
             """
             <?xml version="1.0"?>
             <svg viewBox="0 0 649 487">
-              <style type="text/css">.bold1:nth-of-type(2n) { font-weight: bold; font-size: 1.1em; }</style>
+              <style type="text/css">
+.bold1:nth-of-type(2n) { font-weight: bold; font-size: 1.1em; }
+</style>
               <g>
                 <text class="bold1" x="324" y="304">A</text>
                 <text class="bold1" x="324" y="384">B</text>
@@ -669,6 +673,7 @@ class TestStyleSheets:
             </svg>
         """
         )
+        assert drawing is not None
 
 
 class TestGroupNode:
@@ -927,7 +932,7 @@ class TestPolylineNode:
     def test_length_zero(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
-            '<polyline fill="none" stroke="#000000" ' 'points="10,50,10,50" />'
+            '<polyline fill="none" stroke="#000000" points="10,50,10,50" />'
         )
         polyline = converter.convertPolyline(node)
         assert isinstance(polyline, PolyLine)
@@ -938,7 +943,7 @@ class TestPolylineNode:
     def test_odd_length(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
-            '<polyline fill="none" stroke="#000000" ' 'points="10,50,10,50,10" />'
+            '<polyline fill="none" stroke="#000000" points="10,50,10,50,10" />'
         )
         polyline = converter.convertPolyline(node)
         assert polyline is None
@@ -948,7 +953,7 @@ class TestPolygonNode:
     def test_length_zero(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
-            '<polygon fill="none" stroke="#000000" ' 'points="10,50,10,50" />'
+            '<polygon fill="none" stroke="#000000" points="10,50,10,50" />'
         )
         polygon = converter.convertPolygon(node)
         assert isinstance(polygon, Polygon)
@@ -959,7 +964,7 @@ class TestPolygonNode:
     def test_odd_length(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
-            '<polygon fill="none" stroke="#000000" ' 'points="10,50,10,50,10" />'
+            '<polygon fill="none" stroke="#000000" points="10,50,10,50,10" />'
         )
         polygon = converter.convertPolygon(node)
         assert polygon is None
@@ -1049,7 +1054,10 @@ class TestUseNode:
         assert (
             cgroup_node.contents[0].transform
             == cgroup_node.contents[1].contents[0].transform
-        ), "The transform of the original path is different from the transform of the reused path."
+        ), (
+            "The transform of the original path is different from the transform of "
+            "the reused path."
+        )
 
     def test_use_forward_reference(self):
         """
@@ -1215,7 +1223,8 @@ class TestEmbedded:
                    style="fill:#b8393d;stroke:#dfd8c3;stroke-width:0.75;" />
                 <text id="text8866" y="32" x="25"
                    style="font-size:10px;line-height:1.25;font-family:sans-serif;">
-                   <tspan x="25" y="31" style="stroke-width:0.2">Test 1,2,3</tspan></text>
+                   <tspan x="25" y="31" style="stroke-width:0.2">Test 1,2,3</tspan>
+                </text>
               </g>
               <g>
               <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
@@ -1248,7 +1257,8 @@ class TestEmbedded:
         drawing = drawing_from_svg(
             """
             <?xml version="1.0"?>
-            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="100" width="100">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="100"
+                 width="100">
                 <rect height="100%" width="100%" x="0" y="0" />
                 <svg height="15" width="15" x="45" y="45">
                     <rect fill="black" height="100%" width="100%" x="0" y="0" />
