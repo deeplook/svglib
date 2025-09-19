@@ -1,5 +1,5 @@
 name: Run Matrix Tests on Windows (Placeholder)
-# on: [push, pull_request, workflow_dispatch]
+on: [] # push, pull_request, workflow_dispatch (all disabled)
 jobs:
   tests:
     name: "Python Tests for Windows"
@@ -9,7 +9,6 @@ jobs:
     #     python-version: ["3.9", "3.10", "3.11", "pypy-3.9"]
     steps:
       - uses: "actions/checkout@v4"
-
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
