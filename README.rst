@@ -219,7 +219,7 @@ tool named ``svg2pdf`` in your ``bin`` directory, e.g. in
 ``/usr/local/bin``.
 
 Development and Testing
--------
+-----------------------
 
 To develop ``svglib``, install `uv`_ and run ``uv sync`` to install the
 requirements and development dependencies. To run the test suite with
@@ -228,7 +228,7 @@ requirements and development dependencies. To run the test suite with
 .. _uv: https://docs.astral.sh/uv/
 
 Distribution Testing
--------
+--------------------
 
 The ``svglib`` tarball distribution contains a PyTest_ test suite
 in the ``tests`` directory. There, in ``tests/README.rst``, you can
