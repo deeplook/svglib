@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       test_version:
-        description: 'Version to use for testing (e.g., 0.5.1.dev1)'
+        description: 'Version to use for testing (e.g., 1.6.0.dev1)'
         required: true
         type: string
 
