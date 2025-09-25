@@ -149,9 +149,6 @@ the system command-line. Here is the output from ``svg2pdf -h``::
     issues/pull requests:
         https://github.com/deeplook/svglib
 
-    Copyleft by Dinu Gherman, 2008-2021 (LGPL 3):
-        http://www.gnu.org/copyleft/gpl.html
-
 
 Dependencies
 ------------
@@ -235,19 +232,20 @@ in the ``tests`` directory. There, in ``tests/README.rst``, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line::
 
-    $ tar xfz svglib-<version>.tar.gz
-    $ cd svglib-<version>
-    $ PYTHONPATH=. py.test
-    ======================== test session starts =========================
-    platform darwin -- Python 3.7.3, pytest-5.0.1, py-1.8.0, pluggy-0.12.0
-    rootdir: /Users/dinu/repos/github/deeplook/svglib, inifile:
-    plugins: cov-2.4.0
-    collected 36 items
+    $ make test
+    ========================= test session starts =========================
+    platform darwin -- Python 3.9.6, pytest-8.4.2, pluggy-1.6.0
+    rootdir: /Users/dinu/dev/svglib
+    configfile: pyproject.toml
+    plugins: cov-7.0.0
+    collected 115 items
 
-    tests/test_basic.py ............................
-    tests/test_samples.py .s.s.s.s
+    tests/test_basic.py ............................................ [ 43%]
+    ..................                                               [ 53%]
+    tests/test_fonts.py ............s.....................s.....     [ 88%]
+    tests/test_samples.py .s.s.s.s.....                              [100%]
 
-    =============== 32 passed, 4 skipped in 49.18 seconds ================
+    ============== 109 passed, 6 skipped, 1 warning in 33.32s =============
 
 
 Bug reports

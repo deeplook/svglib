@@ -3,6 +3,15 @@
 ChangeLog
 =========
 
+1.6.0 (2025-09-25)
+------------------
+- Replace setup.py with pyproject.toml, rework GitHub workflows (#405).
+- Drop support for Python 3.8.
+- Modernize codebase, added type annotations, expanded docstrings, etc.
+- Add a Makefile.
+- Add publishing workflows.
+- Remove dunder constants and use importlib.metadata to get the version number.
+
 1.5.1 (2023-01-07)
 ------------------
 - Final fix to conversion from shorthand quadratic to cubic bézier (#372).

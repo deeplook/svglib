@@ -1,9 +1,10 @@
 """Testsuite for svglib.
 
-This tests basic functionality. Run with one of these lines from
+This module tests basic functionality. Run with one of these lines from
 inside the test directory:
 
-    py.test -v -s test_basic.py
+    $ make test
+    $ uv run pytest -v -s test_basic.py
 """
 
 import io
@@ -397,6 +398,7 @@ class TestLengthAttrConverter:
             ("10.5mm", 10.5 * (cm * 0.1)),
             ("3, 5 -7", [3, 5, -7]),
             ("2pt  12pt", [2, 12]),
+            ("10 20 30", [10.0, 20.0, 30.0]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLength, mapping)

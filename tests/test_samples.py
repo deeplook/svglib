@@ -1,10 +1,13 @@
 """Testsuite for svglib.
 
-This tests conversion of sample SVG files into PDF files.
+This module tests conversion of sample SVG files into PDF files.
 Some tests try using a tool called uniconv (if installed)
 to convert SVG files into PDF for comparision with svglib.
 
-Read ``tests/README.rst`` for more information on testing!
+Run with one of these lines from inside the test directory:
+
+    $ make test
+    $ uv run pytest -v -s test_samples.py
 """
 
 import glob

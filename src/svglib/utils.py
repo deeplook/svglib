@@ -1,5 +1,16 @@
-"""
-This is a collection of utilities used by the ``svglib`` code module.
+"""Utility functions for SVG processing and path manipulation.
+
+This module provides low-level utility functions used throughout the svglib
+package for processing SVG content. It includes functions for parsing SVG path
+data, converting between different curve representations, and handling
+geometric transformations.
+
+The module includes:
+- SVG path parsing and normalization
+- Bezier curve conversion utilities
+- Elliptical arc processing functions
+- Vector mathematics helpers
+- String parsing utilities for SVG attributes
 """
 
 import re
@@ -10,13 +21,31 @@ from reportlab.graphics.shapes import mmult, rotate, transformPoint, translate
 
 
 def split_floats(op: str, min_num: int, value: str) -> List[Union[str, List[float]]]:
-    """Split `value`, a list of numbers as a string, to a list of float numbers.
+    """Parse SVG coordinate string into alternating operators and coordinate lists.
 
-    Also optionally insert a `l` or `L` operation depending on the operation
-    and the length of values.
+    Splits a string of numeric values into groups and pairs each group with the
+    appropriate SVG path operation. Automatically converts 'M' to 'L' for subsequent
+    coordinate pairs to handle move-to followed by line-to sequences.
 
-    Example: with op='m' and value='10,20 30,40,' the returned value will be
-        ['m', [10.0, 20.0], 'l', [30.0, 40.0]]
+    Args:
+        op: SVG path operation character (e.g., 'M', 'L', 'm', 'l').
+        min_num: Minimum number of coordinates expected per operation.
+        value: String containing comma/whitespace-separated numeric values.
+
+    Returns:
+        List alternating between operation strings and coordinate lists.
+        Example: ['M', [10.0, 20.0], 'L', [30.0, 40.0]]
+
+    Examples:
+        >>> split_floats('M', 2, '10,20 30,40')
+        ['M', [10.0, 20.0], 'L', [30.0, 40.0]]
+
+        >>> split_floats('L', 2, '100 200')
+        ['L', [100.0, 200.0]]
+
+    Note:
+        Supports scientific notation (e.g., '1.23e-4') and handles various
+        whitespace and comma separators automatically.
     """
     floats = [
         float(seq)
@@ -32,6 +61,33 @@ def split_floats(op: str, min_num: int, value: str) -> List[Union[str, List[floa
 
 
 def split_arc_values(op: str, value: str) -> List[Union[str, List[float]]]:
+    """Parse SVG elliptical arc parameters into structured format.
+
+    Parses SVG arc command parameters which consist of: rx, ry, x-axis-rotation,
+    large-arc-flag, sweep-flag, x, y. Each complete parameter set is paired with
+    the operation character.
+
+    Args:
+        op: SVG arc operation character ('A' or 'a').
+        value: String containing arc parameters in the format:
+            "rx,ry x-axis-rotation large-arc-flag,sweep-flag x,y"
+
+    Returns:
+        List alternating between operation strings and parameter lists.
+        Each parameter list contains [rx, ry, x_axis_rotation, large_arc_flag,
+        sweep_flag, x, y] as floats.
+
+    Examples:
+        >>> split_arc_values('A', '50,50 0 1,0 100,100')
+        ['A', [50.0, 50.0, 0.0, 1.0, 0.0, 100.0, 100.0]]
+
+        >>> split_arc_values('a', '25 25 30 0 1 50 75')
+        ['a', [25.0, 25.0, 30.0, 0.0, 1.0, 50.0, 75.0]]
+
+    Note:
+        The large-arc-flag and sweep-flag are converted to float but should
+        be treated as boolean values (0 or 1).
+    """
     float_re = r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)"
     flag_re = r"([1|0])"
     # 3 numb, 2 flags, 1 coord pair
@@ -48,16 +104,34 @@ def split_arc_values(op: str, value: str) -> List[Union[str, List[float]]]:
 
 
 def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
-    """Normalise SVG path.
+    """Normalize SVG path data into structured format.
 
-    This basically introduces operator codes for multi-argument
-    parameters. Also, it fixes sequences of consecutive M or m
-    operators to MLLL... and mlll... operators. It adds an empty
-    list as argument for Z and z only in order to make the resul-
-    ting list easier to iterate over.
+    Parses raw SVG path string and converts it into a standardized list format
+    where each path command is paired with its coordinate parameters. Automatically
+    handles command sequences and converts implicit line commands after move commands.
 
-    E.g. "M 10 20, M 20 20, L 30 40, 40 40, Z"
-      -> ['M', [10, 20], 'L', [20, 20], 'L', [30, 40], 'L', [40, 40], 'Z', []]
+    Args:
+        attr: Raw SVG path string (e.g., "M 10 20 L 30 40 Z").
+
+    Returns:
+        Normalized list alternating between command strings and coordinate lists.
+        Close path commands ('Z', 'z') are paired with empty lists for consistency.
+
+    Examples:
+        >>> normalise_svg_path("M 10 20 L 30 40 Z")
+        ['M', [10.0, 20.0], 'L', [30.0, 40.0], 'Z', []]
+
+        >>> normalise_svg_path("M 0 0 L 10 0 10 10 Z")
+        ['M', [0.0, 0.0], 'L', [10.0, 0.0], 'L', [10.0, 10.0], 'Z', []]
+
+        >>> normalise_svg_path("m 100,200 300,400")
+        ['m', [100.0, 200.0], 'l', [300.0, 400.0]]
+
+    Note:
+        - Converts sequences of M/m commands to M/m followed by L/l commands
+        - Handles all SVG path commands: M, L, H, V, C, c, S, s, Q, q, T, t, A, a, Z, z
+        - Supports various whitespace and comma separators
+        - All coordinates are converted to float values
     """
 
     # operator codes mapped to the minimum number of expected arguments
@@ -118,8 +192,32 @@ def convert_quadratic_to_cubic_path(
 ) -> Tuple[
     Tuple[float, float], Tuple[float, float], Tuple[float, float], Tuple[float, float]
 ]:
-    """
-    Convert a quadratic Bezier curve through q0, q1, q2 to a cubic one.
+    """Convert quadratic Bezier curve to cubic Bezier curve.
+
+    Converts a quadratic Bezier curve defined by control points q0, q1, q2
+    into an equivalent cubic Bezier curve. This is useful for SVG processing
+    since cubic curves are more commonly supported than quadratic curves.
+
+    Args:
+        q0: Starting point as (x, y) tuple.
+        q1: Control point as (x, y) tuple.
+        q2: End point as (x, y) tuple.
+
+    Returns:
+        Tuple of four (x, y) points defining the equivalent cubic Bezier curve:
+        (start_point, control_point1, control_point2, end_point).
+
+    Examples:
+        >>> convert_quadratic_to_cubic_path((0, 0), (5, 10), (10, 0))
+        ((0, 0), (3.3333333333, 6.6666666666), (6.6666666666, 6.6666666666), (10, 0))
+
+        >>> # Simple case: straight line becomes straight line
+        >>> convert_quadratic_to_cubic_path((0, 0), (5, 5), (10, 10))
+        ((0, 0), (3.3333333333, 3.3333333333), (6.6666666666, 6.6666666666), (10, 10))
+
+    Note:
+        The conversion uses the standard formula where the cubic control points
+        are calculated as: c1 = q0 + (2/3)*(q1 - q0), c2 = c1 + (1/3)*(q2 - q0).
     """
     c0 = q0
     c1 = (q0[0] + 2 / 3 * (q1[0] - q0[0]), q0[1] + 2 / 3 * (q1[1] - q0[1]))
@@ -134,6 +232,36 @@ def convert_quadratic_to_cubic_path(
 
 
 def vector_angle(u: Tuple[float, float], v: Tuple[float, float]) -> float:
+    """Calculate the signed angle between two 2D vectors.
+
+    Computes the angle between vectors u and v using the atan2 method to
+    determine the correct quadrant and sign. Returns angle in degrees.
+
+    Args:
+        u: First vector as (x, y) tuple.
+        v: Second vector as (x, y) tuple.
+
+    Returns:
+        Signed angle in degrees between the vectors, ranging from -180 to 180.
+
+    Examples:
+        >>> vector_angle((1, 0), (0, 1))  # 90 degrees counterclockwise
+        90.0
+
+        >>> vector_angle((1, 0), (0, -1))  # 90 degrees clockwise
+        -90.0
+
+        >>> vector_angle((1, 0), (1, 0))  # Same direction
+        0.0
+
+        >>> vector_angle((1, 0), (-1, 0))  # Opposite direction
+        180.0
+
+    Note:
+        - Handles zero-length vectors by returning 0
+        - Uses numerical stability checks to avoid domain errors in acos
+        - Result is always in the range [-180, 180] degrees
+    """
     d = hypot(*u) * hypot(*v)
     if d == 0:
         return 0
@@ -157,9 +285,48 @@ def end_point_to_center_parameters(
     ry: float,
     phi: float = 0,
 ) -> Tuple[float, float, float, float, float, float]:
-    """
-    See http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes F.6.5
-    note that we reduce phi to zero outside this routine
+    """Convert SVG arc endpoint parameters to center-based representation.
+
+    Implements the algorithm from W3C SVG specification for converting
+    elliptical arc parameters from endpoint format to center format.
+    This is needed for proper arc rendering in ReportLab.
+
+    Args:
+        x1: X-coordinate of arc start point.
+        y1: Y-coordinate of arc start point.
+        x2: X-coordinate of arc end point.
+        y2: Y-coordinate of arc end point.
+        fA: Large arc flag (0 or 1).
+        fS: Sweep flag (0 or 1).
+        rx: Arc radius in X direction.
+        ry: Arc radius in Y direction.
+        phi: Rotation angle of the arc in degrees (default 0).
+
+    Returns:
+        Tuple of (cx, cy, rx, ry, start_angle, sweep_angle):
+        - cx, cy: Center point coordinates
+        - rx, ry: Adjusted radii (may be scaled up if too small)
+        - start_angle: Starting angle in degrees
+        - sweep_angle: Sweep angle in degrees
+
+    Raises:
+        This function handles all edge cases internally and doesn't raise exceptions.
+
+    Examples:
+        >>> end_point_to_center_parameters(0, 0, 10, 0, 0, 1, 5, 5)
+        (5.0, 0.0, 5.0, 5.0, 180.0, 180.0)
+
+        >>> # Degenerate case - identical points
+        >>> end_point_to_center_parameters(5, 5, 5, 5, 0, 0, 10, 10)
+        (5.0, 5.0, 10.0, 10.0, 0.0, 0.0)
+
+    See Also:
+        W3C SVG 1.1 Implementation Notes, Section F.6.5:
+        http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+
+    Note:
+        The rotation angle phi is reduced to zero by coordinate transformation
+        outside this function for simplicity.
     """
     rx = fabs(rx)
     ry = fabs(ry)
@@ -240,6 +407,50 @@ def end_point_to_center_parameters(
 def bezier_arc_from_centre(
     cx: float, cy: float, rx: float, ry: float, start_ang: float = 0, extent: float = 90
 ) -> List[Tuple[float, float, float, float, float, float, float, float]]:
+    """Convert elliptical arc to cubic Bezier curve segments.
+
+    Approximates an elliptical arc with cubic Bezier curves using the kappa
+    constant method. The arc is divided into segments of at most 90 degrees
+    each for accurate approximation.
+
+    Args:
+        cx: X-coordinate of ellipse center.
+        cy: Y-coordinate of ellipse center.
+        rx: Radius in X direction.
+        ry: Radius in Y direction.
+        start_ang: Starting angle in degrees (default 0).
+        extent: Angular extent in degrees (default 90).
+
+    Returns:
+        List of Bezier curve segments, each as an 8-tuple:
+        (x1, y1, x2, y2, x3, y3, x4, y4) where:
+        - (x1, y1): Start point
+        - (x2, y2): First control point
+        - (x3, y3): Second control point
+        - (x4, y4): End point
+
+    Examples:
+        >>> # Quarter circle (90 degrees)
+        >>> curves = bezier_arc_from_centre(0, 0, 10, 10, 0, 90)
+        >>> len(curves)  # One segment for 90 degrees
+        1
+
+        >>> # Half circle (180 degrees) - split into two 90-degree segments
+        >>> curves = bezier_arc_from_centre(0, 0, 10, 10, 0, 180)
+        >>> len(curves)
+        2
+
+        >>> # Full circle (360 degrees) - split into four 90-degree segments
+        >>> curves = bezier_arc_from_centre(0, 0, 10, 10, 0, 360)
+        >>> len(curves)
+        4
+
+    Note:
+        - Arcs are automatically subdivided into segments ≤ 90° for accuracy
+        - Uses the standard kappa = 4/3 * (1 - cos(θ/2)) / sin(θ/2) formula
+        - Handles both clockwise and counterclockwise arcs
+        - Returns empty list for zero-extent arcs
+    """
     if abs(extent) <= 90:
         nfrag = 1
         frag_angle = extent
@@ -294,6 +505,53 @@ def bezier_arc_from_end_points(
     x2: float,
     y2: float,
 ) -> List[Tuple[float, float, float, float, float, float, float, float]]:
+    """Convert SVG elliptical arc to cubic Bezier curve segments.
+
+    High-level function that converts SVG elliptical arc parameters (endpoint format)
+    to a series of cubic Bezier curves. Handles rotation, scaling, and all SVG arc
+    flags. This is the main entry point for arc-to-Bezier conversion in SVG processing.
+
+    Args:
+        x1: X-coordinate of arc start point.
+        y1: Y-coordinate of arc start point.
+        rx: Arc radius in X direction.
+        ry: Arc radius in Y direction.
+        phi: Rotation angle of the arc in degrees.
+        fA: Large arc flag (0 or 1) - chooses larger or smaller arc.
+        fS: Sweep flag (0 or 1) - chooses clockwise or counterclockwise.
+        x2: X-coordinate of arc end point.
+        y2: Y-coordinate of arc end point.
+
+    Returns:
+        List of Bezier curve segments, each as an 8-tuple:
+        (x1, y1, x2, y2, x3, y3, x4, y4) representing:
+        - (x1, y1): Start point of segment
+        - (x2, y2): First control point
+        - (x3, y3): Second control point
+        - (x4, y4): End point of segment
+
+    Examples:
+        >>> # Simple 180-degree arc
+        >>> curves = bezier_arc_from_end_points(0, 0, 10, 10, 0, 0, 1, 20, 0)
+        >>> len(curves)  # Split into segments
+        2
+
+        >>> # Degenerate case - identical points (returns empty list)
+        >>> curves = bezier_arc_from_end_points(10, 10, 5, 5, 0, 0, 0, 10, 10)
+        >>> len(curves)
+        0
+
+        >>> # Rotated ellipse arc
+        >>> curves = bezier_arc_from_end_points(0, 0, 10, 5, 45, 1, 0, 7, 7)
+        >>> len(curves)  # Will be split into multiple segments
+        2
+
+    Note:
+        - Returns empty list if start and end points are identical
+        - Automatically handles coordinate transformations for rotation
+        - Splits arcs into ≤90° segments for accurate Bezier approximation
+        - Follows W3C SVG 1.1 specification for arc parameter interpretation
+    """
     if x1 == x2 and y1 == y2:
         # From https://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes:
         # If the endpoints (x1, y1) and (x2, y2) are identical, then this is

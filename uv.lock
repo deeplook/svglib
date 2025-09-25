@@ -777,6 +777,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -785,16 +786,11 @@ dev = [
     { name = "tox" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "tox" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "cssselect2", specifier = ">=0.2.0" },
     { name = "lxml", specifier = ">=6.0.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18.1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.3.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
@@ -803,15 +799,9 @@ requires-dist = [
     { name = "rlpycairo", specifier = ">=0.4.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.13.0" },
     { name = "tinycss2", specifier = ">=0.6.0" },
-    { name = "tox", marker = "extra == 'dev'", specifier = ">=4.0.0" },
+    { name = "tox", marker = "extra == 'dev'", specifier = ">=4.30.2" },
 ]
 provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=1.18.1" },
-    { name = "tox", specifier = ">=4.30.2" },
-]
 
 [[package]]
 name = "tinycss2"

@@ -38,7 +38,7 @@ hooks:  ## Run all pre-commit hooks.
 	uv run pre-commit run --all-files
 
 .PHONY: all
-all: install lint hooks test ## Run all checks (install, lint, test).
+all: lint typecheck hooks test ## Run all checks (lint, typecheck, hookstest).
 
 .PHONY: dist
 dist: ## Build the package for distribution.

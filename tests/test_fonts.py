@@ -1,3 +1,12 @@
+"""Testsuite for svglib.
+
+This module tests font functionality. Run with one of these lines from
+inside the test directory:
+
+    $ make test
+    $ uv run pytest -v -s test_fonts.py
+"""
+
 import subprocess
 from typing import Any, Optional, Tuple
 
