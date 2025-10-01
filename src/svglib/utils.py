@@ -128,7 +128,6 @@ def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
         ['m', [100.0, 200.0], 'l', [300.0, 400.0]]
 
     Note:
-        - Converts sequences of M/m commands to M/m followed by L/l commands
         - Handles all SVG path commands: M, L, H, V, C, c, S, s, Q, q, T, t, A, a, Z, z
         - Supports various whitespace and comma separators
         - All coordinates are converted to float values
@@ -159,7 +158,6 @@ def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
     }
     op_keys = ops.keys()
 
-    # do some preprocessing
     result: List[Union[str, List[float]]] = []
     groups = re.split("([achlmqstvz])", attr.strip(), flags=re.I)
     op = ""
@@ -167,14 +165,7 @@ def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
         if item.strip() == "":
             continue
         if item in op_keys:
-            # fix sequences of M to one M plus a sequence of L operators,
-            # same for m and l.
-            if item == "M" and op == "M":
-                op = "L"
-            elif item == "m" and op == "m":
-                op = "l"
-            else:
-                op = item
+            op = item
             if ops[op] == 0:  # Z, z
                 result.extend([op, []])
         else:

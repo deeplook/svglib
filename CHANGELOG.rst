@@ -3,6 +3,11 @@
 ChangeLog
 =========
 
+Unreleased
+----------
+- Fixed a SVG path interpretation bug with two successive M or m commands
+  (#414).
+
 1.6.0 (2025-09-25)
 ------------------
 - Replace setup.py with pyproject.toml, rework GitHub workflows (#405).
