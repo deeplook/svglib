@@ -30,7 +30,7 @@ import shlex
 import shutil
 from collections import defaultdict, namedtuple
 from io import BytesIO
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple, Union
+from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
 
 from PIL import Image as PILImage
 from reportlab.graphics.shapes import (
@@ -1782,7 +1782,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
 def svg2rlg(
-    path: Union[str, os.PathLike[str], BinaryIO],
+    path: Union[str, os.PathLike[str], BinaryIO, TextIO],
     resolve_entities: bool = False,
     **kwargs: Any,
 ) -> Optional[Drawing]:
