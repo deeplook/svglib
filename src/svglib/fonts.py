@@ -178,19 +178,28 @@ class FontMap:
         """
         NOT_FOUND = (None, False)
         # Searching with Fontconfig
+        font_name_expr = font_name
+        if weight != "normal":
+            font_name_expr = f"{font_name_expr}:{weight}"
+        if style != "normal":
+            font_name_expr = f"{font_name_expr}:{style}"
+        if font_name_expr != font_name and font_name not in self._map:
+            # Ensure the "normal" version of the font is registered first
+            self.use_fontconfig(font_name)
         try:
             pipe = subprocess.Popen(
-                ["fc-match", "-s", "--format=%{file}\\n", font_name],
+                ["fc-match", "-s", "--format=%{file}\\n", font_name_expr],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
             output = pipe.communicate()[0].decode(sys.getfilesystemencoding())
         except OSError:
             return NOT_FOUND
+        internal_name = FontMap.build_internal_name(font_name, weight, style)
         font_paths = output.split("\n")
         for font_path in font_paths:
             try:
-                registerFont(TTFont(font_name, font_path))
+                registerFont(TTFont(internal_name, font_path))
             except TTFError:
                 continue
             else:
@@ -200,12 +209,11 @@ class FontMap:
             return NOT_FOUND
         # Fontconfig may return a default font totally unrelated with font_name
         exact = font_name.lower() in os.path.basename(success_font_path).lower()
-        internal_name = FontMap.build_internal_name(font_name, weight, style)
         self._map[internal_name] = {
             "svg_family": font_name,
             "svg_weight": weight,
             "svg_style": style,
-            "rlgFont": font_name,
+            "rlgFont": internal_name,
             "exact": exact,
         }
         return font_name, exact
