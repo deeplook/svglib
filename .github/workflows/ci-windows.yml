@@ -45,7 +45,7 @@ jobs:
           path: "tests/samples/W3C_SVG_12_TinyTestSuite"
           key: "w3c-svg12-tinytestsuite-windows-${{ steps.week.outputs.week }}"
       - name: "Install dependencies"
-        run: uv pip install -e .[dev]
+        run: uv pip install -e . --group dev
 
       - name: "Run tests for 3.9"
         run: uv run pytest

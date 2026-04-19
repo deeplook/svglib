@@ -58,16 +58,10 @@ svg2pdf = "svglib:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[project.optional-dependencies]
-dev = [
-    "mypy>=1.18.1",
-    "pre-commit>=4.3.0",
-    "pytest>=8.3.5",
-    "pytest-cov>=7.0.0",
-    "pytest-runner>=6.0.1",
-    "ruff>=0.13.0",
-    "tox>=4.30.2",
-]
+[dependency-groups]
+test = ["pytest>=8.3.5", "pytest-cov>=7.0.0", "pytest-runner>=6.0.1", "tox>=4.30.2"]
+lint = ["mypy>=1.18.1", "ruff>=0.13.0"]
+dev = [{include-group = "test"}, {include-group = "lint"}, "pre-commit>=4.3.0"]
 
 [tool.ruff]
 line-length = 88
