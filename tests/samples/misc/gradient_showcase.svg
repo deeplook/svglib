@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  gradient_showcase.svg — exercises linearGradient and radialGradient on
+  a variety of shapes: rect, circle, ellipse, polygon, polyline, path,
+  and multi-stop / inherited / userSpaceOnUse / semi-transparent variants.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="600" height="900"
+     viewBox="0 0 600 900">
+
+  <defs>
+
+    <!-- ── Linear gradients ── -->
+
+    <!-- Horizontal: three stops -->
+    <linearGradient id="g-horiz" x1="0" y1="0" x2="1" y2="0"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0"   stop-color="#e74c3c"/>
+      <stop offset="0.5" stop-color="#f39c12"/>
+      <stop offset="1"   stop-color="#2ecc71"/>
+    </linearGradient>
+
+    <!-- Vertical: dark-to-sky -->
+    <linearGradient id="g-vert" x1="0" y1="0" x2="0" y2="1"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#2c3e50"/>
+      <stop offset="1" stop-color="#3498db"/>
+    </linearGradient>
+
+    <!-- Diagonal: purple-to-gold -->
+    <linearGradient id="g-diag" x1="0" y1="0" x2="1" y2="1"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#8e44ad"/>
+      <stop offset="1" stop-color="#f1c40f"/>
+    </linearGradient>
+
+    <!-- userSpaceOnUse: absolute canvas coordinates -->
+    <linearGradient id="g-userspace"
+                    x1="30" y1="0" x2="270" y2="0"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1abc9c"/>
+      <stop offset="1" stop-color="#c0392b"/>
+    </linearGradient>
+
+    <!-- Base gradient — stops only, no geometry (used via href) -->
+    <linearGradient id="g-base-stops">
+      <stop offset="0"   stop-color="#e74c3c"/>
+      <stop offset="0.5" stop-color="#f39c12"/>
+      <stop offset="1"   stop-color="#2ecc71"/>
+    </linearGradient>
+
+    <!-- Inherited: same stops as g-base-stops, but applied vertically -->
+    <linearGradient id="g-inherited" xlink:href="#g-base-stops"
+                    x1="0" y1="0" x2="0" y2="1"
+                    gradientUnits="objectBoundingBox"/>
+
+    <!-- Four-stop rainbow -->
+    <linearGradient id="g-rainbow" x1="0" y1="0" x2="1" y2="0"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0"    stop-color="#e74c3c"/>
+      <stop offset="0.33" stop-color="#f1c40f"/>
+      <stop offset="0.67" stop-color="#2980b9"/>
+      <stop offset="1"    stop-color="#8e44ad"/>
+    </linearGradient>
+
+    <!-- ── Radial gradients ── -->
+
+    <!-- Centred: white core, red rim -->
+    <radialGradient id="g-radial-center" cx="0.5" cy="0.5" r="0.5"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="white"/>
+      <stop offset="1" stop-color="#e74c3c"/>
+    </radialGradient>
+
+    <!-- Off-centre focal point: glossy sphere look -->
+    <radialGradient id="g-radial-offcenter" cx="0.35" cy="0.35" r="0.6"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0"   stop-color="white"   stop-opacity="1"/>
+      <stop offset="0.4" stop-color="#3498db" stop-opacity="1"/>
+      <stop offset="1"   stop-color="#1a252f" stop-opacity="1"/>
+    </radialGradient>
+
+    <!-- Glass-button: semi-transparent -->
+    <radialGradient id="g-glass" cx="0.4" cy="0.3" r="0.55"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0"   stop-color="white"   stop-opacity="0.85"/>
+      <stop offset="0.5" stop-color="#2980b9" stop-opacity="0.5"/>
+      <stop offset="1"   stop-color="#1a252f" stop-opacity="0.9"/>
+    </radialGradient>
+
+    <!-- Golden sun burst -->
+    <radialGradient id="g-sun" cx="0.5" cy="0.5" r="0.5"
+                    gradientUnits="objectBoundingBox">
+      <stop offset="0"   stop-color="#fff176"/>
+      <stop offset="0.5" stop-color="#f39c12"/>
+      <stop offset="1"   stop-color="#e74c3c" stop-opacity="0"/>
+    </radialGradient>
+
+  </defs>
+
+  <!-- ════════════════════════════════════════════
+       Section label helper
+       ════════════════════════════════════════════ -->
+
+  <rect x="0" y="0" width="600" height="900" fill="#f8f8f8"/>
+
+  <!-- ── Row 1: rect shapes ── -->
+  <text x="16" y="22" font-size="11" fill="#555" font-family="Helvetica">
+    Rects
+  </text>
+
+  <!-- Horizontal -->
+  <rect x="16"  y="30" width="170" height="60"
+        fill="url(#g-horiz)" stroke="#333" stroke-width="1"/>
+  <text x="16"  y="102" font-size="9" fill="#666" font-family="Helvetica">horizontal 3-stop</text>
+
+  <!-- Vertical -->
+  <rect x="214" y="30" width="170" height="60"
+        fill="url(#g-vert)" stroke="#333" stroke-width="1"/>
+  <text x="214" y="102" font-size="9" fill="#666" font-family="Helvetica">vertical</text>
+
+  <!-- Diagonal -->
+  <rect x="412" y="30" width="170" height="60"
+        fill="url(#g-diag)" stroke="#333" stroke-width="1"/>
+  <text x="412" y="102" font-size="9" fill="#666" font-family="Helvetica">diagonal</text>
+
+  <!-- ── Row 2: more rects ── -->
+  <rect x="16"  y="112" width="170" height="60"
+        fill="url(#g-rainbow)" stroke="#333" stroke-width="1"/>
+  <text x="16"  y="184" font-size="9" fill="#666" font-family="Helvetica">4-stop rainbow</text>
+
+  <rect x="214" y="112" width="170" height="60"
+        fill="url(#g-inherited)" stroke="#333" stroke-width="1"/>
+  <text x="214" y="184" font-size="9" fill="#666" font-family="Helvetica">inherited (vertical via xlink:href)</text>
+
+  <rect x="412" y="112" width="170" height="60"
+        fill="url(#g-userspace)" stroke="#333" stroke-width="1"/>
+  <text x="412" y="184" font-size="9" fill="#666" font-family="Helvetica">userSpaceOnUse</text>
+
+  <!-- ── Row 3: rounded rects ── -->
+  <text x="16" y="200" font-size="11" fill="#555" font-family="Helvetica">
+    Rounded rects
+  </text>
+
+  <rect x="16"  y="208" width="170" height="60" rx="20" ry="20"
+        fill="url(#g-horiz)" stroke="#333" stroke-width="1"/>
+  <text x="16"  y="280" font-size="9" fill="#666" font-family="Helvetica">horizontal</text>
+
+  <rect x="214" y="208" width="170" height="60" rx="30" ry="15"
+        fill="url(#g-vert)" stroke="#333" stroke-width="1"/>
+  <text x="214" y="280" font-size="9" fill="#666" font-family="Helvetica">vertical</text>
+
+  <rect x="412" y="208" width="170" height="60" rx="20" ry="20"
+        fill="url(#g-radial-center)" stroke="#333" stroke-width="1"/>
+  <text x="412" y="280" font-size="9" fill="#666" font-family="Helvetica">radial centred</text>
+
+  <!-- ── Row 4: circles and ellipses ── -->
+  <text x="16" y="296" font-size="11" fill="#555" font-family="Helvetica">
+    Circles &amp; ellipses
+  </text>
+
+  <circle cx="101" cy="345" r="45"
+          fill="url(#g-radial-center)" stroke="#888" stroke-width="1"/>
+  <text x="16"  y="402" font-size="9" fill="#666" font-family="Helvetica">radial centred</text>
+
+  <circle cx="299" cy="345" r="45"
+          fill="url(#g-radial-offcenter)" stroke="#555" stroke-width="1"/>
+  <text x="214" y="402" font-size="9" fill="#666" font-family="Helvetica">off-centre radial</text>
+
+  <circle cx="497" cy="345" r="45"
+          fill="url(#g-glass)" stroke="#2c3e50" stroke-width="1"/>
+  <text x="412" y="402" font-size="9" fill="#666" font-family="Helvetica">glass radial (semi-transparent)</text>
+
+  <ellipse cx="101" cy="448" rx="85" ry="38"
+           fill="url(#g-horiz)" stroke="#333" stroke-width="1"/>
+  <text x="16"  y="496" font-size="9" fill="#666" font-family="Helvetica">ellipse / horizontal</text>
+
+  <ellipse cx="299" cy="448" rx="85" ry="38"
+           fill="url(#g-glass)" stroke="#2c3e50" stroke-width="2"/>
+  <text x="214" y="496" font-size="9" fill="#666" font-family="Helvetica">ellipse / glass radial</text>
+
+  <ellipse cx="497" cy="448" rx="85" ry="38"
+           fill="url(#g-sun)" stroke="#e67e22" stroke-width="1"/>
+  <text x="412" y="496" font-size="9" fill="#666" font-family="Helvetica">ellipse / sun burst (fade-out)</text>
+
+  <!-- ── Row 5: polygons ── -->
+  <text x="16" y="512" font-size="11" fill="#555" font-family="Helvetica">
+    Polygons
+  </text>
+
+  <!-- Triangle -->
+  <polygon points="101,520 16,660 186,660"
+           fill="url(#g-vert)" stroke="#2c3e50" stroke-width="2"/>
+  <text x="16"  y="674" font-size="9" fill="#666" font-family="Helvetica">triangle / vertical</text>
+
+  <!-- Pentagon -->
+  <polygon points="299,520 370,575 344,660 254,660 228,575"
+           fill="url(#g-diag)" stroke="#8e44ad" stroke-width="2"/>
+  <text x="214" y="674" font-size="9" fill="#666" font-family="Helvetica">pentagon / diagonal</text>
+
+  <!-- Star (6 points) -->
+  <polygon points="497,520 514,568 565,568 524,597 540,645 497,618 454,645 470,597 429,568 480,568"
+           fill="url(#g-radial-offcenter)" stroke="#1a252f" stroke-width="1.5"/>
+  <text x="412" y="674" font-size="9" fill="#666" font-family="Helvetica">star / off-centre radial</text>
+
+  <!-- ── Row 6: paths ── -->
+  <text x="16" y="690" font-size="11" fill="#555" font-family="Helvetica">
+    Paths
+  </text>
+
+  <!-- Curved closed path (leaf) -->
+  <path d="M101,700 C140,690 186,730 186,760 C186,790 140,830 101,820
+           C62,830 16,790 16,760 C16,730 62,690 101,700 Z"
+        fill="url(#g-sun)" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="16"  y="844" font-size="9" fill="#666" font-family="Helvetica">closed path (leaf) / sun burst</text>
+
+  <!-- Right-angle triangle via path -->
+  <path d="M214,700 L384,700 L384,840 Z"
+        fill="url(#g-rainbow)" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="214" y="856" font-size="9" fill="#666" font-family="Helvetica">path triangle / rainbow</text>
+
+  <!-- Arrow shape -->
+  <path d="M412,760 L480,700 L480,730 L582,730 L582,790 L480,790 L480,820 Z"
+        fill="url(#g-horiz)" stroke="#e74c3c" stroke-width="1.5"/>
+  <text x="412" y="844" font-size="9" fill="#666" font-family="Helvetica">arrow path / horizontal</text>
+
+</svg>
