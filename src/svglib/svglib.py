@@ -2205,13 +2205,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(*svgAttrValues))
                 except (AttributeError, KeyError, ValueError):
+                    exc_type = sys.exc_info()[0].__name__
                     logger.debug(
-                        "applyStyleOnShape setattr({},{!r},{}(*{!r})) caused {} exception".format(
+                        "applyStyleOnShape setattr({},{!r},{}(*{!r}))"
+                        " caused {} exception".format(
                             shape.__class__.__name__,
                             rlgAttr,
                             meth.__name__,
                             svgAttrValues,
-                            sys.exc_info()[0].__name__,
+                            exc_type,
                         )
                     )
         if getattr(shape, "fillOpacity", None) is not None and shape.fillColor:
