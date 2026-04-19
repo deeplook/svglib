@@ -1132,6 +1132,74 @@ class TestUseNode:
         assert use_group.contents[0].getProperties()["strokeColor"] is None
 
 
+class TestSwitchNode:
+    @staticmethod
+    def _find_rects(shape):
+        from reportlab.graphics.shapes import Rect
+
+        results = []
+        if isinstance(shape, Rect):
+            results.append(shape)
+        if hasattr(shape, "contents"):
+            for item in shape.contents:
+                results.extend(TestSwitchNode._find_rects(item))
+        return results
+
+    def test_switch_skips_unsupported_extension(self):
+        """<switch> skips children with requiredExtensions and renders the fallback."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <switch>
+                    <rect requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/"
+                          width="100" height="100" fill="red"/>
+                    <rect width="50" height="50" fill="blue"/>
+                </switch>
+            </svg>
+        """
+        )
+        rects = self._find_rects(drawing)
+        assert len(rects) == 1
+        assert rects[0].fillColor.hexval() == "0x0000ff"
+
+    def test_switch_skips_unsupported_feature(self):
+        """<switch> must skip children with unsupported requiredFeatures."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <switch>
+                    <rect requiredFeatures="http://www.w3.org/TR/SVG11/feature#Animation"
+                          width="100" height="100" fill="red"/>
+                    <rect width="50" height="50" fill="green"/>
+                </switch>
+            </svg>
+        """
+        )
+        rects = self._find_rects(drawing)
+        assert len(rects) == 1
+        assert rects[0].fillColor.hexval() == "0x008000"
+
+    def test_switch_renders_supported_feature(self):
+        """<switch> renders the first child whose requiredFeatures are all supported."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <switch>
+                    <rect requiredFeatures="http://www.w3.org/TR/SVG11/feature#Shape"
+                          width="100" height="100" fill="blue"/>
+                    <rect width="50" height="50" fill="red"/>
+                </switch>
+            </svg>
+        """
+        )
+        rects = self._find_rects(drawing)
+        assert len(rects) == 1
+        assert rects[0].fillColor.hexval() == "0x0000ff"
+
+
 class TestSymbolNode:
     def test_symbol_unused(self):
         """<symbol> by itself should not be rendered."""
