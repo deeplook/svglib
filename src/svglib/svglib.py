@@ -777,7 +777,9 @@ def _shape_to_pdf_path(canvas, shape):
             pdfPath.lineTo(x, y2)
             pdfPath.close()
         except Exception:
-            pass
+            logger.debug(
+                "Cannot compute bounding box for clip path fallback", exc_info=True
+            )
     return pdfPath
 
 
@@ -1136,6 +1138,7 @@ class SvgRenderer:
             try:
                 bx0, by0, bx1, by1 = clip_shape.getBounds()
             except Exception:
+                logger.debug("Cannot compute bounding box for gradient", exc_info=True)
                 return item
             bbox_w = bx1 - bx0
             bbox_h = by1 - by0
