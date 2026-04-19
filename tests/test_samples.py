@@ -13,6 +13,7 @@ Run with one of these lines from inside the test directory:
 import glob
 import gzip
 import io
+import time
 import json
 import os
 import re
@@ -44,50 +45,61 @@ def fetch_file(
     mime_accept: str = "text/svg",
     uncompress: bool = True,
     raise_exc: bool = False,
+    retries: int = 5,
 ) -> Any:
     """
     Get given URL content using http.client module, uncompress if needed and
-    `uncompress` is True.
+    `uncompress` is True. Retries with exponential backoff on 429 responses.
     """
 
     parsed = urlparse(url)
-    conn = HTTPSConnection(parsed.netloc)
-    conn.request(
-        "GET",
-        parsed.path,
-        headers={
-            "Host": parsed.netloc,
-            "Accept": mime_accept,
-            "User-Agent": "Python/http.client",
-        },
-    )
-    response = conn.getresponse()
-    if (response.status, response.reason) == (200, "OK"):
-        data: Any = response.read()
-        content_type = response.getheader("content-type")
-        if (
-            uncompress
-            and (
-                response.getheader("content-encoding") == "gzip"
-                or (content_type is not None and "gzip" in content_type)
-            )
-            and data[:2] == b"\x1f\x8b"
-        ):
-            with gzip.open(io.BytesIO(data), mode="rb") as zfile:
-                data = zfile.read()
-        if "text" in mime_accept:
-            data = data.decode("utf-8")
-    else:
-        if raise_exc:
+    for attempt in range(retries):
+        conn = HTTPSConnection(parsed.netloc)
+        conn.request(
+            "GET",
+            parsed.path,
+            headers={
+                "Host": parsed.netloc,
+                "Accept": mime_accept,
+                "User-Agent": "Python/http.client",
+            },
+        )
+        response = conn.getresponse()
+        if response.status == 429:
+            wait = 2 ** attempt
+            print(f"rate limited, retrying in {wait}s (attempt {attempt + 1}/{retries})")
             conn.close()
-            raise Exception(
-                f"Unable to fetch file {url}, got {response.status} response "
-                f"({response.reason})"
-            )
-        data = None
-    conn.close()
+            time.sleep(wait)
+            continue
+        if (response.status, response.reason) == (200, "OK"):
+            data: Any = response.read()
+            content_type = response.getheader("content-type")
+            if (
+                uncompress
+                and (
+                    response.getheader("content-encoding") == "gzip"
+                    or (content_type is not None and "gzip" in content_type)
+                )
+                and data[:2] == b"\x1f\x8b"
+            ):
+                with gzip.open(io.BytesIO(data), mode="rb") as zfile:
+                    data = zfile.read()
+            if "text" in mime_accept:
+                data = data.decode("utf-8")
+        else:
+            if raise_exc:
+                conn.close()
+                raise Exception(
+                    f"Unable to fetch file {url}, got {response.status} response "
+                    f"({response.reason})"
+                )
+            data = None
+        conn.close()
+        return data
 
-    return data
+    if raise_exc:
+        raise Exception(f"Unable to fetch file {url}: rate limited after {retries} retries")
+    return None
 
 
 class TestSVGSamples:
