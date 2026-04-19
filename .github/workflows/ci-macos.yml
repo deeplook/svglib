@@ -1,5 +1,10 @@
 name: Run Matrix Tests on MacOS
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"  # Every Monday at 06:00 UTC
 jobs:
   tests:
     name: "Python ${{ matrix.python-version }} on MacOs"
