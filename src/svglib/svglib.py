@@ -36,6 +36,7 @@ from PIL import Image as PILImage
 from reportlab.graphics.shapes import (
     _CLOSEPATH,
     Circle,
+    DirectDraw,
     Drawing,
     Ellipse,
     Group,
@@ -47,6 +48,7 @@ from reportlab.graphics.shapes import (
     Rect,
     SolidShape,
     String,
+    _renderPath,
 )
 from reportlab.lib import colors
 from reportlab.lib.units import pica, toLength
@@ -526,6 +528,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if not text or text == "none":
             return None
 
+        # Gradient/pattern references are handled at the renderer level.
+        if text.startswith("url("):
+            return None
+
         if text == "currentColor":
             return "currentColor"
         if len(text) in (7, 9) and text[0] == "#":
@@ -687,6 +693,160 @@ class ExternalSVG:
         return self.renderer.definitions.get(fragment)
 
 
+_BEZIER_KAPPA = 0.5523  # cubic bezier constant for circle approximation
+
+_GRADIENT_URL_RE = re.compile(r"url\(#([^)]+)\)")
+
+
+def _shape_to_pdf_path(canvas, shape):
+    """Convert a ReportLab shape to a PDFPathObject for use as a clip path.
+
+    Handles Path, Rect, Circle, Ellipse, and Polygon; falls back to the
+    shape's bounding box for other types.
+    """
+    pdfPath = canvas.beginPath()
+    if isinstance(shape, Path):
+        draw_funcs = (pdfPath.moveTo, pdfPath.lineTo, pdfPath.curveTo, pdfPath.close)
+        _renderPath(shape, draw_funcs)
+    elif isinstance(shape, Rect):
+        x, y, x2, y2 = shape.getBounds()
+        w, h = x2 - x, y2 - y
+        rx = min(getattr(shape, "rx", 0) or 0, w / 2)
+        ry = min(getattr(shape, "ry", 0) or 0, h / 2)
+        k = _BEZIER_KAPPA
+        if rx or ry:
+            pdfPath.moveTo(x + rx, y)
+            pdfPath.lineTo(x + w - rx, y)
+            pdfPath.curveTo(
+                x + w - rx + rx * k, y, x + w, y + ry - ry * k, x + w, y + ry
+            )
+            pdfPath.lineTo(x + w, y + h - ry)
+            pdfPath.curveTo(
+                x + w,
+                y + h - ry + ry * k,
+                x + w - rx + rx * k,
+                y + h,
+                x + w - rx,
+                y + h,
+            )
+            pdfPath.lineTo(x + rx, y + h)
+            pdfPath.curveTo(
+                x + rx - rx * k, y + h, x, y + h - ry + ry * k, x, y + h - ry
+            )
+            pdfPath.lineTo(x, y + ry)
+            pdfPath.curveTo(x, y + ry - ry * k, x + rx - rx * k, y, x + rx, y)
+            pdfPath.close()
+        else:
+            pdfPath.moveTo(x, y)
+            pdfPath.lineTo(x + w, y)
+            pdfPath.lineTo(x + w, y + h)
+            pdfPath.lineTo(x, y + h)
+            pdfPath.close()
+    elif isinstance(shape, Circle):
+        cx, cy, r = shape.cx, shape.cy, shape.r
+        k = _BEZIER_KAPPA
+        pdfPath.moveTo(cx + r, cy)
+        pdfPath.curveTo(cx + r, cy + r * k, cx + r * k, cy + r, cx, cy + r)
+        pdfPath.curveTo(cx - r * k, cy + r, cx - r, cy + r * k, cx - r, cy)
+        pdfPath.curveTo(cx - r, cy - r * k, cx - r * k, cy - r, cx, cy - r)
+        pdfPath.curveTo(cx + r * k, cy - r, cx + r, cy - r * k, cx + r, cy)
+        pdfPath.close()
+    elif isinstance(shape, Ellipse):
+        cx, cy = shape.cx, shape.cy
+        rx, ry = shape.rx, shape.ry
+        k = _BEZIER_KAPPA
+        pdfPath.moveTo(cx + rx, cy)
+        pdfPath.curveTo(cx + rx, cy + ry * k, cx + rx * k, cy + ry, cx, cy + ry)
+        pdfPath.curveTo(cx - rx * k, cy + ry, cx - rx, cy + ry * k, cx - rx, cy)
+        pdfPath.curveTo(cx - rx, cy - ry * k, cx - rx * k, cy - ry, cx, cy - ry)
+        pdfPath.curveTo(cx + rx * k, cy - ry, cx + rx, cy - ry * k, cx + rx, cy)
+        pdfPath.close()
+    elif isinstance(shape, Polygon):
+        pts = shape.points
+        if len(pts) >= 2:
+            pdfPath.moveTo(pts[0], pts[1])
+            for i in range(2, len(pts) - 1, 2):
+                pdfPath.lineTo(pts[i], pts[i + 1])
+            pdfPath.close()
+    else:
+        try:
+            x, y, x2, y2 = shape.getBounds()
+            pdfPath.moveTo(x, y)
+            pdfPath.lineTo(x2, y)
+            pdfPath.lineTo(x2, y2)
+            pdfPath.lineTo(x, y2)
+            pdfPath.close()
+        except Exception:
+            pass
+    return pdfPath
+
+
+def _find_clip_shape(item):
+    """Return the first Path/Rect/Circle/Ellipse/Polygon found in item or its group."""
+    if isinstance(item, (Path, Rect, Circle, Ellipse, Polygon)):
+        return item
+    if isinstance(item, Group):
+        for child in item.contents:
+            found = _find_clip_shape(child)
+            if found is not None:
+                return found
+    return None
+
+
+class _LinearGradientShape(DirectDraw):
+    """Fills a clipped region with a linear gradient via PDF shading."""
+
+    def __init__(self, clip_shape, x0, y0, x1, y1, rl_colors, positions, extend=True):
+        self._clip_shape = clip_shape
+        self._x0, self._y0 = x0, y0
+        self._x1, self._y1 = x1, y1
+        self._rl_colors = rl_colors
+        self._positions = positions
+        self._extend = extend
+
+    def drawDirectly(self, renderer):
+        canvas = renderer._canvas
+        canvas.saveState()
+        pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
+        canvas.clipPath(pdfPath, fill=1, stroke=0)
+        canvas.linearGradient(
+            self._x0,
+            self._y0,
+            self._x1,
+            self._y1,
+            self._rl_colors,
+            self._positions,
+            self._extend,
+        )
+        canvas.restoreState()
+
+
+class _RadialGradientShape(DirectDraw):
+    """Fills a clipped region with a radial gradient via PDF shading."""
+
+    def __init__(self, clip_shape, cx, cy, r, rl_colors, positions, extend=True):
+        self._clip_shape = clip_shape
+        self._cx, self._cy, self._r = cx, cy, r
+        self._rl_colors = rl_colors
+        self._positions = positions
+        self._extend = extend
+
+    def drawDirectly(self, renderer):
+        canvas = renderer._canvas
+        canvas.saveState()
+        pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
+        canvas.clipPath(pdfPath, fill=1, stroke=0)
+        canvas.radialGradient(
+            self._cx,
+            self._cy,
+            self._r,
+            self._rl_colors,
+            self._positions,
+            self._extend,
+        )
+        canvas.restoreState()
+
+
 # ## the main meat ###
 
 
@@ -712,6 +872,7 @@ class SvgRenderer:
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions: Dict[str, Any] = {}
+        self.gradient_defs: Dict[str, dict] = {}
         self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Any]]]] = (
             defaultdict(list)
         )
@@ -788,6 +949,9 @@ class SvgRenderer:
             parent.add(item)
         elif name == "clipPath":
             item = self.renderG(node)
+        elif name in ("linearGradient", "radialGradient"):
+            self.renderGradient(node)
+            ignored = True
         elif name in self.handled_shapes:
             if name == "image":
                 # We resolve the image target at renderer level because it can point
@@ -810,6 +974,13 @@ class SvgRenderer:
             item = self.shape_converter.convertShape(name, node, clipping)
             display = node.getAttribute("display")
             if item and display != "none":
+                fill_val = self.attrConverter.findAttr(node, "fill")
+                m = _GRADIENT_URL_RE.fullmatch(fill_val.strip()) if fill_val else None
+                if m:
+                    grad_id = m.group(1)
+                    grad_def = self._resolve_gradient(grad_id)
+                    if grad_def is not None:
+                        item = self._apply_gradient_fill(item, grad_def)
                 parent.add(item)
         else:
             ignored = True
@@ -833,6 +1004,171 @@ class SvgRenderer:
                 for use_node, group in to_render:
                     self.renderUse(use_node, group=group)
             self.print_unused_attributes(node)
+
+    def renderGradient(self, node: NodeTracker) -> None:
+        """Parse a <linearGradient> or <radialGradient> element and store it."""
+        grad_id = node.attrib.get("id")
+        if not grad_id:
+            return
+        grad_type = node_name(node)  # "linearGradient" or "radialGradient"
+
+        def _float_attr(attr, default):
+            raw = node.attrib.get(attr, "").strip()
+            if raw.endswith("%"):
+                try:
+                    return float(raw[:-1]) / 100.0
+                except ValueError:
+                    return default
+            try:
+                return float(raw) if raw else default
+            except ValueError:
+                return default
+
+        href = node.attrib.get("{http://www.w3.org/1999/xlink}href") or node.attrib.get(
+            "href", ""
+        )
+        href_id = href.lstrip("#") if href.startswith("#") else None
+
+        grad_units = node.attrib.get("gradientUnits", "objectBoundingBox")
+        spread = node.attrib.get("spreadMethod", "pad")
+
+        # Collect stop elements (direct children with tag "stop")
+        stops = []
+        for child in node:
+            child_name = node_name(child)
+            if child_name != "stop":
+                continue
+            raw_offset = child.attrib.get("offset", "0").strip()
+            if raw_offset.endswith("%"):
+                try:
+                    offset = float(raw_offset[:-1]) / 100.0
+                except ValueError:
+                    offset = 0.0
+            else:
+                try:
+                    offset = float(raw_offset)
+                except ValueError:
+                    offset = 0.0
+
+            # stop-color and stop-opacity can be in style or as direct attrs
+            style_str = child.attrib.get("style", "")
+            style_attrs: dict = {}
+            if style_str:
+                style_attrs = self.attrConverter.parseMultiAttributes(style_str)
+
+            stop_color_str = style_attrs.get(
+                "stop-color", child.attrib.get("stop-color", "black")
+            )
+            stop_opacity_str = style_attrs.get(
+                "stop-opacity", child.attrib.get("stop-opacity", "1")
+            )
+            try:
+                opacity = float(stop_opacity_str)
+            except (ValueError, TypeError):
+                opacity = 1.0
+
+            rl_color = self.attrConverter.convertColor(stop_color_str)
+            if rl_color is None:
+                rl_color = colors.black
+            rl_color = rl_color.clone()
+            rl_color.alpha = opacity
+            stops.append((offset, rl_color))
+
+        grad_def: dict = {
+            "type": "linear" if grad_type == "linearGradient" else "radial",
+            "gradientUnits": grad_units,
+            "spreadMethod": spread,
+            "stops": stops,
+            "href": href_id,
+        }
+
+        if grad_type == "linearGradient":
+            grad_def["x1"] = _float_attr("x1", 0.0)
+            grad_def["y1"] = _float_attr("y1", 0.0)
+            grad_def["x2"] = _float_attr("x2", 1.0)
+            grad_def["y2"] = _float_attr("y2", 0.0)
+        else:
+            grad_def["cx"] = _float_attr("cx", 0.5)
+            grad_def["cy"] = _float_attr("cy", 0.5)
+            grad_def["r"] = _float_attr("r", 0.5)
+            grad_def["fx"] = _float_attr("fx", grad_def["cx"])
+            grad_def["fy"] = _float_attr("fy", grad_def["cy"])
+
+        self.gradient_defs[grad_id] = grad_def
+
+    def _resolve_gradient(self, grad_id: str) -> Optional[dict]:
+        """Return a fully resolved gradient dict, following xlink:href chains."""
+        visited = set()
+        result = self.gradient_defs.get(grad_id)
+        while result is not None:
+            href = result.get("href")
+            if not href or href in visited:
+                break
+            parent = self.gradient_defs.get(href)
+            if parent is None:
+                break
+            visited.add(href)
+            # Merge: current overrides parent for all keys except missing stops
+            merged = dict(parent)
+            for k, v in result.items():
+                if k == "stops" and not v:
+                    continue  # inherit parent's stops
+                merged[k] = v
+            result = merged
+        return result
+
+    def _apply_gradient_fill(self, item: Any, grad_def: dict) -> Any:
+        """Wrap a shape in a Group that paints the gradient fill then the stroke."""
+        clip_shape = _find_clip_shape(item)
+        if clip_shape is None:
+            return item
+
+        stops = grad_def.get("stops", [])
+        if not stops:
+            return item
+
+        positions = [s[0] for s in stops]
+        rl_colors = [s[1] for s in stops]
+        extend = grad_def.get("spreadMethod", "pad") == "pad"
+        grad_units = grad_def.get("gradientUnits", "objectBoundingBox")
+
+        if grad_units == "objectBoundingBox":
+            try:
+                bx0, by0, bx1, by1 = clip_shape.getBounds()
+            except Exception:
+                return item
+            bbox_w = bx1 - bx0
+            bbox_h = by1 - by0
+        else:
+            bx0 = by0 = bbox_w = bbox_h = 0.0  # unused for userSpaceOnUse
+
+        if grad_def["type"] == "linear":
+            x1, y1 = grad_def.get("x1", 0.0), grad_def.get("y1", 0.0)
+            x2, y2 = grad_def.get("x2", 1.0), grad_def.get("y2", 0.0)
+            if grad_units == "objectBoundingBox":
+                x1 = bx0 + x1 * bbox_w
+                y1 = by0 + y1 * bbox_h
+                x2 = bx0 + x2 * bbox_w
+                y2 = by0 + y2 * bbox_h
+            grad_shape: DirectDraw = _LinearGradientShape(
+                clip_shape, x1, y1, x2, y2, rl_colors, positions, extend
+            )
+        else:
+            cx = grad_def.get("cx", 0.5)
+            cy = grad_def.get("cy", 0.5)
+            r = grad_def.get("r", 0.5)
+            if grad_units == "objectBoundingBox":
+                cx = bx0 + cx * bbox_w
+                cy = by0 + cy * bbox_h
+                r = r * (bbox_w + bbox_h) / 2.0
+            grad_shape = _RadialGradientShape(
+                clip_shape, cx, cy, r, rl_colors, positions, extend
+            )
+
+        group = Group()
+        group.add(grad_shape)
+        group.add(item)
+        return group
 
     def get_clippath(self, node: NodeTracker) -> Optional[Any]:
         """Get the clipping path object referenced by a node's 'clip-path' attribute.
