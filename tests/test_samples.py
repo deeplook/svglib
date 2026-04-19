@@ -13,12 +13,12 @@ Run with one of these lines from inside the test directory:
 import glob
 import gzip
 import io
-import time
 import json
 import os
 import re
 import tarfile
 import textwrap
+import time
 from http.client import HTTPSConnection
 from os.path import basename, dirname, exists, getsize, join, splitext
 from typing import Any
@@ -66,8 +66,10 @@ def fetch_file(
         )
         response = conn.getresponse()
         if response.status == 429:
-            wait = 2 ** attempt
-            print(f"rate limited, retrying in {wait}s (attempt {attempt + 1}/{retries})")
+            wait = 2**attempt
+            print(
+                f"rate limited, retrying in {wait}s (attempt {attempt + 1}/{retries})"
+            )
             conn.close()
             time.sleep(wait)
             continue
@@ -98,7 +100,9 @@ def fetch_file(
         return data
 
     if raise_exc:
-        raise Exception(f"Unable to fetch file {url}: rate limited after {retries} retries")
+        raise Exception(
+            f"Unable to fetch file {url}: rate limited after {retries} retries"
+        )
     return None
 
 
