@@ -307,7 +307,10 @@ class TestWikipediaFlags:
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print(f"fetch {flag_url}")
-                flag_svg = fetch_file(flag_url, raise_exc=True)
+                flag_svg = fetch_file(flag_url, raise_exc=False)
+                if flag_svg is None:
+                    print(f"skipping {flag_url} (download failed after retries)")
+                    continue
                 with open(path, "w", encoding="UTF-8") as f:
                     f.write(flag_svg)
 
