@@ -288,6 +288,11 @@ class TestWikipediaFlags:
             flag_url_map = []
             prefix = "https://en.wikipedia.org/wiki/File:"
             for i, fn in enumerate(flag_names):
+                if time.monotonic() > self._setup_deadline:
+                    pytest.skip(
+                        f"Wikipedia flags setup timed out after {self.SETUP_TIMEOUT}s "
+                        f"(cold cache). Remaining flags will be downloaded on the next run."
+                    )
                 # load single flag HTML page, like
                 # https://en.wikipedia.org/wiki/Image:Flag_of_Bhutan.svg
                 flag_html = fetch_file(prefix + quote(fn))
