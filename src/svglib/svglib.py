@@ -22,6 +22,7 @@ import base64
 import copy
 import gzip
 import itertools
+import locale
 import logging
 import os
 import pathlib
@@ -161,6 +162,61 @@ DELAYED = object()
 logger = logging.getLogger(__name__)
 
 Box = namedtuple("Box", ["x", "y", "width", "height"])
+
+# SVG feature strings supported by svglib, used for <switch> evaluation.
+# Stored in lowercase for case-insensitive matching.
+# SVG 1.1: https://www.w3.org/TR/SVG11/feature.html
+# SVG 1.2 Tiny: https://www.w3.org/TR/SVGTiny12/feature.html
+SUPPORTED_SVG_FEATURES = frozenset(
+    f.lower()
+    for f in [
+        # SVG 1.1 features
+        "http://www.w3.org/TR/SVG11/feature#SVG",
+        "http://www.w3.org/TR/SVG11/feature#SVGDOM",
+        "http://www.w3.org/TR/SVG11/feature#SVG-static",
+        "http://www.w3.org/TR/SVG11/feature#SVGDOM-static",
+        "http://www.w3.org/TR/SVG11/feature#CoreAttribute",
+        "http://www.w3.org/TR/SVG11/feature#Structure",
+        "http://www.w3.org/TR/SVG11/feature#BasicStructure",
+        "http://www.w3.org/TR/SVG11/feature#ConditionalProcessing",
+        "http://www.w3.org/TR/SVG11/feature#Style",
+        "http://www.w3.org/TR/SVG11/feature#ViewportAttribute",
+        "http://www.w3.org/TR/SVG11/feature#Shape",
+        "http://www.w3.org/TR/SVG11/feature#BasicText",
+        "http://www.w3.org/TR/SVG11/feature#Image",
+        "http://www.w3.org/TR/SVG11/feature#BasicPaintAttribute",
+        "http://www.w3.org/TR/SVG11/feature#OpacityAttribute",
+        "http://www.w3.org/TR/SVG11/feature#BasicGraphicsAttribute",
+        "http://www.w3.org/TR/SVG11/feature#Clip",
+        "http://www.w3.org/TR/SVG11/feature#BasicClip",
+        "http://www.w3.org/TR/SVG11/feature#ColorProfile",
+        "http://www.w3.org/TR/SVG11/feature#Gradient",
+        "http://www.w3.org/TR/SVG11/feature#Pattern",
+        "http://www.w3.org/TR/SVG11/feature#XlinkAttribute",
+        "http://www.w3.org/TR/SVG11/feature#Font",
+        "http://www.w3.org/TR/SVG11/feature#BasicFont",
+        "http://www.w3.org/TR/SVG11/feature#PaintAttribute",
+        "http://www.w3.org/TR/SVG11/feature#GraphicsAttribute",
+        # SVG 1.2 Tiny features
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#SVG-static",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#CoreAttribute",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Structure",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#ConditionalProcessing",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#ConditionalProcessingAttribute",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Image",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Shape",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Text",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#PaintAttribute",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#OpacityAttribute",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#GraphicsAttribute",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Gradient",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#XlinkAttribute",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Font",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#Hyperlinking",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#ExternalResourcesRequired",
+        "http://www.w3.org/Graphics/SVG/feature/1.2/#NavigationAttribute",
+    ]
+)
 
 split_whitespace = re.compile(r"[^ \t\r\n\f]+").findall
 
@@ -786,6 +842,10 @@ class SvgRenderer:
         elif name == "use":
             item = self.renderUse(node, clipping=clipping)
             parent.add(item)
+        elif name == "switch":
+            item = self.renderSwitch(node, clipping=clipping)
+            if item is not None:
+                parent.add(item)
         elif name == "clipPath":
             item = self.renderG(node)
         elif name in self.handled_shapes:
@@ -1125,6 +1185,43 @@ class SvgRenderer:
             self.shape_converter.applyTransformOnGroup(transform, gr)
 
         return gr
+
+    def renderSwitch(
+        self, node: NodeTracker, clipping: Optional[Any] = None
+    ) -> Optional[Any]:
+        """Render a <switch> element by evaluating each child's conditions.
+
+        Per the SVG spec, the first child whose requiredFeatures,
+        requiredExtensions, and systemLanguage conditions are all satisfied
+        is rendered; remaining children are skipped.
+        """
+        sys_lang = locale.getdefaultlocale()[0] or ""
+        sys_lang_prefix = sys_lang.split("_")[0]
+
+        for child in node:
+            # requiredExtensions: svglib supports no external extensions
+            if child.attrib.get("requiredExtensions"):
+                continue
+            # requiredFeatures: all listed features must be supported
+            required = child.attrib.get("requiredFeatures", "")
+            if required:
+                features = required.split()
+                if not all(f.lower() in SUPPORTED_SVG_FEATURES for f in features):
+                    continue
+            # systemLanguage: at least one tag must match the system locale
+            sys_language = child.attrib.get("systemLanguage", "")
+            if sys_language:
+                tags = [t.strip() for t in sys_language.split(",")]
+                if not any(t == sys_lang or t == sys_lang_prefix for t in tags):
+                    continue
+            # This child's conditions are satisfied — render it
+            gr = Group()
+            self.renderNode(child, parent=gr)
+            if clipping is not None:
+                gr.add(clipping)
+            return gr
+
+        return None
 
     def renderStyle(self, node: NodeTracker) -> None:
         """Render a <style> element by adding its content to the CSS matcher."""
