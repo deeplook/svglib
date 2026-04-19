@@ -218,7 +218,7 @@ class FontMap:
             "exact": exact,
         }
         self._family_index.setdefault(font_name.lower(), font_name)
-        return font_name, exact
+        return internal_name, exact
 
     def register_default_fonts(self) -> None:
         """Register mappings for standard PDF fonts and common font families.
