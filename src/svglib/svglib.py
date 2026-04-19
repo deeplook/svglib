@@ -1707,7 +1707,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         mappingN = (
             (["fill"], "fillColor", "convertColor", ["black"]),
             (["fill-opacity"], "fillOpacity", "convertOpacity", [1]),
-            (["fill-rule"], "_fillRule", "convertFillRule", ["nonzero"]),
+            (["fill-rule"], "fillMode", "convertFillRule", ["nonzero"]),
             (["stroke"], "strokeColor", "convertColor", ["none"]),
             (["stroke-width"], "strokeWidth", "convertLength", ["1"]),
             (["stroke-opacity"], "strokeOpacity", "convertOpacity", [1]),
