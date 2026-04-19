@@ -12,6 +12,7 @@ The module includes:
 """
 
 import os
+import shutil
 import subprocess
 import sys
 from typing import Dict, Optional, Tuple, Union
@@ -187,9 +188,12 @@ class FontMap:
         if font_name_expr != font_name and font_name not in self._map:
             # Ensure the "normal" version of the font is registered first
             self.use_fontconfig(font_name)
+        fc_match = shutil.which("fc-match")
+        if fc_match is None:
+            return NOT_FOUND
         try:
             pipe = subprocess.Popen(
-                ["fc-match", "-s", "--format=%{file}\\n", font_name_expr],
+                [fc_match, "-s", "--format=%{file}\\n", "--", font_name_expr],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
