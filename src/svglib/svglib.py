@@ -29,6 +29,7 @@ import pathlib
 import re
 import shlex
 import shutil
+import sys
 from collections import defaultdict, namedtuple
 from io import BytesIO
 from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
@@ -2204,7 +2205,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(*svgAttrValues))
                 except (AttributeError, KeyError, ValueError):
-                    logger.debug("Exception during applyStyleOnShape")
+                    logger.debug("applyStyleOnShape setattr({},{!r},{}(*{!r})) caused {} exception".format(
+                                shape.__class__.__name__, rlgAttr, meth.__name__, svgAttrValues,
+                                sys.exc_info()[0].__name__))
         if getattr(shape, "fillOpacity", None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
         if getattr(shape, "strokeWidth", None) == 0:
@@ -2405,42 +2408,3 @@ def copy_shape_properties(source_shape: Any, dest_shape: Any) -> None:
             setattr(dest_shape, prop, val)
         except AttributeError:
             pass
-
-
-def monkeypatch_reportlab() -> None:
-    """Apply a patch to ReportLab to handle path fill rules correctly.
-
-    This patch addresses an issue where ReportLab does not honor the
-    'fill-rule' attribute of SVG paths, defaulting to 'even-odd'.
-    """
-    from reportlab.graphics import shapes
-    from reportlab.pdfgen.canvas import Canvas
-
-    original_renderPath = shapes._renderPath
-
-    def patchedRenderPath(path: Any, drawFuncs: Any, **kwargs: Any) -> Any:
-        # Patched method to transfer fillRule from Path to PDFPathObject
-        # Get back from bound method to instance
-        try:
-            drawFuncs[0].__self__.fillMode = path._fillRule
-        except AttributeError:
-            pass
-        return original_renderPath(path, drawFuncs, **kwargs)
-
-    shapes._renderPath = patchedRenderPath
-
-    original_drawPath = Canvas.drawPath
-
-    def patchedDrawPath(self: Any, path: Any, **kwargs: Any) -> Any:
-        current = self._fillMode
-        if hasattr(path, "fillMode"):
-            self._fillMode = path.fillMode
-        else:
-            self._fillMode = FILL_NON_ZERO
-        original_drawPath(self, path, **kwargs)
-        self._fillMode = current
-
-    Canvas.drawPath = patchedDrawPath
-
-
-monkeypatch_reportlab()
