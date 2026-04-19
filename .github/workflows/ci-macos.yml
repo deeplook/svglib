@@ -36,20 +36,23 @@ jobs:
         run: echo "week=$(date +%Y-W%V)" >> "$GITHUB_OUTPUT"
 
       - name: "Cache for wikipedia flags"
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "tests/samples/wikipedia/flags"
           key: "wikipedia-flags-macos-${{ steps.week.outputs.week }}"
+          restore-keys: "wikipedia-flags-macos-"
       - name: "Cache for wikipedia symbols"
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "tests/samples/wikipedia/symbols"
           key: "wikipedia-symbols-macos-${{ steps.week.outputs.week }}"
+          restore-keys: "wikipedia-symbols-macos-"
       - name: "Cache for w3c svg12 tinytestsuite"
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "tests/samples/W3C_SVG_12_TinyTestSuite"
           key: "w3c-svg12-tinytestsuite-macos-${{ steps.week.outputs.week }}"
+          restore-keys: "w3c-svg12-tinytestsuite-macos-"
       - name: "Install dependencies"
         run: uv pip install -e . --group dev
 
