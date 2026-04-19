@@ -71,6 +71,7 @@ class FontMap:
         'Family-WeightStyle' (e.g., 'Arial-BoldItalic').
         """
         self._map: Dict[str, Dict[str, Union[str, bool, int]]] = {}
+        self._family_index: Dict[str, str] = {}  # lowercase family → canonical family
 
         self.register_default_fonts()
 
@@ -216,6 +217,7 @@ class FontMap:
             "rlgFont": internal_name,
             "exact": exact,
         }
+        self._family_index.setdefault(font_name.lower(), font_name)
         return font_name, exact
 
     def register_default_fonts(self) -> None:
@@ -397,6 +399,7 @@ class FontMap:
                 "rlgFont": rlgFontName,
                 "exact": True,
             }
+            self._family_index.setdefault(font_family.lower(), font_family)
             return internal_name, True
 
         if internal_name not in STANDARD_FONT_NAMES and font_path is not None:
@@ -409,6 +412,7 @@ class FontMap:
                     "rlgFont": rlgFontName,
                     "exact": True,
                 }
+                self._family_index.setdefault(font_family.lower(), font_family)
                 return internal_name, True
             except TTFError:
                 return NOT_FOUND
@@ -438,6 +442,7 @@ class FontMap:
             If no suitable font is found, falls back to DEFAULT_FONT_NAME (Helvetica).
             The search prioritizes exact matches over approximate ones.
         """
+        font_name = self._family_index.get(font_name.lower(), font_name)
         internal_name = FontMap.build_internal_name(font_name, weight, style)
         # Step 1 check if the font is one of the buildin standard fonts
         if internal_name in STANDARD_FONT_NAMES:
