@@ -251,10 +251,15 @@ class TestWikipediaFlags:
 
         return path
 
+    # Maximum wall-clock seconds allowed for the cold-cache download phase.
+    # On a warm cache all files exist and setup completes instantly.
+    SETUP_TIMEOUT = 300
+
     def setup_method(self):
         "Check if files exists, else download."
 
         self.folder_path = f"{TEST_ROOT}/samples/wikipedia/flags"
+        self._setup_deadline = time.monotonic() + self.SETUP_TIMEOUT
 
         # create directory if not already present
         if not exists(self.folder_path):
@@ -304,6 +309,11 @@ class TestWikipediaFlags:
         with open(json_path, encoding="UTF-8") as fh:
             flag_url_map = json.load(fh)
         for dummy, flag_url in flag_url_map:
+            if time.monotonic() > self._setup_deadline:
+                pytest.skip(
+                    f"Wikipedia flags setup timed out after {self.SETUP_TIMEOUT}s "
+                    f"(cold cache). Remaining flags will be downloaded on the next run."
+                )
             path = join(self.folder_path, self.flag_url2filename(flag_url))
             if not exists(path):
                 print(f"fetch {flag_url}")
