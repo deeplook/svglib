@@ -189,7 +189,7 @@ class FontMap:
             self.use_fontconfig(font_name)
         try:
             pipe = subprocess.Popen(
-                ["fc-match", "-s", "--format=%{file}\\n", font_name_expr],
+                ["fc-match", "-s", "--format=%{file}\\n", "--", font_name_expr],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
