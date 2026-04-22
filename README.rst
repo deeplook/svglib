@@ -100,11 +100,10 @@ interactive Python session:
 .. code:: python
 
     >>> from svglib.svglib import svg2rlg
-    >>> from reportlab.graphics import renderPDF, renderPM
+    >>> from reportlab.graphics import renderPDF
     >>>
     >>> drawing = svg2rlg("file.svg")
     >>> renderPDF.drawToFile(drawing, "file.pdf")
-    >>> renderPM.drawToFile(drawing, "file.png", fmt="PNG")
 
 Note that the second parameter of ``drawToFile`` can be any
 `Python file object`_, like a ``BytesIO`` buffer if you don't want the result
@@ -157,14 +156,43 @@ Dependencies
 ``Svglib`` depends mainly on the ``reportlab`` package, which provides
 the abstractions for building complex ``Drawings`` which it can render
 into different fileformats, including PDF, EPS, SVG and various bitmaps
-ones. Other dependancies are ``lxml`` which is used in the context of SVG
+ones. Other dependencies are ``lxml`` which is used in the context of SVG
 CSS stylesheets.
 
-Previous versions of this package included a way to run `cairo` without explicit
-installation by the user; the dependency that took care of that no longer does
-this installation, and as such, the user must install `cairo` themselves. For
-installation instructions, see the official website:
-https://www.cairographics.org/download/
+PDF output does not require Cairo. SVG images embedded in input files are
+included in generated PDFs through ReportLab's PDF renderer.
+
+Bitmap output
++++++++++++++
+
+Rendering ReportLab drawings to bitmap formats such as PNG uses
+``reportlab.graphics.renderPM`` and requires a renderPM backend.
+
+The default ReportLab 4.x backend is ``rlPyCairo``::
+
+    $ pip install "svglib[bitmaps]"
+
+Depending on the platform, ``pycairo`` may also require the system Cairo
+library to be installed. For installation instructions, see the official
+website: https://www.cairographics.org/download/
+
+Alternatively, users can install ReportLab's legacy ``_renderPM`` backend::
+
+    $ pip install svglib rl-renderPM
+
+To choose a backend explicitly, set ReportLab's renderPM backend before calling
+``renderPM``:
+
+.. code:: python
+
+    from reportlab import rl_config
+    from reportlab.graphics import renderPM
+
+    rl_config.renderPMBackend = "rlPyCairo"  # default in ReportLab 4.x
+    # or:
+    rl_config.renderPMBackend = "_renderPM"
+
+    renderPM.drawToFile(drawing, "file.png", fmt="PNG")
 
 
 Installation

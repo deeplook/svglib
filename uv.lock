@@ -811,8 +811,12 @@ dependencies = [
     { name = "cssselect2" },
     { name = "lxml" },
     { name = "reportlab" },
-    { name = "rlpycairo" },
     { name = "tinycss2" },
+]
+
+[package.optional-dependencies]
+bitmaps = [
+    { name = "rlpycairo" },
 ]
 
 [package.dev-dependencies]
@@ -841,9 +845,10 @@ requires-dist = [
     { name = "cssselect2", specifier = ">=0.2.0" },
     { name = "lxml", specifier = ">=6.0.0" },
     { name = "reportlab", specifier = ">=4.4.3" },
-    { name = "rlpycairo", specifier = ">=0.4.0" },
+    { name = "rlpycairo", marker = "extra == 'bitmaps'", specifier = ">=0.4.0" },
     { name = "tinycss2", specifier = ">=0.6.0" },
 ]
+provides-extras = ["bitmaps"]
 
 [package.metadata.requires-dev]
 dev = [
