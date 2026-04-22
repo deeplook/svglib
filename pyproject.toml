@@ -44,9 +44,11 @@ dependencies = [
     "cssselect2>=0.2.0",
     "lxml>=6.0.0",
     "reportlab>=4.4.3",
-    "rlpycairo>=0.4.0",
     "tinycss2>=0.6.0",
 ]
+
+[project.optional-dependencies]
+bitmaps = ["rlpycairo>=0.4.0"]
 
 [project.urls]
 Homepage = "https://github.com/deeplook/svglib"
