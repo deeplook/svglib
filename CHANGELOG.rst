@@ -5,6 +5,16 @@ ChangeLog
 
 Unreleased
 ----------
+- Add support for SVG ``linearGradient`` and ``radialGradient`` paint servers
+  (#442).
+- Add support for SVG ``<switch>`` elements with conditional rendering (#441).
+- Fix ``fill-rule`` handling for paths by setting ReportLab ``fillMode``
+  directly (#440).
+- Fix case-insensitive font family lookup in ``FontMap`` (#433, #435).
+- Fix fontconfig handling when resolved fonts use non-normal weight or style.
+- Improve missing font warnings by pointing users to ``register_font()``.
+- Harden ``fc-match`` calls by resolving the executable path and passing
+  arguments after ``--``.
 - Fixed a SVG path interpretation bug with two successive M or m commands
   (#414).
 

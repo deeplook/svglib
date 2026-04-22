@@ -1,4 +1,5 @@
 .cache
+.playwright-mcp/
 .coverage
 MANIFEST
 coverage.xml

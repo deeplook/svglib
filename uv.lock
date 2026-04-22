@@ -775,7 +775,7 @@ dependencies = [
     { name = "tinycss2" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
@@ -785,23 +785,46 @@ dev = [
     { name = "ruff" },
     { name = "tox" },
 ]
+lint = [
+    { name = "mypy" },
+    { name = "ruff" },
+]
+test = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-runner" },
+    { name = "tox" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "cssselect2", specifier = ">=0.2.0" },
     { name = "lxml", specifier = ">=6.0.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18.1" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.3.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "pytest-runner", marker = "extra == 'dev'", specifier = ">=6.0.1" },
     { name = "reportlab", specifier = ">=4.4.3" },
     { name = "rlpycairo", specifier = ">=0.4.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.13.0" },
     { name = "tinycss2", specifier = ">=0.6.0" },
-    { name = "tox", marker = "extra == 'dev'", specifier = ">=4.30.2" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.18.1" },
+    { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "pytest-runner", specifier = ">=6.0.1" },
+    { name = "ruff", specifier = ">=0.13.0" },
+    { name = "tox", specifier = ">=4.30.2" },
+]
+lint = [
+    { name = "mypy", specifier = ">=1.18.1" },
+    { name = "ruff", specifier = ">=0.13.0" },
+]
+test = [
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "pytest-runner", specifier = ">=6.0.1" },
+    { name = "tox", specifier = ">=4.30.2" },
+]
 
 [[package]]
 name = "tinycss2"

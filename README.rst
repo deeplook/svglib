@@ -73,6 +73,8 @@ Features
 - allow patterns for output files on command-line
 - install a Python package named ``svglib``
 - install a Python command-line script named ``svg2pdf``
+- support SVG linear and radial gradients
+- support SVG ``<switch>`` elements with conditional rendering
 - provide a PyTest_ test suite with over 90% code coverage
 - test entire `W3C SVG test suite`_ after pulling from the internet
 - test all SVG `flags from Wikipedia`_ after pulling from the internet
@@ -86,7 +88,6 @@ Known limitations
 - @import rules in stylesheets are ignored. CSS is supported, but the range
   of supported attributes is still limited
 - clipping is limited to single paths, no mask support
-- color gradients are not supported (limitation of reportlab)
 - SVG ``ForeignObject`` elements are not supported.
 
 
