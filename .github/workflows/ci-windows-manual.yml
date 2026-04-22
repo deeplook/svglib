@@ -1,0 +1,47 @@
+name: Run Tests on Windows (Manual)
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: "Python 3.13 on Windows"
+    runs-on: "windows-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+
+      - name: Create Virtual Environment
+        run: uv venv
+
+      - name: "Get current week"
+        id: week
+        run: echo "week=$(Get-Date -UFormat '%Y-W%V')" >> "$env:GITHUB_OUTPUT"
+        shell: pwsh
+
+      - name: "Cache for wikipedia flags"
+        uses: actions/cache@v4
+        with:
+          path: "tests/samples/wikipedia/flags"
+          key: "wikipedia-flags-windows-manual-${{ steps.week.outputs.week }}"
+          restore-keys: "wikipedia-flags-windows-"
+      - name: "Cache for wikipedia symbols"
+        uses: actions/cache@v4
+        with:
+          path: "tests/samples/wikipedia/symbols"
+          key: "wikipedia-symbols-windows-manual-${{ steps.week.outputs.week }}"
+          restore-keys: "wikipedia-symbols-windows-"
+      - name: "Cache for w3c svg12 tinytestsuite"
+        uses: actions/cache@v4
+        with:
+          path: "tests/samples/W3C_SVG_12_TinyTestSuite"
+          key: "w3c-svg12-tinytestsuite-windows-manual-${{ steps.week.outputs.week }}"
+          restore-keys: "w3c-svg12-tinytestsuite-windows-"
+      - name: "Install dependencies"
+        run: uv pip install -e . --group dev
+
+      - name: "Run tests"
+        run: uv run pytest
