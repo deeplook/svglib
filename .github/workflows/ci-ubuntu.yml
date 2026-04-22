@@ -15,6 +15,11 @@ jobs:
     steps:
       - uses: "actions/checkout@v4"
 
+      - name: Setup native build dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y libxml2-dev libxslt1-dev libjpeg-dev
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
