@@ -1283,6 +1283,75 @@ class TestViewBox:
         )
         assert (drawing.width, drawing.height) == (480, 360)
 
+    def test_preserve_aspect_ratio_meet_default(self):
+        """Mismatched aspect ratios use uniform (min) scale by default."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="12cm" height="5.25cm" viewBox="0 0 1200 400">
+                <rect width="100" height="100"/>
+            </svg>
+        """
+        )
+        t = drawing.contents[0].transform
+        x_scale = t[0]
+        y_scale = abs(t[3])
+        assert pytest.approx(x_scale) == y_scale
+
+    def test_preserve_aspect_ratio_none(self):
+        """preserveAspectRatio="none" uses independent x/y scales."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="12cm" height="5.25cm" viewBox="0 0 1200 400"
+                 preserveAspectRatio="none">
+                <rect width="100" height="100"/>
+            </svg>
+        """
+        )
+        t = drawing.contents[0].transform
+        x_scale = t[0]
+        y_scale = abs(t[3])
+        assert x_scale != pytest.approx(y_scale)
+
+    def test_preserve_aspect_ratio_slice(self):
+        """preserveAspectRatio="xMidYMid slice" uses uniform (max) scale."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="12cm" height="5.25cm" viewBox="0 0 1200 400"
+                 preserveAspectRatio="xMidYMid slice">
+                <rect width="100" height="100"/>
+            </svg>
+        """
+        )
+        t = drawing.contents[0].transform
+        x_scale = t[0]
+        y_scale = abs(t[3])
+        # slice uses max scale, so the larger scale (y_scale ~0.372) should be used
+        assert pytest.approx(x_scale) == y_scale
+        # The uniform scale should be the larger one (max of the two raw scales, ~0.372)
+        assert x_scale > 0.284
+
+    def test_preserve_aspect_ratio_matched_aspect_ratio(self):
+        """When aspect ratios match exactly, scale is unchanged."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="1200" height="800" viewBox="-60 -40 120 80">
+                <rect width="10" height="10"/>
+            </svg>
+        """
+        )
+        t = drawing.contents[0].transform
+        x_scale = t[0]
+        y_scale = abs(t[3])
+        assert pytest.approx(x_scale) == y_scale
+
 
 class TestEmbedded:
     def test_svg_in_svg(self):
