@@ -3,19 +3,37 @@
 ChangeLog
 =========
 
-Unreleased
-----------
+2.0b1 (2026-04-29)
+------------------
+
+**Breaking change — output sizes will differ from 1.x.**
+
+svglib now correctly maps SVG user units to ReportLab points using the
+standard SVG/CSS conversion factor: 1 px = 0.75 pt (96 dpi).  Previous
+releases treated 1 user unit as 1 pt, which is 33 % too large.  Any SVG
+whose ``width``/``height`` or ``viewBox`` uses user units or ``px`` will
+produce a PDF that is 75 % of its previous linear dimensions (same
+proportions, correct physical size).
+
+*Migration* — if you need to preserve the old apparent size, scale the
+returned ``Drawing`` object before use::
+
+    from svglib.svglib import svg2rlg
+
+    drawing = svg2rlg("file.svg")
+    # Restore 1.x dimensions (1 user unit → 1 pt, non-spec):
+    factor = 4 / 3          # 1 / 0.75
+    drawing.width  *= factor
+    drawing.height *= factor
+    drawing.scale(factor, factor)
+
 - Fix inconsistent unit handling: bare numbers and ``px`` units now produce
   identical output, as required by the SVG spec (§5.9.2). ``convertLength``
   now returns user units (px) instead of ReportLab points; a new
   ``convertLengthToPt`` helper is used where absolute point values are needed
-  (font sizes, canvas dimensions). **Output sizes will change** for SVGs that
-  mix bare-number and ``px`` lengths, or that use physical units (``cm``,
-  ``mm``, ``in``, ``pt``, ``pc``) without a ``viewBox`` — the rendered PDF
-  will now match browser output rather than the previous (incorrect) scaling
-  (#439).
+  (font sizes, canvas dimensions) (#439).
 - Fix SVGs with a ``viewBox`` but no explicit ``width``/``height``: the
-  viewport scale now defaults to PX_TO_PT (0.75) instead of 1, preventing
+  viewport scale now defaults to ``PX_TO_PT`` (0.75) instead of 1, preventing
   content from being cropped.
 - Add support for SVG ``linearGradient`` and ``radialGradient`` paint servers
   (#442).
