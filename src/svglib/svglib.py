@@ -1500,6 +1500,42 @@ class SvgRenderer:
                 y_scale = height / view_box.height
             if width is not None and view_box.width != width:
                 x_scale = width / view_box.width
+
+            # Apply preserveAspectRatio (default: xMidYMid meet)
+            par = (node.getAttribute("preserveAspectRatio") or "xMidYMid meet").strip()
+            par_tokens = par.split()
+            align = par_tokens[0] if par_tokens else "xMidYMid"
+            meet_or_slice = par_tokens[1] if len(par_tokens) > 1 else "meet"
+
+            if align != "none":
+                if meet_or_slice == "slice":
+                    uniform_scale = max(x_scale, y_scale)
+                else:  # meet (default)
+                    uniform_scale = min(x_scale, y_scale)
+
+                # Compute translation to align content within canvas
+                if width is not None and height is not None:
+                    scaled_vb_w = view_box.width * uniform_scale
+                    scaled_vb_h = view_box.height * uniform_scale
+                    # Horizontal alignment
+                    if align.startswith("xMin"):
+                        tx = 0
+                    elif align.startswith("xMax"):
+                        tx = width - scaled_vb_w
+                    else:  # xMid (default)
+                        tx = (width - scaled_vb_w) / 2
+                    # Vertical alignment (SVG y increases downward, PDF upward)
+                    if "YMin" in align:
+                        ty = height - scaled_vb_h
+                    elif "YMax" in align:
+                        ty = 0
+                    else:  # YMid (default)
+                        ty = (height - scaled_vb_h) / 2
+                    if tx or ty:
+                        group.translate(tx, ty)
+
+                x_scale = y_scale = uniform_scale
+
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
 
         return group
