@@ -484,11 +484,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertLength(
         self,
         svgAttr: str,
-        em_base: float = DEFAULT_FONT_SIZE,
+        em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
         attr_name: Optional[str] = None,
         default: float = 0.0,
     ) -> Union[float, List[float]]:
-        """Convert an SVG length string to points.
+        """Convert an SVG length string to user units (px).
 
         Args:
             svgAttr: The SVG length string (e.g., "10px", "5em").
@@ -574,7 +574,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
     def convertLengthToPt(
         self,
         svgAttr: str,
-        em_base: float = DEFAULT_FONT_SIZE,
+        em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
         attr_name: Optional[str] = None,
         default: float = 0.0,
     ) -> Union[float, List[float]]:
@@ -1519,15 +1519,18 @@ class SvgRenderer:
             # Apply only the 'reverse' y-scaling (PDF 0,0 is bottom left)
             group.scale(1, -1)
         elif view_box:
-            x_scale, y_scale = 1, 1
             width, height = self.shape_converter.convert_length_attrs(
                 node, "width", "height", defaults=(None,) * 2
             )
+            # Fall back to viewBox dimensions (user units) when no explicit size.
+            # render() does the same, so Drawing size = viewBox × PX_TO_PT.
+            if width is None:
+                width = view_box.width
+            if height is None:
+                height = view_box.height
             # canvas is in pts; view_box is in user units — scale converts user→pt
-            if height is not None:
-                y_scale = (height * PX_TO_PT) / view_box.height
-            if width is not None:
-                x_scale = (width * PX_TO_PT) / view_box.width
+            x_scale = (width * PX_TO_PT) / view_box.width if view_box.width else 1
+            y_scale = (height * PX_TO_PT) / view_box.height if view_box.height else 1
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
 
         return group
@@ -1711,7 +1714,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         self,
         node: Any,
         *attrs: str,
-        em_base: float = DEFAULT_FONT_SIZE,
+        em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
         **kwargs: Any,
     ) -> List[float]:
         """Convert a list of length attributes from a node.
@@ -1832,7 +1835,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
         ff = attrConv.convertFontFamily(ff, fw, fstyle)
-        fs = attrConv.findAttr(node, "font-size") or str(DEFAULT_FONT_SIZE)
+        fs = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
         fs = attrConv.convertLength(fs)  # type: ignore  (user units, used as em_base)
         fs_pt = fs * PX_TO_PT  # absolute points for ReportLab font metrics
         x: List[float]
@@ -2189,7 +2192,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 "convertFontFamily",
                 [DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE],
             ),
-            (["font-size"], "fontSize", "convertLengthToPt", [str(DEFAULT_FONT_SIZE)]),
+            (
+                ["font-size"],
+                "fontSize",
+                "convertLengthToPt",
+                [f"{DEFAULT_FONT_SIZE}pt"],
+            ),
             (["text-anchor"], "textAnchor", "id", ["start"]),
         )
 
