@@ -389,15 +389,15 @@ class TestLengthAttrConverter:
             ("-3.16", -3.16),
             ("-1e-2", -0.01),
             ("1e-5", 1e-5),
-            ("1e1cm", 10 * cm),
-            ("1e1in", 10 * inch),
-            ("-8e-2cm", (-8e-2) * cm),
-            ("20px", 20 * 0.75),
-            ("20pt", 20),
-            ("1.5em", 12 * 1.5),
-            ("10.5mm", 10.5 * (cm * 0.1)),
+            ("1e1cm", 10 * cm / 0.75),
+            ("1e1in", 10 * inch / 0.75),
+            ("-8e-2cm", (-8e-2) * cm / 0.75),
+            ("20px", 20),
+            ("20pt", 20 * (96 / 72)),
+            ("1.5em", 16 * 1.5),
+            ("10.5mm", 10.5 * (cm * 0.1) / 0.75),
             ("3, 5 -7", [3, 5, -7]),
-            ("2pt  12pt", [2, 12]),
+            ("2pt  12pt", [2 * (96 / 72), 12 * (96 / 72)]),
             ("10 20 30", [10.0, 20.0, 30.0]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
@@ -420,7 +420,7 @@ class TestLengthAttrConverter:
         "Test length list attribute conversion."
 
         mapping = (
-            (" 5cm 5in", [5 * cm, 5 * inch]),
+            (" 5cm 5in", [5 * cm / 0.75, 5 * inch / 0.75]),
             (" 5, 5", [5, 5]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
@@ -1252,7 +1252,7 @@ class TestViewBox:
         """
         )
         # Main group coordinates are translated to match the viewBox origin
-        assert drawing.contents[0].transform == (10, 0, 0, -10, 600.0, 400.0)
+        assert drawing.contents[0].transform == (7.5, 0.0, 0.0, -7.5, 450.0, 300.0)
 
     def test_percent_width_height(self):
         drawing = drawing_from_svg(
@@ -1267,7 +1267,7 @@ class TestViewBox:
             </svg>
         """
         )
-        assert (drawing.width, drawing.height) == (480, 360)
+        assert (drawing.width, drawing.height) == (360.0, 270.0)
 
     def test_no_width_height(self):
         drawing = drawing_from_svg(
@@ -1281,7 +1281,7 @@ class TestViewBox:
             </svg>
         """
         )
-        assert (drawing.width, drawing.height) == (480, 360)
+        assert (drawing.width, drawing.height) == (360.0, 270.0)
 
 
 class TestEmbedded:

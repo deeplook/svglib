@@ -53,7 +53,7 @@ from reportlab.graphics.shapes import (
     _renderPath,
 )
 from reportlab.lib import colors
-from reportlab.lib.units import pica, toLength
+from reportlab.lib.units import toLength
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 from reportlab.pdfgen.pdfimages import PDFImage
@@ -89,6 +89,9 @@ from .utils import (
     convert_quadratic_to_cubic_path,
     normalise_svg_path,
 )
+
+# SVG user units are px; ReportLab works in points.  1 px = 0.75 pt (96 dpi / 72 dpi).
+PX_TO_PT = 0.75
 
 
 def _convert_palette_to_rgba(image: PILImage.Image) -> PILImage.Image:
@@ -536,13 +539,16 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                 return float(text[:-1])
             return float(text[:-1]) / 100 * full
         elif text.endswith("pc"):
-            return float(text[:-2]) * pica
+            # 1 pc = 12 pt = 16 px user units
+            return float(text[:-2]) * 16
         elif text.endswith("pt"):
-            return float(text[:-2])
+            # 1 pt = 1/72 in = 96/72 px user units
+            return float(text[:-2]) * (96 / 72)
         elif text.endswith("em"):
             return float(text[:-2]) * em_base
         elif text.endswith("px"):
-            return float(text[:-2]) * 0.75
+            # px are user units (1:1)
+            return float(text[:-2])
         elif text.endswith("ex"):
             # The x-height of the text must be assumed to be 0.5em tall when the
             # text cannot be measured.
@@ -553,13 +559,32 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return float(text[:-2]) * em_base / 2
 
         text = text.strip()
-        length = toLength(text)  # this does the default measurements such as mm and cm
-
-        return length
+        try:
+            # Bare numbers are user units (= px, SVG spec §5.9.2) — return as-is.
+            return float(text)
+        except ValueError:
+            pass
+        # toLength handles mm, cm, in, etc. and returns points; convert to user units.
+        return toLength(text) / PX_TO_PT
 
     def convertLengthList(self, svgAttr: str) -> List[Union[float, List[float]]]:
         """Convert a space-separated list of lengths into a list of floats."""
         return [self.convertLength(a) for a in self.split_attr_list(svgAttr)]
+
+    def convertLengthToPt(
+        self,
+        svgAttr: str,
+        em_base: float = DEFAULT_FONT_SIZE,
+        attr_name: Optional[str] = None,
+        default: float = 0.0,
+    ) -> Union[float, List[float]]:
+        """Convert an SVG length string to points (user units × PX_TO_PT)."""
+        result = self.convertLength(
+            svgAttr, em_base=em_base, attr_name=attr_name, default=default
+        )
+        if isinstance(result, list):
+            return [v * PX_TO_PT for v in result]
+        return result * PX_TO_PT
 
     def convertOpacity(self, svgAttr: str) -> float:
         """Convert an opacity string to a float."""
@@ -962,7 +987,7 @@ class SvgRenderer:
         width, height = self.shape_converter.convert_length_attrs(
             svg_node, "width", "height", defaults=(view_box.width, view_box.height)
         )
-        drawing = Drawing(width, height)
+        drawing = Drawing(width * PX_TO_PT, height * PX_TO_PT)
         drawing.add(main_group)
         return drawing
 
@@ -1442,8 +1467,10 @@ class SvgRenderer:
         """
         view_box = svg_node.getAttribute("viewBox")
         if view_box:
-            view_box = self.attrConverter.convertLengthList(view_box)  # type: ignore
-            return Box(*view_box)
+            # viewBox defines a unitless user-coordinate space (SVG spec §8.1).
+            # Parse as raw floats — never apply unit conversion here.
+            values = [float(v) for v in view_box.replace(",", " ").split()]
+            return Box(*values)
         if default_box:
             width, height = map(svg_node.getAttribute, ("width", "height"))
             width, height = map(self.attrConverter.convertLength, (width, height))  # type: ignore
@@ -1496,10 +1523,11 @@ class SvgRenderer:
             width, height = self.shape_converter.convert_length_attrs(
                 node, "width", "height", defaults=(None,) * 2
             )
-            if height is not None and view_box.height != height:
-                y_scale = height / view_box.height
-            if width is not None and view_box.width != width:
-                x_scale = width / view_box.width
+            # canvas is in pts; view_box is in user units — scale converts user→pt
+            if height is not None:
+                y_scale = (height * PX_TO_PT) / view_box.height
+            if width is not None:
+                x_scale = (width * PX_TO_PT) / view_box.width
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
 
         return group
@@ -1805,7 +1833,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
         ff = attrConv.convertFontFamily(ff, fw, fstyle)
         fs = attrConv.findAttr(node, "font-size") or str(DEFAULT_FONT_SIZE)
-        fs = attrConv.convertLength(fs)  # type: ignore
+        fs = attrConv.convertLength(fs)  # type: ignore  (user units, used as em_base)
+        fs_pt = fs * PX_TO_PT  # absolute points for ReportLab font metrics
         x: List[float]
         y: List[float]
         x, y = self.convert_length_attrs(node, "x", "y", em_base=fs)  # type: ignore
@@ -1839,7 +1868,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             else:
                 baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)  # type: ignore
 
-            frag_lengths.append(stringWidth(text, ff, fs))  # type: ignore
+            frag_lengths.append(stringWidth(text, ff, fs_pt))  # type: ignore
 
             # When x, y, dx, or dy is a list, we calculate position for each char of
             # text.
@@ -1865,7 +1894,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     if char_dy is None:
                         char_dy = 0
                     new_x = char_dx + (
-                        last_x + stringWidth(last_char, ff, fs)
+                        last_x + stringWidth(last_char, ff, fs_pt)
                         if char_x is None
                         else char_x
                     )
@@ -2160,7 +2189,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 "convertFontFamily",
                 [DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE],
             ),
-            (["font-size"], "fontSize", "convertLength", [str(DEFAULT_FONT_SIZE)]),
+            (["font-size"], "fontSize", "convertLengthToPt", [str(DEFAULT_FONT_SIZE)]),
             (["text-anchor"], "textAnchor", "id", ["start"]),
         )
 
