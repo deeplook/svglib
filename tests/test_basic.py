@@ -405,6 +405,40 @@ class TestLengthAttrConverter:
         assert len(failed) == 0
         assert ac.convertLength("1.5em", em_base=16.5) == 24.75
 
+    def test_bare_number_equals_px(self):
+        "Bare numbers and px units must produce identical lengths (issue #439)."
+        ac = svglib.Svg2RlgAttributeConverter()
+        # In user-unit space, "N" and "Npx" are the same (SVG spec §5.9.2).
+        assert ac.convertLength("13") == ac.convertLength("13px")
+        assert ac.convertLength("100") == ac.convertLength("100px")
+        assert ac.convertLength("0.5") == ac.convertLength("0.5px")
+        # convertLengthToPt must be consistent too (used for font-size).
+        assert ac.convertLengthToPt("13") == ac.convertLengthToPt("13px")
+
+    def test_font_size_bare_number_vs_px(self):
+        "font-size='N' and font-size='Npx' must produce the same fontSize (issue #439)."
+        svg_tmpl = """<svg xmlns="http://www.w3.org/2000/svg"
+                          width="200" height="50" viewBox="0 0 200 50">
+            <text font-size="{fs}">x</text>
+        </svg>"""
+        import io
+
+        from lxml import etree
+
+        def font_size_for(fs_attr):
+            root = etree.parse(
+                io.BytesIO(svg_tmpl.format(fs=fs_attr).encode())
+            ).getroot()
+            drawing = svglib.SvgRenderer("").render(root)
+            # Walk into the drawing to find the first String object.
+            group = drawing.contents[0]
+            while hasattr(group, "contents"):
+                group = group.contents[0]
+            return group.fontSize
+
+        assert font_size_for("13") == font_size_for("13px")
+        assert font_size_for("24") == font_size_for("24px")
+
     def test_percentage_conversion(self):
         "Test percentage length attribute conversion."
 
