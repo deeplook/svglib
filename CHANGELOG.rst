@@ -5,6 +5,18 @@ ChangeLog
 
 Unreleased
 ----------
+- Fix inconsistent unit handling: bare numbers and ``px`` units now produce
+  identical output, as required by the SVG spec (§5.9.2). ``convertLength``
+  now returns user units (px) instead of ReportLab points; a new
+  ``convertLengthToPt`` helper is used where absolute point values are needed
+  (font sizes, canvas dimensions). **Output sizes will change** for SVGs that
+  mix bare-number and ``px`` lengths, or that use physical units (``cm``,
+  ``mm``, ``in``, ``pt``, ``pc``) without a ``viewBox`` — the rendered PDF
+  will now match browser output rather than the previous (incorrect) scaling
+  (#439).
+- Fix SVGs with a ``viewBox`` but no explicit ``width``/``height``: the
+  viewport scale now defaults to PX_TO_PT (0.75) instead of 1, preventing
+  content from being cropped.
 - Add support for SVG ``linearGradient`` and ``radialGradient`` paint servers
   (#442).
 - Add support for SVG ``<switch>`` elements with conditional rendering (#441).
