@@ -39,7 +39,7 @@ STANDARD_FONT_NAMES = (
 DEFAULT_FONT_NAME = "Helvetica"
 DEFAULT_FONT_WEIGHT = "normal"
 DEFAULT_FONT_STYLE = "normal"
-DEFAULT_FONT_SIZE = 16  # 16 user units (px); equals 12 pt after px→pt conversion
+DEFAULT_FONT_SIZE = 12  # points (CSS/SVG default: 12 pt = 16 px)
 
 
 class FontMap:
