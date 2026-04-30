@@ -151,6 +151,64 @@ the system command-line. Here is the output from ``svg2pdf -h``::
         https://github.com/deeplook/svglib
 
 
+Units and output sizes
+----------------------
+
+SVG is anchored to a **96 dpi** coordinate system: one user unit (bare
+number or ``px``) equals one CSS pixel, which is 1/96 of an inch.
+ReportLab works in **points** (1 pt = 1/72 inch).  The conversion
+factor is ``1 px = 0.75 pt``.
+
+The ``Drawing`` object returned by ``svg2rlg`` always has its
+``width`` and ``height`` expressed in ReportLab points.  The table
+below shows what you get for common unit choices on the root ``<svg>``
+element:
+
+======================  ============================  ==================
+SVG ``width``           ``Drawing.width`` (pt)        Physical width
+======================  ============================  ==================
+``width="96"``          72 pt                         1 inch
+``width="96px"``        72 pt (same as bare)          1 inch
+``width="72pt"``        72 pt                         1 inch
+``width="25.4mm"``      72 pt                         1 inch
+``width="1in"``         72 pt                         1 inch
+======================  ============================  ==================
+
+The physical size is the same in every row — the unit only affects
+which number appears in the file.
+
+**Font sizes** follow the same rule.  ``font-size="16"`` (bare or
+``px``) produces a 12 pt font in the PDF (16 × 0.75).  Use
+``font-size="12pt"`` when you need to specify a precise typographic
+size directly.
+
+**Choosing units**
+
+- *Web-first SVGs*: use bare numbers throughout and a ``viewBox``.
+  The browser renders at 96 dpi; svglib scales to 72 dpi points.
+  Physical dimensions are preserved in the PDF.
+- *Print at an exact physical size*: declare ``width``/``height`` in
+  ``mm``, ``cm``, or ``in`` on the ``<svg>`` element and use a
+  matching ``viewBox``.  Both screen and print will show the declared
+  physical size.
+- *Control exact PDF point dimensions*: use ``pt`` units on
+  ``width``/``height``; the numeric value is preserved in the Drawing.
+
+**Adjusting the output size at render time**
+
+If you need to rescale the returned Drawing (e.g. to fit a fixed page
+size or restore the pre-2.0 behaviour), scale the Drawing object
+directly:
+
+.. code:: python
+
+    drawing = svg2rlg("file.svg")
+    factor = 4 / 3   # restore 1.x size (1 user unit → 1 pt, non-spec)
+    drawing.width  *= factor
+    drawing.height *= factor
+    drawing.scale(factor, factor)
+
+
 Dependencies
 ------------
 

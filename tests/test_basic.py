@@ -389,21 +389,55 @@ class TestLengthAttrConverter:
             ("-3.16", -3.16),
             ("-1e-2", -0.01),
             ("1e-5", 1e-5),
-            ("1e1cm", 10 * cm),
-            ("1e1in", 10 * inch),
-            ("-8e-2cm", (-8e-2) * cm),
-            ("20px", 20 * 0.75),
-            ("20pt", 20),
-            ("1.5em", 12 * 1.5),
-            ("10.5mm", 10.5 * (cm * 0.1)),
+            ("1e1cm", 10 * cm / 0.75),
+            ("1e1in", 10 * inch / 0.75),
+            ("-8e-2cm", (-8e-2) * cm / 0.75),
+            ("20px", 20),
+            ("20pt", 20 * (96 / 72)),
+            ("1.5em", 16 * 1.5),
+            ("10.5mm", 10.5 * (cm * 0.1) / 0.75),
             ("3, 5 -7", [3, 5, -7]),
-            ("2pt  12pt", [2, 12]),
+            ("2pt  12pt", [2 * (96 / 72), 12 * (96 / 72)]),
             ("10 20 30", [10.0, 20.0, 30.0]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertLength, mapping)
         assert len(failed) == 0
         assert ac.convertLength("1.5em", em_base=16.5) == 24.75
+
+    def test_bare_number_equals_px(self):
+        "Bare numbers and px units must produce identical lengths (issue #439)."
+        ac = svglib.Svg2RlgAttributeConverter()
+        # In user-unit space, "N" and "Npx" are the same (SVG spec §5.9.2).
+        assert ac.convertLength("13") == ac.convertLength("13px")
+        assert ac.convertLength("100") == ac.convertLength("100px")
+        assert ac.convertLength("0.5") == ac.convertLength("0.5px")
+        # convertLengthToPt must be consistent too (used for font-size).
+        assert ac.convertLengthToPt("13") == ac.convertLengthToPt("13px")
+
+    def test_font_size_bare_number_vs_px(self):
+        "font-size='N' and font-size='Npx' must produce the same fontSize (issue #439)."
+        svg_tmpl = """<svg xmlns="http://www.w3.org/2000/svg"
+                          width="200" height="50" viewBox="0 0 200 50">
+            <text font-size="{fs}">x</text>
+        </svg>"""
+        import io
+
+        from lxml import etree
+
+        def font_size_for(fs_attr):
+            root = etree.parse(
+                io.BytesIO(svg_tmpl.format(fs=fs_attr).encode())
+            ).getroot()
+            drawing = svglib.SvgRenderer("").render(root)
+            # Walk into the drawing to find the first String object.
+            group = drawing.contents[0]
+            while hasattr(group, "contents"):
+                group = group.contents[0]
+            return group.fontSize
+
+        assert font_size_for("13") == font_size_for("13px")
+        assert font_size_for("24") == font_size_for("24px")
 
     def test_percentage_conversion(self):
         "Test percentage length attribute conversion."
@@ -420,7 +454,7 @@ class TestLengthAttrConverter:
         "Test length list attribute conversion."
 
         mapping = (
-            (" 5cm 5in", [5 * cm, 5 * inch]),
+            (" 5cm 5in", [5 * cm / 0.75, 5 * inch / 0.75]),
             (" 5, 5", [5, 5]),
         )
         ac = svglib.Svg2RlgAttributeConverter()
@@ -1252,7 +1286,7 @@ class TestViewBox:
         """
         )
         # Main group coordinates are translated to match the viewBox origin
-        assert drawing.contents[0].transform == (10, 0, 0, -10, 600.0, 400.0)
+        assert drawing.contents[0].transform == (7.5, 0.0, 0.0, -7.5, 450.0, 300.0)
 
     def test_percent_width_height(self):
         drawing = drawing_from_svg(
@@ -1267,7 +1301,7 @@ class TestViewBox:
             </svg>
         """
         )
-        assert (drawing.width, drawing.height) == (480, 360)
+        assert (drawing.width, drawing.height) == (360.0, 270.0)
 
     def test_no_width_height(self):
         drawing = drawing_from_svg(
@@ -1281,7 +1315,7 @@ class TestViewBox:
             </svg>
         """
         )
-        assert (drawing.width, drawing.height) == (480, 360)
+        assert (drawing.width, drawing.height) == (360.0, 270.0)
 
 
 class TestEmbedded:
