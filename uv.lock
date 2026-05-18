@@ -805,7 +805,7 @@ wheels = [
 
 [[package]]
 name = "svglib"
-version = "1.6.0"
+version = "2.0b1"
 source = { editable = "." }
 dependencies = [
     { name = "cssselect2" },
