@@ -1496,6 +1496,19 @@ class SvgRenderer:
             width, height = self.shape_converter.convert_length_attrs(
                 node, "width", "height", defaults=(None,) * 2
             )
+            # Per SVG 1.1 §5.1.2, a nested <svg> with omitted width/height
+            # defaults them to "100%" of the parent viewport. (SVG 2 §8.2
+            # technically changed this so that omitting either resolves to 0
+            # and disables rendering, but no browser implements that and most
+            # real-world SVGs still rely on the 1.1 behavior.) Without this
+            # fallback, an inner <svg viewBox="0 0 N N"> with no explicit
+            # width/height renders content at viewBox-unit size instead of
+            # filling the parent slot.
+            if not outermost and _saved_box is not None:
+                if width is None:
+                    width = _saved_box.width
+                if height is None:
+                    height = _saved_box.height
             if height is not None and view_box.height != height:
                 y_scale = height / view_box.height
             if width is not None and view_box.width != width:

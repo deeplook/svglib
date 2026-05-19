@@ -1342,6 +1342,31 @@ class TestEmbedded:
         inner_rect = drawing.contents[0].contents[1].contents[0]
         assert inner_rect.width == 15
 
+    def test_nested_svg_without_width_height(self):
+        """A nested <svg viewBox="..."> with omitted width/height should
+        default to 100% of the parent viewport (SVG 1.1 §5.1.2). Without
+        the fallback, the viewBox-to-viewport scaling was skipped and
+        inner content rendered at viewBox-unit size instead of filling
+        the slot."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+                 width="200" height="200">
+              <svg viewBox="0 0 50 50">
+                <rect x="0" y="0" width="50" height="50"/>
+              </svg>
+            </svg>
+        """
+        )
+        nested_group = drawing.contents[0].contents[0]
+        xmin, ymin, xmax, ymax = nested_group.getBounds()
+        # Parent viewport is 200x200, inner viewBox is 50x50, so the rect
+        # should be rendered at the full 200x200 — not 50x50, which is what
+        # happens without the fallback.
+        assert xmax - xmin == 200
+        assert ymax - ymin == 200
+
     def test_png_in_svg_file_like(self):
         drawing = drawing_from_svg(
             """
