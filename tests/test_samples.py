@@ -33,6 +33,16 @@ from svglib import svglib
 TEST_ROOT = dirname(__file__)
 
 
+def has_renderpm_backend() -> bool:
+    """Return whether ReportLab can load a renderPM bitmap backend."""
+
+    try:
+        renderPM._getPMBackend()
+    except renderPM.RenderPMError:
+        return False
+    return True
+
+
 def found_uniconv() -> bool:
     "Do we have uniconv installed?"
 
@@ -407,6 +417,7 @@ class TestW3CSVG:
             print(f"deleting [{i}] {path}")
             os.remove(path)
 
+    @pytest.mark.skipif(not has_renderpm_backend(), reason="needs a renderPM backend")
     def test_convert_pdf_png(self):
         """
         Test converting W3C SVG files to PDF and PNG using svglib.

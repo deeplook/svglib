@@ -5,6 +5,8 @@ ChangeLog
 
 Unreleased
 ----------
+- Move ``rlpycairo`` to the ``bitmaps`` extra, so Cairo is no longer part of
+  the default installation path.
 - Add support for SVG ``linearGradient`` and ``radialGradient`` paint servers
   (#442).
 - Add support for SVG ``<switch>`` elements with conditional rendering (#441).
@@ -26,6 +28,8 @@ Unreleased
 - Add a Makefile.
 - Add publishing workflows.
 - Remove dunder constants and use importlib.metadata to get the version number.
+- Add ``rlpycairo`` as a dependency, which made Cairo part of the default
+  installation path.
 
 1.5.1 (2023-01-07)
 ------------------
