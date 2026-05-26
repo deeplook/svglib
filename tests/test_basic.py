@@ -1471,6 +1471,41 @@ class TestEmbedded:
         assert xmax - xmin == pytest.approx(150)
         assert ymax - ymin == pytest.approx(150)
 
+    def test_old_inkscape_warning(self, caplog):
+        """SVGs from Inkscape <0.92 (90 dpi) should log a warning; newer should not."""
+        old_svg = """<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                 inkscape:version="0.91 r13725"
+                 width="100" height="100">
+              <rect width="100" height="100"/>
+            </svg>"""
+        new_svg = """<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                 inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+                 width="100" height="100">
+              <rect width="100" height="100"/>
+            </svg>"""
+        plain_svg = """<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <rect width="100" height="100"/>
+            </svg>"""
+        import logging
+
+        with caplog.at_level(logging.WARNING, logger="svglib.svglib"):
+            drawing_from_svg(old_svg)
+        assert any("pre-0.92" in r.message for r in caplog.records)
+
+        caplog.clear()
+        with caplog.at_level(logging.WARNING, logger="svglib.svglib"):
+            drawing_from_svg(new_svg)
+        assert not caplog.records
+
+        with caplog.at_level(logging.WARNING, logger="svglib.svglib"):
+            drawing_from_svg(plain_svg)
+        assert not caplog.records
+
     def test_png_in_svg_file_like(self):
         drawing = drawing_from_svg(
             """

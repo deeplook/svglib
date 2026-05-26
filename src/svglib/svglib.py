@@ -161,6 +161,7 @@ def find_font(
 
 
 XML_NS = "http://www.w3.org/XML/1998/namespace"
+INKSCAPE_NS = "http://www.inkscape.org/namespaces/inkscape"
 
 # A sentinel to identify a situation where a node reference a fragment not yet defined.
 DELAYED = object()
@@ -964,6 +965,24 @@ class SvgRenderer:
         self._external_svgs: Dict[str, ExternalSVG] = {}
         self.attrConverter.css_rules = CSSMatcher()
 
+    def _warn_old_inkscape(self, svg_node: Any) -> None:
+        inkscape_version = svg_node.get(f"{{{INKSCAPE_NS}}}version", "")
+        if not inkscape_version:
+            return
+        version_str = inkscape_version.split()[0]
+        try:
+            parts = tuple(int(x) for x in version_str.split(".")[:2])
+        except ValueError:
+            return
+        if parts < (0, 92):
+            logger.warning(
+                "This SVG was created with Inkscape %s (pre-0.92, 90 dpi). "
+                "Coordinates assume 90 dpi instead of the standard 96 dpi, "
+                "so the output may be ~6.7%% too large. "
+                "Re-save with Inkscape ≥0.92 to fix.",
+                version_str,
+            )
+
     def render(self, svg_node: Any) -> Drawing:
         """Render an SVG node into a ReportLab Drawing.
 
@@ -974,6 +993,7 @@ class SvgRenderer:
             A ReportLab Drawing object representing the SVG.
         """
         node = NodeTracker.from_xml_root(svg_node)
+        self._warn_old_inkscape(svg_node)
         view_box = self.get_box(node, default_box=True)
         # Knowing the main box is useful for percentage units
         self.attrConverter.set_box(view_box)
