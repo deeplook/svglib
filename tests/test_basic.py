@@ -1395,11 +1395,12 @@ class TestEmbedded:
         )
         nested_group = drawing.contents[0].contents[0]
         xmin, ymin, xmax, ymax = nested_group.getBounds()
-        # Parent viewport is 200x200, inner viewBox is 50x50, so the rect
-        # should be rendered at the full 200x200 — not 50x50, which is what
-        # happens without the fallback.
-        assert xmax - xmin == 200
-        assert ymax - ymin == 200
+        # Parent viewport is 200x200px = 150x150pt (px→pt at 0.75). The inner
+        # SVG inherits the parent slot, so the rect fills 150×150pt — not
+        # 50×50 (viewBox units without scaling), which is what happens without
+        # the fallback.
+        assert xmax - xmin == pytest.approx(150)
+        assert ymax - ymin == pytest.approx(150)
 
     def test_png_in_svg_file_like(self):
         drawing = drawing_from_svg(
