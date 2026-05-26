@@ -1544,6 +1544,42 @@ class SvgRenderer:
             # canvas is in pts; view_box is in user units — scale converts user→pt
             x_scale = (width * PX_TO_PT) / view_box.width if view_box.width else 1
             y_scale = (height * PX_TO_PT) / view_box.height if view_box.height else 1
+
+            # Apply preserveAspectRatio (default: xMidYMid meet)
+            par = (node.getAttribute("preserveAspectRatio") or "xMidYMid meet").strip()
+            par_tokens = par.split()
+            align = par_tokens[0] if par_tokens else "xMidYMid"
+            meet_or_slice = par_tokens[1] if len(par_tokens) > 1 else "meet"
+
+            if align != "none":
+                if meet_or_slice == "slice":
+                    uniform_scale = max(x_scale, y_scale)
+                else:  # meet (default)
+                    uniform_scale = min(x_scale, y_scale)
+
+                # Compute translation to align content within canvas (in pts)
+                width_pt = width * PX_TO_PT
+                height_pt = height * PX_TO_PT
+                scaled_vb_w = view_box.width * uniform_scale
+                scaled_vb_h = view_box.height * uniform_scale
+                # Horizontal alignment
+                if align.startswith("xMin"):
+                    tx = 0
+                elif align.startswith("xMax"):
+                    tx = width_pt - scaled_vb_w
+                else:  # xMid (default)
+                    tx = (width_pt - scaled_vb_w) / 2
+                # Vertical alignment (SVG y increases downward, PDF upward)
+                if "YMin" in align:
+                    ty = height_pt - scaled_vb_h
+                elif "YMax" in align:
+                    ty = 0
+                else:  # YMid (default)
+                    ty = (height_pt - scaled_vb_h) / 2
+                if tx or ty:
+                    group.translate(tx, ty)
+
+                x_scale = y_scale = uniform_scale
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
 
         return group
