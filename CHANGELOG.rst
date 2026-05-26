@@ -27,6 +27,10 @@ returned ``Drawing`` object before use::
     drawing.height *= factor
     drawing.scale(factor, factor)
 
+- Add support for SVG 2 length units: ``rem``, ``vw``, ``vh``, ``vmin``,
+  ``vmax``, and ``q`` (quarter-millimetre) in ``convertLength`` (#449).
+- Warn when loading SVGs created with Inkscape < 0.92, which used a
+  non-standard 90 dpi reference resolution (#452).
 - Move ``rlpycairo`` to the ``bitmaps`` extra, so Cairo is no longer part of
   the default installation path.
 - Fix inconsistent unit handling: bare numbers and ``px`` units now produce

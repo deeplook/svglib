@@ -237,3 +237,87 @@ class TestFontSizeUnits:
             _font_size_pt("72pt"),
             rel_tol=1e-4,
         )
+
+
+# ---------------------------------------------------------------------------
+# SVG 2 viewport and root-relative units (issue #449)
+# ---------------------------------------------------------------------------
+
+
+def _converter_with_box(width: float, height: float):
+    """Return an Svg2RlgAttributeConverter with main_box set to the given size."""
+    from svglib.svglib import Box, Svg2RlgAttributeConverter
+
+    conv = Svg2RlgAttributeConverter()
+    conv.set_box(Box(0, 0, width, height))
+    return conv
+
+
+class TestSVG2ViewportUnits:
+    """rem, vw, vh, vmin, vmax, q — SVG 2 / CSS length units."""
+
+    def test_rem_equals_16px(self):
+        """1rem == 16 user units (CSS default root font-size)."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(conv.convertLength("1rem"), 16.0)
+        assert math.isclose(conv.convertLength("2rem"), 32.0)
+
+    def test_rem_matches_16px_literal(self):
+        """1rem and 16px must produce identical lengths."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(conv.convertLength("1rem"), conv.convertLength("16px"))
+
+    def test_vw_fraction_of_viewport_width(self):
+        """50vw == 50% of viewport width (200 user units for a 400-wide box)."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(conv.convertLength("50vw"), 200.0)
+        assert math.isclose(conv.convertLength("100vw"), 400.0)
+
+    def test_vh_fraction_of_viewport_height(self):
+        """50vh == 50% of viewport height (150 user units for a 300-tall box)."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(conv.convertLength("50vh"), 150.0)
+        assert math.isclose(conv.convertLength("100vh"), 300.0)
+
+    def test_vmin_uses_smaller_dimension(self):
+        """100vmin == the smaller of viewport width and height."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(conv.convertLength("100vmin"), 300.0)
+
+    def test_vmax_uses_larger_dimension(self):
+        """100vmax == the larger of viewport width and height."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(conv.convertLength("100vmax"), 400.0)
+
+    def test_vmin_vmax_square_viewport_equal(self):
+        """For a square viewport, vmin == vmax."""
+        conv = _converter_with_box(200, 200)
+        assert math.isclose(conv.convertLength("50vmin"), conv.convertLength("50vmax"))
+
+    def test_q_quarter_millimetre(self):
+        """4q == 1mm (q is a quarter-millimetre)."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(
+            conv.convertLength("4q"), conv.convertLength("1mm"), rel_tol=1e-4
+        )
+
+    def test_q_100_equals_25mm(self):
+        """100q == 25mm."""
+        conv = _converter_with_box(400, 300)
+        assert math.isclose(
+            conv.convertLength("100q"), conv.convertLength("25mm"), rel_tol=1e-4
+        )
+
+    def test_vw_used_in_svg_rect(self):
+        """A rect with width="50vw" in a 400-unit viewport is 200 user units wide."""
+        drawing = drawing_from_svg(
+            """<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="400" height="300" viewBox="0 0 400 300">
+              <rect id="r" x="0" y="0" width="50vw" height="50vh"/>
+            </svg>"""
+        )
+        rect = drawing.contents[0].contents[0]
+        # rect stores dimensions in user units; the group transform converts to pts
+        assert math.isclose(rect.width, 200.0, rel_tol=1e-4)
+        assert math.isclose(rect.height, 150.0, rel_tol=1e-4)

@@ -545,8 +545,38 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         elif text.endswith("pt"):
             # 1 pt = 1/72 in = 96/72 px user units
             return float(text[:-2]) * (96 / 72)
+        elif text.endswith("rem"):
+            # root em — always the CSS default 16 px (= DEFAULT_FONT_SIZE / PX_TO_PT)
+            return float(text[:-3]) * (DEFAULT_FONT_SIZE / PX_TO_PT)
         elif text.endswith("em"):
             return float(text[:-2]) * em_base
+        elif text.endswith("vmin"):
+            if self.main_box is None:
+                logger.error("Unable to resolve vmin unit without a main box")
+                return default
+            return (
+                float(text[:-4]) / 100 * min(self.main_box.width, self.main_box.height)
+            )
+        elif text.endswith("vmax"):
+            if self.main_box is None:
+                logger.error("Unable to resolve vmax unit without a main box")
+                return default
+            return (
+                float(text[:-4]) / 100 * max(self.main_box.width, self.main_box.height)
+            )
+        elif text.endswith("vw"):
+            if self.main_box is None:
+                logger.error("Unable to resolve vw unit without a main box")
+                return default
+            return float(text[:-2]) / 100 * self.main_box.width
+        elif text.endswith("vh"):
+            if self.main_box is None:
+                logger.error("Unable to resolve vh unit without a main box")
+                return default
+            return float(text[:-2]) / 100 * self.main_box.height
+        elif text.endswith("q"):
+            # 1q = 0.25 mm
+            return float(text[:-1]) * toLength("1mm") / (4 * PX_TO_PT)
         elif text.endswith("px"):
             # px are user units (1:1)
             return float(text[:-2])
