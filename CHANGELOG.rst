@@ -29,6 +29,8 @@ returned ``Drawing`` object before use::
 
 - Add support for SVG 2 length units: ``rem``, ``vw``, ``vh``, ``vmin``,
   ``vmax``, and ``q`` (quarter-millimetre) in ``convertLength`` (#449).
+- ``rem`` now resolves against the root ``<svg>`` element's ``font-size``
+  (falling back to the CSS default of 16 px when not set).
 - Warn when loading SVGs created with Inkscape < 0.92, which used a
   non-standard 90 dpi reference resolution (#452).
 - Move ``rlpycairo`` to the ``bitmaps`` extra, so Cairo is no longer part of

@@ -256,16 +256,44 @@ def _converter_with_box(width: float, height: float):
 class TestSVG2ViewportUnits:
     """rem, vw, vh, vmin, vmax, q — SVG 2 / CSS length units."""
 
-    def test_rem_equals_16px(self):
-        """1rem == 16 user units (CSS default root font-size)."""
+    def test_rem_equals_16px_default(self):
+        """1rem == 16 user units when root has no explicit font-size (CSS default)."""
         conv = _converter_with_box(400, 300)
         assert math.isclose(conv.convertLength("1rem"), 16.0)
         assert math.isclose(conv.convertLength("2rem"), 32.0)
 
     def test_rem_matches_16px_literal(self):
-        """1rem and 16px must produce identical lengths."""
+        """1rem and 16px must produce identical lengths when using the default."""
         conv = _converter_with_box(400, 300)
         assert math.isclose(conv.convertLength("1rem"), conv.convertLength("16px"))
+
+    def test_rem_uses_root_font_size_from_svg(self):
+        """rem resolves against the root <svg> font-size, not always 16px."""
+        drawing = drawing_from_svg(
+            """<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="400" height="300" viewBox="0 0 400 300"
+                 font-size="20px">
+              <rect x="0" y="0" width="2rem" height="1rem"/>
+            </svg>"""
+        )
+        rect = drawing.contents[0].contents[0]
+        # 2rem = 2 * 20px = 40 user units; 1rem = 20 user units
+        assert math.isclose(rect.width, 40.0, rel_tol=1e-4)
+        assert math.isclose(rect.height, 20.0, rel_tol=1e-4)
+
+    def test_rem_default_when_no_root_font_size(self):
+        """rem defaults to 16px when root <svg> has no explicit font-size."""
+        drawing = drawing_from_svg(
+            """<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="400" height="300" viewBox="0 0 400 300">
+              <rect x="0" y="0" width="1rem" height="1rem"/>
+            </svg>"""
+        )
+        rect = drawing.contents[0].contents[0]
+        assert math.isclose(rect.width, 16.0, rel_tol=1e-4)
+        assert math.isclose(rect.height, 16.0, rel_tol=1e-4)
 
     def test_vw_fraction_of_viewport_width(self):
         """50vw == 50% of viewport width (200 user units for a 400-wide box)."""

@@ -312,6 +312,8 @@ class AttributeConverter:
     def __init__(self) -> None:
         self.css_rules: Optional[CSSMatcher] = None
         self.main_box: Optional[Box] = None
+        # Resolved once at render time from the root <svg> font-size; used by rem.
+        self.root_font_size: float = DEFAULT_FONT_SIZE / PX_TO_PT  # 16 px default
 
     def set_box(self, main_box: Optional[Box]) -> None:
         """Set the main viewbox for resolving percentage-based units.
@@ -546,8 +548,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             # 1 pt = 1/72 in = 96/72 px user units
             return float(text[:-2]) * (96 / 72)
         elif text.endswith("rem"):
-            # root em — always the CSS default 16 px (= DEFAULT_FONT_SIZE / PX_TO_PT)
-            return float(text[:-3]) * (DEFAULT_FONT_SIZE / PX_TO_PT)
+            return float(text[:-3]) * self.root_font_size
         elif text.endswith("em"):
             return float(text[:-2]) * em_base
         elif text.endswith("vmin"):
@@ -995,6 +996,13 @@ class SvgRenderer:
         self._external_svgs: Dict[str, ExternalSVG] = {}
         self.attrConverter.css_rules = CSSMatcher()
 
+    def _set_root_font_size(self, root_node: Any) -> None:
+        fs_str = self.attrConverter.findAttr(root_node, "font-size")
+        if fs_str:
+            fs_px = self.attrConverter.convertLength(fs_str)
+            if fs_px:
+                self.attrConverter.root_font_size = float(fs_px)  # type: ignore[arg-type]
+
     def _warn_old_inkscape(self, svg_node: Any) -> None:
         inkscape_version = svg_node.get(f"{{{INKSCAPE_NS}}}version", "")
         if not inkscape_version:
@@ -1024,6 +1032,7 @@ class SvgRenderer:
         """
         node = NodeTracker.from_xml_root(svg_node)
         self._warn_old_inkscape(svg_node)
+        self._set_root_font_size(node)
         view_box = self.get_box(node, default_box=True)
         # Knowing the main box is useful for percentage units
         self.attrConverter.set_box(view_box)
