@@ -3,7 +3,7 @@
 ChangeLog
 =========
 
-2.0b1 (2026-04-29)
+2.0b1 (2026-05-26)
 ------------------
 
 **Breaking change — output sizes will differ from 1.x.**
