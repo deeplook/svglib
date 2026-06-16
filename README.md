@@ -1,0 +1,320 @@
+# Svglib
+
+*A pure-Python library for reading and converting SVG*
+
+[![CI Ubuntu](https://github.com/deeplook/svglib/actions/workflows/ci-ubuntu.yml/badge.svg)](https://github.com/deeplook/svglib/actions/workflows/ci-ubuntu.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/deeplook/svglib/master.svg)](https://results.pre-commit.ci/latest/github/deeplook/svglib/master)
+[![PyUp](https://pyup.io/repos/github/deeplook/svglib/shield.svg)](https://pyup.io/repos/github/deeplook/svglib/)
+[![Python Implementation](https://img.shields.io/pypi/implementation/svglib.svg)](https://pypi.org/project/svglib)
+[![Python Versions](https://img.shields.io/pypi/pyversions/svglib.svg)](https://pypi.org/project/svglib)
+[![Downloads](https://img.shields.io/pypi/dm/svglib.svg)](https://pepy.tech/project/svglib)
+[![PyPI Version](https://img.shields.io/pypi/v/svglib.svg)](https://pypi.org/project/svglib)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/svglib.svg)](https://github.com/conda-forge/svglib-feedstock)
+[![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/svglib.svg)](https://github.com/conda-forge/svglib-feedstock)
+[![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/svglib.svg)](https://pypi.org/project/svglib)
+[![License](https://img.shields.io/pypi/l/svglib.svg)](https://pypi.org/project/svglib)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deeplook/streamlit-svglib/master/streamlit_app.py)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/deeplook)
+
+
+## About
+
+`Svglib` is a Python library for reading [SVG](http://www.w3.org/Graphics/SVG/) files and converting
+them (to a reasonable degree) to other formats using the
+[ReportLab](https://www.reportlab.com/opensource/) Open Source toolkit.
+
+Used as a package you can read existing SVG files and convert them into
+ReportLab `Drawing` objects that can be used in a variety of contexts,
+e.g. as ReportLab Platypus `Flowable` objects or in
+[RML](https://www.reportlab.com/software/rml-reference/).
+As a command-line tool it converts SVG files into PDF ones (but adding
+other output formats like bitmap or EPS is really easy and will be better
+supported, soon).
+
+Tests include a huge [W3C SVG test suite](http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview)
+plus ca. 200 [flags from Wikipedia](https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags)
+and some selected [symbols from Wikipedia](https://en.wikipedia.org/wiki/List_of_symbols)
+(with increasingly less pointing to missing features).
+
+
+## Features
+
+- convert [SVG](http://www.w3.org/Graphics/SVG/) files into [ReportLab](https://www.reportlab.com/opensource/) Graphics `Drawing` objects
+- handle plain or compressed SVG files (.svg and .svgz)
+- allow patterns for output files on command-line
+- install a Python package named `svglib`
+- install a Python command-line script named `svg2pdf`
+- support SVG linear and radial gradients
+- support SVG `<switch>` elements with conditional rendering
+- provide a [PyTest](http://pytest.org) test suite with over 90% code coverage
+- test entire [W3C SVG test suite](http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview) after pulling from the internet
+- test all SVG [flags from Wikipedia](https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags) after pulling from the internet
+- test selected SVG [symbols from Wikipedia](https://en.wikipedia.org/wiki/List_of_symbols) after pulling from the net
+- support Python 3.9+ and PyPy3
+
+
+## Known limitations
+
+- `@import` rules in stylesheets are ignored. CSS is supported, but the range
+  of supported attributes is still limited
+- clipping is limited to single paths, no mask support
+- SVG `ForeignObject` elements are not supported.
+
+
+## Examples
+
+You can use `svglib` as a Python package e.g. like in the following
+interactive Python session:
+
+```python
+>>> from svglib.svglib import svg2rlg
+>>> from reportlab.graphics import renderPDF
+>>>
+>>> drawing = svg2rlg("file.svg")
+>>> renderPDF.drawToFile(drawing, "file.pdf")
+```
+
+Note that the second parameter of `drawToFile` can be any
+[Python file object](https://docs.python.org/3/glossary.html#term-file-object),
+like a `BytesIO` buffer if you don't want the result to be written on disk.
+
+In addition a script named `svg2pdf` can be used more easily from
+the system command-line. Here is the output from `svg2pdf -h`:
+
+```
+usage: svg2pdf [-h] [-v] [-o PATH_PAT] [PATH [PATH ...]]
+
+svg2pdf v. x.x.x
+A converter from SVG to PDF (via ReportLab Graphics)
+
+positional arguments:
+  PATH                  Input SVG file path with extension .svg or .svgz.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --version         Print version number and exit.
+  -o PATH_PAT, --output PATH_PAT
+                        Set output path (incl. the placeholders: dirname,
+                        basename,base, ext, now) in both, %(name)s and {name}
+                        notations.
+
+examples:
+  # convert path/file.svg to path/file.pdf
+  svg2pdf path/file.svg
+
+  # convert file1.svg to file1.pdf and file2.svgz to file2.pdf
+  svg2pdf file1.svg file2.svgz
+
+  # convert file.svg to out.pdf
+  svg2pdf -o out.pdf file.svg
+
+  # convert all SVG files in path/ to PDF files with names like:
+  # path/file1.svg -> file1.pdf
+  svg2pdf -o "%(base)s.pdf" path/file*.svg
+
+  # like before but with timestamp in the PDF files:
+  # path/file1.svg -> path/out-12-58-36-file1.pdf
+  svg2pdf -o {dirname}/out-{now.hour}-{now.minute}-{now.second}-%(base)s.pdf path/file*.svg
+
+issues/pull requests:
+    https://github.com/deeplook/svglib
+```
+
+
+## Units and output sizes
+
+SVG is anchored to a **96 dpi** coordinate system: one user unit (bare
+number or `px`) equals one CSS pixel, which is 1/96 of an inch.
+ReportLab works in **points** (1 pt = 1/72 inch). The conversion
+factor is `1 px = 0.75 pt`.
+
+The `Drawing` object returned by `svg2rlg` always has its
+`width` and `height` expressed in ReportLab points. The table
+below shows what you get for common unit choices on the root `<svg>`
+element:
+
+| SVG `width`        | `Drawing.width` (pt) | Physical width |
+|--------------------|----------------------|----------------|
+| `width="96"`       | 72 pt                | 1 inch         |
+| `width="96px"`     | 72 pt (same as bare) | 1 inch         |
+| `width="72pt"`     | 72 pt                | 1 inch         |
+| `width="25.4mm"`   | 72 pt                | 1 inch         |
+| `width="1in"`      | 72 pt                | 1 inch         |
+
+The physical size is the same in every row — the unit only affects
+which number appears in the file.
+
+**Font sizes** follow the same rule. `font-size="16"` (bare or
+`px`) produces a 12 pt font in the PDF (16 × 0.75). Use
+`font-size="12pt"` when you need to specify a precise typographic
+size directly.
+
+**Choosing units**
+
+- *Web-first SVGs*: use bare numbers throughout and a `viewBox`.
+  The browser renders at 96 dpi; svglib scales to 72 dpi points.
+  Physical dimensions are preserved in the PDF.
+- *Print at an exact physical size*: declare `width`/`height` in
+  `mm`, `cm`, or `in` on the `<svg>` element and use a
+  matching `viewBox`. Both screen and print will show the declared
+  physical size.
+- *Control exact PDF point dimensions*: use `pt` units on
+  `width`/`height`; the numeric value is preserved in the Drawing.
+
+**Adjusting the output size at render time**
+
+If you need to rescale the returned Drawing (e.g. to fit a fixed page
+size or restore the pre-2.0 behaviour), scale the Drawing object
+directly:
+
+```python
+drawing = svg2rlg("file.svg")
+factor = 4 / 3   # restore 1.x size (1 user unit → 1 pt, non-spec)
+drawing.width  *= factor
+drawing.height *= factor
+drawing.scale(factor, factor)
+```
+
+
+## Dependencies
+
+`Svglib` depends mainly on the `reportlab` package, which provides
+the abstractions for building complex `Drawings` which it can render
+into different fileformats, including PDF, EPS, SVG and various bitmap
+ones. Other dependencies are `lxml` which is used in the context of SVG
+CSS stylesheets.
+
+PDF output does not require Cairo. SVG images embedded in input files are
+included in generated PDFs through ReportLab's PDF renderer.
+
+### Bitmap output
+
+Rendering ReportLab drawings to bitmap formats such as PNG uses
+`reportlab.graphics.renderPM` and requires a renderPM backend.
+
+The default ReportLab 4.x backend is `rlPyCairo`:
+
+```
+$ pip install "svglib[bitmaps]"
+```
+
+Depending on the platform, `pycairo` may also require the system Cairo
+library to be installed. For installation instructions, see the official
+website: https://www.cairographics.org/download/
+
+Alternatively, users can install ReportLab's legacy `_renderPM` backend:
+
+```
+$ pip install svglib rl-renderPM
+```
+
+To choose a backend explicitly, set ReportLab's renderPM backend before calling
+`renderPM`:
+
+```python
+from reportlab import rl_config
+from reportlab.graphics import renderPM
+
+rl_config.renderPMBackend = "rlPyCairo"  # default in ReportLab 4.x
+# or:
+rl_config.renderPMBackend = "_renderPM"
+
+renderPM.drawToFile(drawing, "file.png", fmt="PNG")
+```
+
+
+## Installation
+
+There are three ways to install `svglib`.
+
+### 1. Using `pip`
+
+With the `pip` command on your system and a working internet
+connection you can install the newest version of `svglib` with only
+one command in a terminal:
+
+```
+$ pip install svglib
+```
+
+You can also use `pip` to install the very latest version of the
+repository from GitHub, but then you won't be able to conveniently
+run the test suite:
+
+```
+$ pip install git+https://github.com/deeplook/svglib
+```
+
+
+### 2. Using `conda`
+
+If you use [Anaconda](https://www.anaconda.com/download/) or
+[Miniconda](https://conda.io/miniconda.html) you are surely using its respective
+package manager, [Conda](https://conda.io), as well. In that case you should be
+able to install `svglib` using these simple commands:
+
+```
+$ conda config --add channels conda-forge
+$ conda install svglib
+```
+
+`Svglib` was kindly packaged for `conda` by
+[nicoddemus](https://github.com/nicoddemus). See here more about
+[svglib with conda](https://github.com/conda-forge/svglib-feedstock).
+
+
+### 3. Manual installation
+
+Alternatively, you can install a tarball like `svglib-<version>.tar.gz`
+after downloading it from the [svglib page on PyPI](https://pypi.org/project/svglib/)
+or the [svglib releases page on GitHub](https://github.com/deeplook/svglib/releases)
+and installing it via `pip`:
+
+```
+$ pip install svglib-<version>.tar.gz
+```
+
+This will install a Python package named `svglib` in the
+`site-packages` subfolder of your Python installation and a script
+tool named `svg2pdf` in your `bin` directory, e.g. in
+`/usr/local/bin`.
+
+
+## Development and Testing
+
+To develop `svglib`, install [uv](https://docs.astral.sh/uv/) and run `uv sync` to
+install the requirements and development dependencies. To run the test suite with
+`pytest`, run: `uv run pytest`.
+
+
+## Distribution Testing
+
+The `svglib` tarball distribution contains a [PyTest](http://pytest.org) test suite
+in the `tests` directory. There, in `tests/README.rst`, you can
+also read more about testing. You can run the testsuite e.g. like
+shown in the following lines on the command-line:
+
+```
+$ make test
+========================= test session starts =========================
+platform darwin -- Python 3.9.6, pytest-8.4.2, pluggy-1.6.0
+rootdir: /Users/dinu/dev/svglib
+configfile: pyproject.toml
+plugins: cov-7.0.0
+collected 115 items
+
+tests/test_basic.py ............................................ [ 43%]
+..................                                               [ 53%]
+tests/test_fonts.py ............s.....................s.....     [ 88%]
+tests/test_samples.py .s.s.s.s.....                              [100%]
+
+============== 109 passed, 6 skipped, 1 warning in 33.32s =============
+```
+
+
+## Bug reports
+
+Please report bugs on the [svglib issue tracker](https://github.com/deeplook/svglib/issues)
+on GitHub (pull requests are also appreciated)!
+If necessary, please include information about the operating system, as
+well as the versions of `svglib`, ReportLab and Python being used!

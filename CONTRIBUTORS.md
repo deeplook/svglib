@@ -1,7 +1,4 @@
-.. -*- mode: rst -*-
-
-Contributors
-============
+# Contributors
 
 This is the (preliminary) list of contributors in no particular order:
 
