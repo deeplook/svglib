@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.0.1 (2026-06-17)
+
+Supply-chain hygiene release — no code changes.
+
+This release replaces 2.0.0, which was published directly with `uv publish`
+and therefore lacked the PEP 740 provenance attestation that was present in
+1.6.0. Releases must be triggered via the GitHub Actions release workflow
+(`publish-to-pypi.yml`), which uses PyPI Trusted Publishing (OIDC) to produce
+a SLSA Level 3 attestation. Publishing locally — even with
+`uv publish --trusted-publishing` — relies on a local OAuth identity and does
+not meet that bar.
+
+- Declare `pillow>=9.0.0` as a direct dependency; it was previously an
+  undeclared transitive dependency pulled in by reportlab (#463).
+
 ## 2.0.0 (2026-06-16)
 
 Identical to 2.0b1 in terms of code; this release promotes the beta to a
