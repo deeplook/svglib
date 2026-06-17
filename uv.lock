@@ -824,11 +824,12 @@ wheels = [
 
 [[package]]
 name = "svglib"
-version = "2.0b1"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "cssselect2" },
     { name = "lxml" },
+    { name = "pillow" },
     { name = "reportlab" },
     { name = "tinycss2" },
 ]
@@ -863,6 +864,7 @@ test = [
 requires-dist = [
     { name = "cssselect2", specifier = ">=0.2.0" },
     { name = "lxml", specifier = ">=6.0.0" },
+    { name = "pillow", specifier = ">=9.0.0" },
     { name = "reportlab", specifier = ">=4.4.3" },
     { name = "rlpycairo", marker = "extra == 'bitmaps'", specifier = ">=0.4.0" },
     { name = "tinycss2", specifier = ">=0.6.0" },

@@ -43,6 +43,7 @@ requires-python = ">=3.9"
 dependencies = [
     "cssselect2>=0.2.0",
     "lxml>=6.0.0",
+    "pillow>=9.0.0",
     "reportlab>=4.4.3",
     "tinycss2>=0.6.0",
 ]
