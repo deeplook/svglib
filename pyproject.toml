@@ -1,6 +1,6 @@
 [project]
 name = "svglib"
-version = "2.0.1"
+version = "2.0.2"
 description = "A pure-Python library for reading and converting SVG"
 readme = "README.md"
 authors = [{ name = "Dinu Gherman" }]
