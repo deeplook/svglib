@@ -998,6 +998,10 @@ class LinearGradientShape(DirectDraw):
         )
         canvas.restoreState()
 
+    def getBounds(self):
+        """Return the bounds of the clipped region this gradient fills."""
+        return self._clip_shape.getBounds()
+
 
 class RadialGradientShape(DirectDraw):
     """Fills a clipped region with a radial gradient via PDF shading."""
@@ -1032,6 +1036,10 @@ class RadialGradientShape(DirectDraw):
             self._extend,
         )
         canvas.restoreState()
+
+    def getBounds(self):
+        """Return the bounds of the clipped region this gradient fills."""
+        return self._clip_shape.getBounds()
 
 
 # Deprecated aliases for the underscore-prefixed names these classes had before

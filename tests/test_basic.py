@@ -1675,6 +1675,10 @@ class TestGradients:
         groups = self._find_groups(drawing)
         # The rect's fill must have been replaced by a gradient group
         assert len(groups) > 1
+        # The gradient shape must implement getBounds() so the drawing can be
+        # measured (e.g. when used as a flowable by rst2pdf); see issue #466.
+        x0, y0, x1, y1 = drawing.getBounds()
+        assert x1 > x0 and y1 > y0
 
     def test_radial_gradient_circle(self):
         """A circle with a radialGradient fill must produce a Group."""
@@ -1695,6 +1699,9 @@ class TestGradients:
         )
         groups = self._find_groups(drawing)
         assert len(groups) > 1
+        # See issue #466: the gradient shape must implement getBounds().
+        x0, y0, x1, y1 = drawing.getBounds()
+        assert x1 > x0 and y1 > y0
 
     def test_gradient_stops_parsed(self):
         """Stop colors and offsets must be correctly stored in gradient_defs."""
