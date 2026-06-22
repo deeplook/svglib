@@ -48,6 +48,7 @@ from reportlab.graphics.shapes import (
     Polygon,
     PolyLine,
     Rect,
+    Shape,
     SolidShape,
     String,
     _renderPath,
@@ -913,7 +914,17 @@ def _find_clip_shape(item):
 class LinearGradientShape(DirectDraw):
     """Fills a clipped region with a linear gradient via PDF shading."""
 
-    def __init__(self, clip_shape, x0, y0, x1, y1, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Shape,
+        x0: float,
+        y0: float,
+        x1: float,
+        y1: float,
+        rl_colors: List[colors.Color],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
         self._x1, self._y1 = x1, y1
@@ -921,7 +932,7 @@ class LinearGradientShape(DirectDraw):
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -941,14 +952,23 @@ class LinearGradientShape(DirectDraw):
 class RadialGradientShape(DirectDraw):
     """Fills a clipped region with a radial gradient via PDF shading."""
 
-    def __init__(self, clip_shape, cx, cy, r, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Shape,
+        cx: float,
+        cy: float,
+        r: float,
+        rl_colors: List[colors.Color],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
         self._rl_colors = rl_colors
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
