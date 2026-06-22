@@ -998,9 +998,9 @@ class LinearGradientShape(DirectDraw):
         )
         canvas.restoreState()
 
-    def getBounds(self):
+    def getBounds(self) -> Tuple[float, float, float, float]:
         """Return the bounds of the clipped region this gradient fills."""
-        return self._clip_shape.getBounds()
+        return cast(Tuple[float, float, float, float], self._clip_shape.getBounds())
 
 
 class RadialGradientShape(DirectDraw):
@@ -1037,9 +1037,9 @@ class RadialGradientShape(DirectDraw):
         )
         canvas.restoreState()
 
-    def getBounds(self):
+    def getBounds(self) -> Tuple[float, float, float, float]:
         """Return the bounds of the clipped region this gradient fills."""
-        return self._clip_shape.getBounds()
+        return cast(Tuple[float, float, float, float], self._clip_shape.getBounds())
 
 
 # Deprecated aliases for the underscore-prefixed names these classes had before
