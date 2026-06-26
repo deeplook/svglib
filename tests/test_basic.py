@@ -11,7 +11,6 @@ import io
 import os
 import pathlib
 import textwrap
-from os.path import dirname
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable, List, Tuple
 
