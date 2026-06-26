@@ -11,6 +11,7 @@ import io
 import os
 import pathlib
 import textwrap
+from os.path import dirname
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable, List, Tuple
 
@@ -32,6 +33,7 @@ from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 from svglib import svglib, utils
+from svglib.svglib import ClippingPath
 from tests.utils import drawing_from_svg, minimal_svg_node
 
 
@@ -328,6 +330,52 @@ class TestPaths:
         # Fill and stroke properties are force-deleted.
         assert rect_clip.getProperties()["fillColor"] is None
         assert rect_clip.getProperties()["strokeColor"] is None
+
+
+    def test_clip_path_with_rect_transform(self):
+        clipping_paths = [
+            '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0"/>'
+            '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0" rx="20" ry="20"/>',
+            '<path transform="scale(0.5, 0.5)" d="M 0 0 H 100 V 100 H 0 Z"/>'
+        ]
+
+        def find_clipping(item):
+            if isinstance(item, ClippingPath):
+                return item
+
+            if hasattr(item, 'contents'):
+                for child in item.contents:
+                    result = find_clipping(child)
+                    if result:
+                        return result
+
+            return None
+        
+        for clipping_path in clipping_paths:
+            drawing = drawing_from_svg(f"""
+                <svg namespace="http://www.w3.org/XML/1998/namespace" 
+                     xmlns="http://www.w3.org/2000/svg" 
+                     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" 
+                     viewBox="0 0 100 50" width="100" height="50">
+    
+                    <defs>
+                        <clipPath id="clip-1">
+                            {clipping_path}
+                        </clipPath>
+                    </defs>
+                    <g>
+                        <g clip-path="url(#clip-1)">
+                            <path fill="green" d="M 0 0 H 50 V 50 H 0 Z"/>
+                            <path fill="red" d="M 50 0 H 100 V 50 H 50 Z"/>
+                        </g>
+                    </g>
+                </svg>
+            """)
+    
+            clipping = find_clipping(drawing)
+    
+            assert clipping is not None
+            assert max(clipping.points) == 50
 
 
 def force_cmyk(rgb: Any) -> Any:
