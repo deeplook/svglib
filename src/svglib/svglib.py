@@ -937,6 +937,10 @@ class _LinearGradientShape(DirectDraw):
         )
         canvas.restoreState()
 
+    def getBounds(self) -> Tuple[float, float, float, float]:
+        """Return the bounds of the clipped region this gradient fills."""
+        return self._clip_shape.getBounds()
+
 
 class _RadialGradientShape(DirectDraw):
     """Fills a clipped region with a radial gradient via PDF shading."""
@@ -962,6 +966,10 @@ class _RadialGradientShape(DirectDraw):
             self._extend,
         )
         canvas.restoreState()
+
+    def getBounds(self) -> Tuple[float, float, float, float]:
+        """Return the bounds of the clipped region this gradient fills."""
+        return self._clip_shape.getBounds()
 
 
 # ## the main meat ###
