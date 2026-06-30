@@ -1899,7 +1899,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         return Rect(x, y, width, height, rx=rx, ry=ry)
     
-    def convertRectPath(self, node: Any):
+    def convertRectPath(self, node: Any) -> Path:
         x, y, width, height, rx, ry = self.convert_length_attrs(
             node, "x", "y", "width", "height", "rx", "ry"
         )
