@@ -48,6 +48,7 @@ from reportlab.graphics.shapes import (
     Polygon,
     PolyLine,
     Rect,
+    Shape,
     SolidShape,
     String,
     _renderPath,
@@ -910,10 +911,20 @@ def _find_clip_shape(item):
     return None
 
 
-class _LinearGradientShape(DirectDraw):
+class LinearGradientShape(DirectDraw):
     """Fills a clipped region with a linear gradient via PDF shading."""
 
-    def __init__(self, clip_shape, x0, y0, x1, y1, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Shape,
+        x0: float,
+        y0: float,
+        x1: float,
+        y1: float,
+        rl_colors: List[colors.Color],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
         self._x1, self._y1 = x1, y1
@@ -921,7 +932,7 @@ class _LinearGradientShape(DirectDraw):
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -938,17 +949,26 @@ class _LinearGradientShape(DirectDraw):
         canvas.restoreState()
 
 
-class _RadialGradientShape(DirectDraw):
+class RadialGradientShape(DirectDraw):
     """Fills a clipped region with a radial gradient via PDF shading."""
 
-    def __init__(self, clip_shape, cx, cy, r, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Shape,
+        cx: float,
+        cy: float,
+        r: float,
+        rl_colors: List[colors.Color],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
         self._rl_colors = rl_colors
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -962,6 +982,13 @@ class _RadialGradientShape(DirectDraw):
             self._extend,
         )
         canvas.restoreState()
+
+
+# Deprecated aliases for the underscore-prefixed names these classes had
+# before 2.1.0. They were never meant to be private, but the leading
+# underscore wrongly signalled so. Scheduled for removal in 2.1.0.
+_LinearGradientShape = LinearGradientShape
+_RadialGradientShape = RadialGradientShape
 
 
 # ## the main meat ###
@@ -1299,7 +1326,7 @@ class SvgRenderer:
                 y1 = by0 + y1 * bbox_h
                 x2 = bx0 + x2 * bbox_w
                 y2 = by0 + y2 * bbox_h
-            grad_shape: DirectDraw = _LinearGradientShape(
+            grad_shape: DirectDraw = LinearGradientShape(
                 clip_shape, x1, y1, x2, y2, rl_colors, positions, extend
             )
         else:
@@ -1310,7 +1337,7 @@ class SvgRenderer:
                 cx = bx0 + cx * bbox_w
                 cy = by0 + cy * bbox_h
                 r = r * (bbox_w + bbox_h) / 2.0
-            grad_shape = _RadialGradientShape(
+            grad_shape = RadialGradientShape(
                 clip_shape, cx, cy, r, rl_colors, positions, extend
             )
 
