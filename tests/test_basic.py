@@ -33,7 +33,12 @@ from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 from svglib import svglib, utils
 from svglib.svglib import ClippingPath
-from tests.utils import drawing_from_svg, minimal_svg_node
+from tests.test_samples import has_renderpm_backend
+from tests.utils import (
+    drawing_from_svg,
+    minimal_svg_node,
+    svg_raster_difference,
+)
 
 
 def _testit(
@@ -331,7 +336,7 @@ class TestPaths:
         assert rect_clip.getProperties()["strokeColor"] is None
 
 
-    def test_clip_path_with_rect_transform(self):
+    def test_clipping_path_with_transform(self):
         clipping_paths = [
             '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0"/>',
             '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0" rx="20" ry="20"/>',
@@ -376,7 +381,26 @@ class TestPaths:
             assert clipping is not None
             assert max(clipping.points) == 50
 
+    @pytest.mark.skipif(not has_renderpm_backend(), reason="needs a renderPM backend")
+    def test_clipping_path_with_transform_visual(self):
+        assert svg_raster_difference(
+            "clipping/path.svg", "clipping/path.png", scale=4/3
+        ) == 0
 
+        assert svg_raster_difference(
+            "clipping/rect.svg", "clipping/rect.png", scale=4/3
+        ) == 0
+
+        assert svg_raster_difference(
+            "clipping/rounded-rect.svg", "clipping/rounded-rect.png", scale=4/3
+        ) == 0
+
+        assert svg_raster_difference(
+            "clipping/path-no-transform.svg", "clipping/path-no-transform.png",
+            scale=4/3
+        ) == 0
+
+    
 def force_cmyk(rgb: Any) -> Any:
     c, m, y, k = colors.rgb2cmyk(rgb.red, rgb.green, rgb.blue)
     return colors.CMYKColor(c, m, y, k, alpha=rgb.alpha)
