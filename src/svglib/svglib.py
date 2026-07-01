@@ -1336,17 +1336,40 @@ class SvgRenderer:
                 elif isinstance(elem, SolidShape):
                     return elem
             return None
-
+        
+        def transform_path(path: Path, transform):
+            # Transforms on the clipping path is not supported so it needs to be applied
+            # to the points
+            a, b, c, d, e, f = transform
+            for i in range(0, len(path.points), 2):
+                x, y = path.points[i], path.points[i + 1]
+                path.points[i] = a * x + c * y + e
+                path.points[i + 1] = b * x + d * y + f
+        
         def get_shape_from_node(node: Any) -> Optional[Any]:
             for child in node.iter_children():
-                if node_name(child) == "path":
+                child_name = node_name(child)
+                if child_name == "path":
                     group = self.shape_converter.convertShape("path", child)
-                    return group.contents[-1]
-                elif node_name(child) == "use":
+                    path = group.contents[-1]
+                    
+                    if group.transform:
+                        transform_path(path, group.transform)
+                    
+                    return path
+                elif child_name == "use":
                     grp = self.renderUse(child)
                     return get_shape_from_group(grp)
-                elif node_name(child) == "rect":
-                    return self.shape_converter.convertRect(child)
+                elif child_name == "rect":
+                    transform = child.getAttribute('transform')
+                    if transform:
+                        rect = self.shape_converter.convertRectPath(child)
+                        group = Group()
+                        self.shape_converter.applyTransformOnGroup(transform, group)
+                        transform_path(rect, group.transform)
+                        return rect
+                    else:
+                        return self.shape_converter.convertRect(child)
                 else:
                     return get_shape_from_node(child)
             return None
@@ -1807,16 +1830,22 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # Only apply style where the convert method did not apply it.
             self.applyStyleOnShape(shape, node)
         transform = node.getAttribute("transform")
-        if not (transform or clipping):
-            return shape
-        else:
+        
+        if clipping:
             group = Group()
-            if transform:
-                self.applyTransformOnGroup(transform, group)
-            if clipping:
-                group.add(clipping)
+            group.add(clipping)
             group.add(shape)
-            return group
+            shape = group
+            
+        if transform:
+            if not isinstance(shape, Group):
+                group = Group()
+                group.add(shape)
+                shape = group
+
+            self.applyTransformOnGroup(transform, shape)
+        
+        return shape
 
     def convert_length_attrs(
         self,
@@ -1867,7 +1896,70 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             ry = rx
         elif ry and not rx:
             rx = ry
+
         return Rect(x, y, width, height, rx=rx, ry=ry)
+    
+    def convertRectPath(self, node: Any) -> Path:
+        x, y, width, height, rx, ry = self.convert_length_attrs(
+            node, "x", "y", "width", "height", "rx", "ry"
+        )
+        if rx > (width / 2):
+            rx = width / 2
+        if ry > (height / 2):
+            ry = height / 2
+        if rx and not ry:
+            ry = rx
+        elif ry and not rx:
+            rx = ry
+
+        # Basic rectangle
+        if rx == 0 or ry == 0:
+            p = Path()
+            p.moveTo(x, y)
+            p.lineTo(x + width, y)
+            p.lineTo(x + width, y + height)
+            p.lineTo(x, y + height)
+            p.closePath()
+            return p
+
+        # Approximation constant for circle to cubic bezier = 4/3 * tan(pi/8)
+        c = 0.552284749830793
+
+        dx = rx * c
+        dy = ry * c
+
+        p = Path()
+
+        # Bottom-left corner arc start
+        p.moveTo(x + rx, y)
+
+        # Bottom edge + bottom-right corner
+        p.lineTo(x + width - rx, y)
+        p.curveTo(x + width - rx + dx, y,
+                  x + width, y + ry - dy,
+                  x + width, y + ry)
+
+        # Right edge + top-right corner
+        p.lineTo(x + width, y + height - ry)
+        p.curveTo(x + width, y + height - ry + dy,
+                  x + width - rx + dx, y + height,
+                  x + width - rx, y + height)
+
+        # Top edge + top-left corner
+        p.lineTo(x + rx, y + height)
+        p.curveTo(x + rx - dx, y + height,
+                  x, y + height - ry + dy,
+                  x, y + height - ry)
+
+        # Left edge + bottom-left corner
+        p.lineTo(x, y + ry)
+        p.curveTo(x, y + ry - dy,
+                  x + rx - dx, y,
+                  x + rx, y)
+
+        p.closePath()
+
+        return p
 
     def convertCircle(self, node: Any) -> Circle:
         """Convert an SVG <circle> element to a ReportLab Circle."""
