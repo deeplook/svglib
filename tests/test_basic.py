@@ -357,11 +357,11 @@ class TestPaths:
 
         for clipping_path in clipping_paths:
             drawing = drawing_from_svg(f"""
-                <svg namespace="http://www.w3.org/XML/1998/namespace" 
-                     xmlns="http://www.w3.org/2000/svg" 
-                     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" 
+                <svg namespace="http://www.w3.org/XML/1998/namespace"
+                     xmlns="http://www.w3.org/2000/svg"
+                     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
                      viewBox="0 0 100 50" width="100" height="50">
-    
+
                     <defs>
                         <clipPath id="clip-1">
                             {clipping_path}
