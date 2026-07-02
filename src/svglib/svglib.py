@@ -1336,7 +1336,7 @@ class SvgRenderer:
                 elif isinstance(elem, SolidShape):
                     return elem
             return None
-        
+
         def transform_path(path: Path, transform):
             # Transforms on the clipping path is not supported so it needs to be applied
             # to the points
@@ -1345,23 +1345,23 @@ class SvgRenderer:
                 x, y = path.points[i], path.points[i + 1]
                 path.points[i] = a * x + c * y + e
                 path.points[i + 1] = b * x + d * y + f
-        
+
         def get_shape_from_node(node: Any) -> Optional[Any]:
             for child in node.iter_children():
                 child_name = node_name(child)
                 if child_name == "path":
                     group = self.shape_converter.convertShape("path", child)
                     path = group.contents[-1]
-                    
+
                     if group.transform:
                         transform_path(path, group.transform)
-                    
+
                     return path
                 elif child_name == "use":
                     grp = self.renderUse(child)
                     return get_shape_from_group(grp)
                 elif child_name == "rect":
-                    transform = child.getAttribute('transform')
+                    transform = child.getAttribute("transform")
                     if transform:
                         rect = self.shape_converter.convertRectPath(child)
                         group = Group()
@@ -1830,13 +1830,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # Only apply style where the convert method did not apply it.
             self.applyStyleOnShape(shape, node)
         transform = node.getAttribute("transform")
-        
+
         if clipping:
             group = Group()
             group.add(clipping)
             group.add(shape)
             shape = group
-            
+
         if transform:
             if not isinstance(shape, Group):
                 group = Group()
@@ -1844,7 +1844,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 shape = group
 
             self.applyTransformOnGroup(transform, shape)
-        
+
         return shape
 
     def convert_length_attrs(
@@ -1898,7 +1898,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             rx = ry
 
         return Rect(x, y, width, height, rx=rx, ry=ry)
-    
+
     def convertRectPath(self, node: Any) -> Path:
         x, y, width, height, rx, ry = self.convert_length_attrs(
             node, "x", "y", "width", "height", "rx", "ry"
@@ -1935,27 +1935,26 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         # Bottom edge + bottom-right corner
         p.lineTo(x + width - rx, y)
-        p.curveTo(x + width - rx + dx, y,
-                  x + width, y + ry - dy,
-                  x + width, y + ry)
+        p.curveTo(x + width - rx + dx, y, x + width, y + ry - dy, x + width, y + ry)
 
         # Right edge + top-right corner
         p.lineTo(x + width, y + height - ry)
-        p.curveTo(x + width, y + height - ry + dy,
-                  x + width - rx + dx, y + height,
-                  x + width - rx, y + height)
+        p.curveTo(
+            x + width,
+            y + height - ry + dy,
+            x + width - rx + dx,
+            y + height,
+            x + width - rx,
+            y + height,
+        )
 
         # Top edge + top-left corner
         p.lineTo(x + rx, y + height)
-        p.curveTo(x + rx - dx, y + height,
-                  x, y + height - ry + dy,
-                  x, y + height - ry)
+        p.curveTo(x + rx - dx, y + height, x, y + height - ry + dy, x, y + height - ry)
 
         # Left edge + bottom-left corner
         p.lineTo(x, y + ry)
-        p.curveTo(x, y + ry - dy,
-                  x + rx - dx, y,
-                  x + rx, y)
+        p.curveTo(x, y + ry - dy, x + rx - dx, y, x + rx, y)
 
         p.closePath()
 
