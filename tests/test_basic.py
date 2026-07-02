@@ -339,7 +339,8 @@ class TestPaths:
     def test_clipping_path_with_transform(self):
         clipping_paths = [
             '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0"/>',
-            '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0" rx="20" ry="20"/>',
+            '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0" ' +
+            'rx="20" ry="20"/>',
             '<path transform="scale(0.5, 0.5)" d="M 0 0 H 100 V 100 H 0 Z"/>'
         ]
 

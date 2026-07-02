@@ -4,9 +4,9 @@ from os.path import dirname
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from typing import Any
-from PIL import Image
 
 from lxml.etree import XML
+from PIL import Image
 
 from svglib.svglib import NodeTracker, svg2rlg
 
@@ -47,29 +47,23 @@ def svg_raster_difference(svg: str, raster: str, scale=1, tolerance=3) -> float:
     
     assert os.path.exists(svg_path)
     assert os.path.exists(raster_path)
-    
-    svg_file = open(svg_path, 'rb')
-    raster_file = open(raster_path, "rb")
-    
-    drawing = svg2rlg(svg_file)
-    if scale and scale != 1:
-        drawing.width *= scale
-        drawing.height *= scale
-        drawing.scale(scale, scale)
 
-    temp_name = None
-    with NamedTemporaryFile(mode="w", suffix=".png", delete=False) as temp:
-        temp_name = temp.name
+    with open(svg_path, 'rb') as svg_file:
+        drawing = svg2rlg(svg_file)
+        if scale and scale != 1:
+            drawing.width *= scale
+            drawing.height *= scale
+            drawing.scale(scale, scale)
 
-    assert temp_name is not None
+        with NamedTemporaryFile(mode="w", suffix=".png", delete=False) as temp:
+            svg_raster_path = temp.name
 
-    drawing.save(formats=['png'], outDir=None, fnRoot=temp_name)
+        drawing.save(formats=['png'], outDir=None, fnRoot=svg_raster_path)
 
     incorrect_pixels = 0
     squared_tolerance = tolerance * tolerance
-    max_pixels = 1
-    with Image.open(raster_file) as raster:
-        with Image.open(temp_name) as drawing_raster:
+    with Image.open(raster_path) as raster:
+        with Image.open(svg_raster_path) as drawing_raster:
             assert raster.size == drawing_raster.size
 
             # Convert RGB to match the reportlab export
@@ -93,7 +87,7 @@ def svg_raster_difference(svg: str, raster: str, scale=1, tolerance=3) -> float:
                     if squared_distance > squared_tolerance:
                         incorrect_pixels += 1
 
-    os.unlink(temp_name)
+    os.unlink(svg_raster_path)
 
     return (incorrect_pixels / max_pixels) * 100
 
