@@ -1348,10 +1348,7 @@ class SvgRenderer:
                     if isinstance(item, Group):
                         return get_shape_from_group(item)
 
-                    return self.shape_converter.shapeToPath(
-                        item,
-                        child.getAttribute("transform"),
-                    )
+                    return self.shape_converter.shapeToPath(item, None)
 
                 elif child_name == "use":
                     grp = self.renderUse(child)
@@ -2389,7 +2386,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         path = Path()
 
         # Approximation constant for circle to cubic bezier = 4/3 * tan(pi/8)
-        c = 0.552284749830793
+        bc = 0.552284749830793
 
         if isinstance(shape, Rect):
             x = shape.x
@@ -2408,8 +2405,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 path.closePath()
             else:
                 # Rounded corners, need to approximate the corner curves
-                dx = rx * c
-                dy = ry * c
+                dx = rx * bc
+                dy = ry * bc
 
                 # Bottom-left corner arc start
                 path.moveTo(x + rx, y)
@@ -2453,8 +2450,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             cx = shape.cx
             cy = shape.cy
-            dx = rx * c
-            dy = ry * c
+            dx = rx * bc
+            dy = ry * bc
 
             path.moveTo(cx + rx, cy)
 
@@ -2501,7 +2498,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             path.closePath()
 
         elif isinstance(shape, Polygon):
-            for i in range(0, len(shape.points), 2):
+            if len(shape.points) >= 2:
+                path.moveTo(shape.points[0], shape.points[1])
+
+            for i in range(2, len(shape.points), 2):
                 path.lineTo(shape.points[i], shape.points[i + 1])
 
             path.closePath()

@@ -434,7 +434,6 @@ class TestPaths:
             "rect",
             "rounded-rect",
             "path-no-transform",
-            "rect",
             "ellipse",
             "circle",
             "polygon",
