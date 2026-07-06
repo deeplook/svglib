@@ -2373,7 +2373,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # lines are device-dependent, their use is not recommended.
             shape.strokeColor = None
 
-    def shapeToPath(self, shape: SolidShape, transform=None) -> Optional[Path]:
+    def shapeToPath(
+        self,
+        shape: SolidShape,
+        transform: Optional[Tuple[float, float, float, float, float, float]] = None,
+    ) -> Optional[Path]:
         """
         Convert a solid shape into path.
 
