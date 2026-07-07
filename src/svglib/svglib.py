@@ -1334,19 +1334,25 @@ class SvgRenderer:
                 if isinstance(elem, Group):
                     return get_shape_from_group(elem)
                 elif isinstance(elem, SolidShape):
-                    return elem
+                    return self.shape_converter.shapeToPath(elem, group.transform)
             return None
 
         def get_shape_from_node(node: Any) -> Optional[Any]:
             for child in node.iter_children():
-                if node_name(child) == "path":
-                    group = self.shape_converter.convertShape("path", child)
-                    return group.contents[-1]
-                elif node_name(child) == "use":
+                child_name = node_name(child)
+                valid_nodes = ["path", "rect", "circle", "ellipse", "polygon"]
+                if child_name in valid_nodes:
+                    item = self.shape_converter.convertShape(child_name, child)
+
+                    # The transform will be applied in the get_shape_from_group
+                    if isinstance(item, Group):
+                        return get_shape_from_group(item)
+
+                    return self.shape_converter.shapeToPath(item, None)
+
+                elif child_name == "use":
                     grp = self.renderUse(child)
                     return get_shape_from_group(grp)
-                elif node_name(child) == "rect":
-                    return self.shape_converter.convertRect(child)
                 else:
                     return get_shape_from_node(child)
             return None
@@ -1363,20 +1369,7 @@ class SvgRenderer:
             return None
 
         shape = get_shape_from_node(self.definitions[ref])
-        if isinstance(shape, Rect):
-            # It is possible to use a rect as a clipping path in an svg, so we
-            # need to convert it to a path for rlg.
-            x1, y1, x2, y2 = shape.getBounds()
-            cp = ClippingPath()
-            cp.moveTo(x1, y1)
-            cp.lineTo(x2, y1)
-            cp.lineTo(x2, y2)
-            cp.lineTo(x1, y2)
-            cp.closePath()
-            # Copy the styles from the rect to the clipping path.
-            copy_shape_properties(shape, cp)
-            return cp
-        elif isinstance(shape, Path):
+        if shape and isinstance(shape, Path):
             return ClippingPath(copy_from=shape)
         elif shape:
             logger.error(
@@ -1807,16 +1800,22 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # Only apply style where the convert method did not apply it.
             self.applyStyleOnShape(shape, node)
         transform = node.getAttribute("transform")
-        if not (transform or clipping):
-            return shape
-        else:
+
+        if clipping:
             group = Group()
-            if transform:
-                self.applyTransformOnGroup(transform, group)
-            if clipping:
-                group.add(clipping)
+            group.add(clipping)
             group.add(shape)
-            return group
+            shape = group
+
+        if transform:
+            if not isinstance(shape, Group):
+                group = Group()
+                group.add(shape)
+                shape = group
+
+            self.applyTransformOnGroup(transform, shape)
+
+        return shape
 
     def convert_length_attrs(
         self,
@@ -1867,6 +1866,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             ry = rx
         elif ry and not rx:
             rx = ry
+
         return Rect(x, y, width, height, rx=rx, ry=ry)
 
     def convertCircle(self, node: Any) -> Circle:
@@ -2372,6 +2372,160 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # nearly invisible. Since the results of rendering such zero-width
             # lines are device-dependent, their use is not recommended.
             shape.strokeColor = None
+
+    def shapeToPath(
+        self,
+        shape: SolidShape,
+        transform: Optional[Tuple[float, float, float, float, float, float]] = None,
+    ) -> Optional[Path]:
+        """
+        Convert a solid shape into path.
+
+        Not all shapes can be perfectly represented with bézier curves
+        so the path may be a close approximation with a margin of error.
+        """
+        if not shape:
+            return None
+
+        path = Path()
+
+        # Approximation constant for circle to cubic bezier = 4/3 * tan(pi/8)
+        bc = 0.552284749830793
+
+        if isinstance(shape, Rect):
+            x = shape.x
+            y = shape.y
+            width = shape.width
+            height = shape.height
+            rx = shape.rx
+            ry = shape.ry
+
+            if rx == 0 or ry == 0:
+                # Basic rectangle, exact shape
+                path.moveTo(x, y)
+                path.lineTo(x + width, y)
+                path.lineTo(x + width, y + height)
+                path.lineTo(x, y + height)
+                path.closePath()
+            else:
+                # Rounded corners, need to approximate the corner curves
+                dx = rx * bc
+                dy = ry * bc
+
+                # Bottom-left corner arc start
+                path.moveTo(x + rx, y)
+
+                # Bottom edge + bottom-right corner
+                path.lineTo(x + width - rx, y)
+                path.curveTo(
+                    x + width - rx + dx, y, x + width, y + ry - dy, x + width, y + ry
+                )
+
+                # Right edge + top-right corner
+                path.lineTo(x + width, y + height - ry)
+                path.curveTo(
+                    x + width,
+                    y + height - ry + dy,
+                    x + width - rx + dx,
+                    y + height,
+                    x + width - rx,
+                    y + height,
+                )
+
+                # Top edge + top-left corner
+                path.lineTo(x + rx, y + height)
+                path.curveTo(
+                    x + rx - dx, y + height, x, y + height - ry + dy, x, y + height - ry
+                )
+
+                # Left edge + bottom-left corner
+                path.lineTo(x, y + ry)
+                path.curveTo(x, y + ry - dy, x + rx - dx, y, x + rx, y)
+
+                path.closePath()
+
+        elif isinstance(shape, Circle) or isinstance(shape, Ellipse):
+            if isinstance(shape, Circle):
+                rx = shape.r
+                ry = shape.r
+            else:
+                rx = shape.rx
+                ry = shape.ry
+
+            cx = shape.cx
+            cy = shape.cy
+            dx = rx * bc
+            dy = ry * bc
+
+            path.moveTo(cx + rx, cy)
+
+            # Lower-right
+            path.curveTo(
+                cx + rx,
+                cy - dy,
+                cx + dx,
+                cy - ry,
+                cx,
+                cy - ry,
+            )
+
+            # Lower-left
+            path.curveTo(
+                cx - dx,
+                cy - ry,
+                cx - rx,
+                cy - dy,
+                cx - rx,
+                cy,
+            )
+
+            # Upper-left
+            path.curveTo(
+                cx - rx,
+                cy + dy,
+                cx - dx,
+                cy + ry,
+                cx,
+                cy + ry,
+            )
+
+            # Upper-right
+            path.curveTo(
+                cx + dx,
+                cy + ry,
+                cx + rx,
+                cy + dy,
+                cx + rx,
+                cy,
+            )
+
+            path.closePath()
+
+        elif isinstance(shape, Polygon):
+            if len(shape.points) >= 2:
+                path.moveTo(shape.points[0], shape.points[1])
+
+            for i in range(2, len(shape.points), 2):
+                path.lineTo(shape.points[i], shape.points[i + 1])
+
+            path.closePath()
+
+        elif isinstance(shape, Path):
+            path = shape.copy()
+
+        else:
+            # Unsupported shape conversion
+            return None
+
+        # Bake in the transform so it can be used with clipping paths
+        if transform:
+            a, b, c, d, e, f = transform
+            for i in range(0, len(path.points), 2):
+                x, y = path.points[i], path.points[i + 1]
+                path.points[i] = a * x + c * y + e
+                path.points[i + 1] = b * x + d * y + f
+
+        return path
 
 
 def svg2rlg(

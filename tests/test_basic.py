@@ -32,7 +32,13 @@ from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD
 
 from svglib import svglib, utils
-from tests.utils import drawing_from_svg, minimal_svg_node
+from svglib.svglib import ClippingPath
+from tests.test_samples import has_renderpm_backend
+from tests.utils import (
+    drawing_from_svg,
+    minimal_svg_node,
+    svg_raster_difference,
+)
 
 
 def _testit(
@@ -328,6 +334,116 @@ class TestPaths:
         # Fill and stroke properties are force-deleted.
         assert rect_clip.getProperties()["fillColor"] is None
         assert rect_clip.getProperties()["strokeColor"] is None
+
+    def find_clipping(self, item):
+        if isinstance(item, ClippingPath):
+            return item
+
+        if hasattr(item, "contents"):
+            for child in item.contents:
+                result = self.find_clipping(child)
+                if result:
+                    return result
+
+        return None
+
+    def test_clipping_path_with_transform(self):
+        clipping_paths = [
+            '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0"/>',
+            '<rect transform="scale(0.5, 0.5)" height="100" width="100" x="0" y="0" '
+            + 'rx="20" ry="20"/>',
+            '<path transform="scale(0.5, 0.5)" d="M 0 0 H 100 V 100 H 0 Z"/>',
+            '<circle transform="scale(0.5, 0.5)" cx="50" cy="50" r="50"/>',
+            '<ellipse transform="scale(0.5, 0.5)" cx="50" cy="50" rx="50" ry="50"/>',
+            '<polygon transform="scale(0.5, 0.5)" points="0,100 50,25 50,75 100,0" />',
+        ]
+
+        for clipping_path in clipping_paths:
+            drawing = drawing_from_svg(f"""
+                <svg namespace="http://www.w3.org/XML/1998/namespace"
+                     xmlns="http://www.w3.org/2000/svg"
+                     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                     viewBox="0 0 100 50" width="100" height="50">
+
+                    <defs>
+                        <clipPath id="clip-1">
+                            {clipping_path}
+                        </clipPath>
+                    </defs>
+                    <g>
+                        <g clip-path="url(#clip-1)">
+                            <path fill="green" d="M 0 0 H 50 V 50 H 0 Z"/>
+                            <path fill="red" d="M 50 0 H 100 V 50 H 50 Z"/>
+                        </g>
+                    </g>
+                </svg>
+            """)
+
+            clipping = self.find_clipping(drawing)
+
+            assert clipping is not None
+            assert max(clipping.points) == 50
+
+    def test_clipping_path_with_transform_url(self):
+        clipping_paths = [
+            '<rect id="clip-shape" transform="scale(0.5, 0.5)" '
+            + 'height="100" width="100" x="0" y="0"/>',
+            '<rect id="clip-shape" transform="scale(0.5, 0.5)" '
+            + 'height="100" width="100" x="0" y="0" rx="20" ry="20"/>',
+            '<path id="clip-shape" transform="scale(0.5, 0.5)" '
+            + 'd="M 0 0 H 100 V 100 H 0 Z"/>',
+            '<circle id="clip-shape" transform="scale(0.5, 0.5)" '
+            + 'cx="50" cy="50" r="50"/>',
+            '<ellipse id="clip-shape" transform="scale(0.5, 0.5)" '
+            + 'cx="50" cy="50" rx="50" ry="50"/>',
+            '<polygon id="clip-shape" transform="scale(0.5, 0.5)" '
+            + 'points="0,100 50,25 50,75 100,0" />',
+        ]
+
+        for clipping_path in clipping_paths:
+            drawing = drawing_from_svg(f"""
+                <svg namespace="http://www.w3.org/XML/1998/namespace"
+                     xmlns="http://www.w3.org/2000/svg"
+                     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                     viewBox="0 0 100 50" width="100" height="50">
+
+                    <defs>
+                        {clipping_path}
+                        <clipPath id="clip-1">
+                            <use xlink:href="#clip-shape"/>
+                        </clipPath>
+                    </defs>
+                    <g>
+                        <g clip-path="url(#clip-1)">
+                            <path fill="green" d="M 0 0 H 50 V 50 H 0 Z"/>
+                            <path fill="red" d="M 50 0 H 100 V 50 H 50 Z"/>
+                        </g>
+                    </g>
+                </svg>
+            """)
+
+            clipping = self.find_clipping(drawing)
+
+            assert clipping is not None
+            assert max(clipping.points) == 50
+
+    @pytest.mark.skipif(not has_renderpm_backend(), reason="needs a renderPM backend")
+    def test_clipping_path_with_transform_visual(self):
+        test_files = [
+            "path",
+            "rect",
+            "rounded-rect",
+            "path-no-transform",
+            "ellipse",
+            "circle",
+            "polygon",
+        ]
+
+        for test_file in test_files:
+            svg = f"clipping/{test_file}.svg"
+            raster = f"clipping/{test_file}.png"
+
+            assert svg_raster_difference(svg, raster, 4 / 3) == 0
 
 
 def force_cmyk(rgb: Any) -> Any:
