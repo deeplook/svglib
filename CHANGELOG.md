@@ -2,7 +2,26 @@
 
 ## Unreleased
 
-Type-safety and tooling improvements — no runtime behavior changes.
+### Added
+
+- **Clipping paths** now support `<circle>`, `<ellipse>`, and `<polygon>` clip
+  shapes, in addition to paths and rectangles, and clipping masks referenced
+  from within a `<use>` element.
+- Transforms are now applied to clipping-path shapes, fixing clip paths that
+  relied on previously unsupported transforms (issue #366).
+- The gradient shape classes now implement `getBounds()`, so drawings that
+  contain gradient fills can be measured — for example when used as a flowable
+  by rst2pdf (issue #466).
+
+### Changed
+
+- Renamed the gradient shape classes `_LinearGradientShape` and
+  `_RadialGradientShape` to `LinearGradientShape` and `RadialGradientShape`.
+  They appear in the rendered `Drawing` tree and were never meant to be
+  private, so the leading underscore was misleading. The old underscore-
+  prefixed names remain as deprecated aliases and will be **removed in 2.1.0**.
+
+### Type safety and internal quality (no behavior change)
 
 - Completed static type annotations for `svglib.py`; the package now passes
   `mypy --strict` on its own source, with a single documented per-module
@@ -13,14 +32,17 @@ Type-safety and tooling improvements — no runtime behavior changes.
 - Tightened internal gradient handling types: parsed gradient definitions now
   use a `TypedDict` instead of an opaque `Dict[str, Any]`, and the internal
   group/parent parameters are typed as `Optional[Group]`.
-- Renamed the gradient shape classes `_LinearGradientShape` and
-  `_RadialGradientShape` to `LinearGradientShape` and `RadialGradientShape`.
-  They appear in the rendered `Drawing` tree and were never meant to be
-  private, so the leading underscore was misleading. The old underscore-
-  prefixed names remain as deprecated aliases and will be **removed in 2.1.0**.
 - Added docstrings to the remaining undocumented functions in `svglib.py`,
-  bringing documentation coverage to 100% and clearing the recurring
-  DeepSource doc-coverage failure.
+  bringing documentation coverage to 100%.
+
+### Tooling and housekeeping
+
+- Removed the DeepSource configuration. Its checks were redundant with ruff,
+  `mypy --strict`, CodeQL, and the pytest matrix, and only produced recurring
+  noise on pull requests.
+- Removed the long-defunct `uniconv` sample tests. They contained no assertions
+  and shelled out to UniConvertor, an abandoned Python 2 tool, so they had been
+  permanently skipped.
 
 ## 2.0.2 (2026-06-18)
 
