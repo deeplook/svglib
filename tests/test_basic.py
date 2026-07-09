@@ -1349,6 +1349,47 @@ class TestSwitchNode:
         assert len(rects) == 1
         assert rects[0].fillColor.hexval() == "0x0000ff"
 
+    def test_switch_matches_system_language(self, monkeypatch):
+        """<switch> renders the first child whose systemLanguage matches the locale."""
+        for var in ("LC_ALL", "LC_CTYPE", "LANGUAGE"):
+            monkeypatch.delenv(var, raising=False)
+        monkeypatch.setenv("LANG", "de_DE.UTF-8")
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <switch>
+                    <rect systemLanguage="fr" width="100" height="100" fill="red"/>
+                    <rect systemLanguage="de" width="80" height="80" fill="green"/>
+                    <rect width="50" height="50" fill="blue"/>
+                </switch>
+            </svg>
+        """
+        )
+        rects = self._find_rects(drawing)
+        assert len(rects) == 1
+        assert rects[0].fillColor.hexval() == "0x008000"  # "de" matches "de_DE"
+
+    def test_switch_skips_nonmatching_system_language(self, monkeypatch):
+        """<switch> skips a non-matching systemLanguage and renders the fallback."""
+        for var in ("LC_ALL", "LC_CTYPE", "LANGUAGE"):
+            monkeypatch.delenv(var, raising=False)
+        monkeypatch.setenv("LANG", "en_US.UTF-8")
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <switch>
+                    <rect systemLanguage="fr" width="100" height="100" fill="red"/>
+                    <rect width="50" height="50" fill="blue"/>
+                </switch>
+            </svg>
+        """
+        )
+        rects = self._find_rects(drawing)
+        assert len(rects) == 1
+        assert rects[0].fillColor.hexval() == "0x0000ff"  # "fr" skipped, fallback used
+
 
 class TestSymbolNode:
     def test_symbol_unused(self):
