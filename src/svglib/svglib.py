@@ -2648,7 +2648,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             # Unsupported shape conversion
             return None
 
-        # Copy over fill rule
+        # Preserve fill rule and other shape properties
         copy_shape_properties(shape, path)
 
         # Bake in the transform so it can be used with clipping paths
