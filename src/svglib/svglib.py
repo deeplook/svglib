@@ -816,7 +816,7 @@ _BEZIER_KAPPA = 0.5523  # cubic bezier constant for circle approximation
 _GRADIENT_URL_RE = re.compile(r"url\(#([^)]+)\)")
 
 
-def _shape_to_pdf_path(canvas, shape):
+def _shape_to_pdf_path(canvas: Any, shape: Any) -> Any:
     """Convert a ReportLab shape to a PDFPathObject for use as a clip path.
 
     Handles Path, Rect, Circle, Ellipse, and Polygon; falls back to the
@@ -901,7 +901,7 @@ def _shape_to_pdf_path(canvas, shape):
     return pdfPath
 
 
-def _find_clip_shape(item):
+def _find_clip_shape(item: Any) -> Optional[Any]:
     """Return the first Path/Rect/Circle/Ellipse/Polygon found in item or its group."""
     if isinstance(item, (Path, Rect, Circle, Ellipse, Polygon)):
         return item
@@ -916,7 +916,17 @@ def _find_clip_shape(item):
 class _LinearGradientShape(DirectDraw):
     """Fills a clipped region with a linear gradient via PDF shading."""
 
-    def __init__(self, clip_shape, x0, y0, x1, y1, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Any,
+        x0: float,
+        y0: float,
+        x1: float,
+        y1: float,
+        rl_colors: List[Any],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
         self._x1, self._y1 = x1, y1
@@ -924,7 +934,7 @@ class _LinearGradientShape(DirectDraw):
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -944,14 +954,23 @@ class _LinearGradientShape(DirectDraw):
 class _RadialGradientShape(DirectDraw):
     """Fills a clipped region with a radial gradient via PDF shading."""
 
-    def __init__(self, clip_shape, cx, cy, r, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Any,
+        cx: float,
+        cy: float,
+        r: float,
+        rl_colors: List[Any],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
         self._rl_colors = rl_colors
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -992,7 +1011,7 @@ class SvgRenderer:
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions: Dict[str, Any] = {}
-        self.gradient_defs: Dict[str, dict] = {}
+        self.gradient_defs: Dict[str, Dict[str, Any]] = {}
         self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Any]]]] = (
             defaultdict(list)
         )
@@ -1163,7 +1182,7 @@ class SvgRenderer:
             return
         grad_type = node_name(node)  # "linearGradient" or "radialGradient"
 
-        def _float_attr(attr, default):
+        def _float_attr(attr: str, default: float) -> float:
             raw = node.attrib.get(attr, "").strip()
             if raw.endswith("%"):
                 try:
@@ -1203,7 +1222,7 @@ class SvgRenderer:
 
             # stop-color and stop-opacity can be in style or as direct attrs
             style_str = child.attrib.get("style", "")
-            style_attrs: dict = {}
+            style_attrs: Dict[str, Any] = {}
             if style_str:
                 style_attrs = self.attrConverter.parseMultiAttributes(style_str)
 
@@ -1225,7 +1244,7 @@ class SvgRenderer:
             rl_color.alpha = opacity
             stops.append((offset, rl_color))
 
-        grad_def: dict = {
+        grad_def: Dict[str, Any] = {
             "type": "linear" if grad_type == "linearGradient" else "radial",
             "gradientUnits": grad_units,
             "spreadMethod": spread,
@@ -1247,7 +1266,7 @@ class SvgRenderer:
 
         self.gradient_defs[grad_id] = grad_def
 
-    def _resolve_gradient(self, grad_id: str) -> Optional[dict]:
+    def _resolve_gradient(self, grad_id: str) -> Optional[Dict[str, Any]]:
         """Return a fully resolved gradient dict, following xlink:href chains."""
         visited = set()
         result = self.gradient_defs.get(grad_id)
@@ -1268,7 +1287,7 @@ class SvgRenderer:
             result = merged
         return result
 
-    def _apply_gradient_fill(self, item: Any, grad_def: dict) -> Any:
+    def _apply_gradient_fill(self, item: Any, grad_def: Dict[str, Any]) -> Any:
         """Wrap a shape in a Group that paints the gradient fill then the stroke."""
         clip_shape = _find_clip_shape(item)
         if clip_shape is None:
@@ -1961,29 +1980,29 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             dy: Union[float, List[float]] = 0
             baseLineShift: Union[float, int] = 0
             if not is_tail:
-                x1, y1, dx, dy = self.convert_length_attrs(  # type: ignore
+                x1, y1, dx, dy = self.convert_length_attrs(
                     subnode,
                     "x",
                     "y",
                     "dx",
                     "dy",
-                    em_base=fs,  # type: ignore
+                    em_base=fs,
                 )
                 has_x, has_y = (
                     subnode.attrib.get("x", "") != "",
                     subnode.attrib.get("y", "") != "",
                 )
-                dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)  # type: ignore
-                dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)  # type: ignore
+                dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)
+                dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
             baseLineShift = subnode.attrib.get("baseline-shift", "0")
             if baseLineShift in ("sub", "super", "baseline"):
-                baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[  # type: ignore
+                baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[
                     baseLineShift  # type: ignore
                 ]
             else:
                 baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)  # type: ignore
 
-            frag_lengths.append(stringWidth(text, ff, fs_pt))  # type: ignore
+            frag_lengths.append(stringWidth(text, ff, fs_pt))
 
             # When x, y, dx, or dy is a list, we calculate position for each char of
             # text.
@@ -2253,7 +2272,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     values = values, 0
                 group.translate(*values)
             elif op == "rotate":
-                if not isinstance(values, tuple) or len(values) == 1:  # type: ignore
+                if not isinstance(values, tuple) or len(values) == 1:
                     group.rotate(values)
                 elif len(values) == 3:
                     angle, cx, cy = values
@@ -2333,15 +2352,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                         if (
                             svgAttrName == "fill-opacity"
                             and getattr(shape, "fillColor", None) is not None
-                            and getattr(shape.fillColor, "alpha", 1) != 1  # type: ignore
+                            and getattr(shape.fillColor, "alpha", 1) != 1
                         ):
-                            svgAttrValue = shape.fillColor.alpha  # type: ignore
+                            svgAttrValue = shape.fillColor.alpha
                         elif (
                             svgAttrName == "stroke-opacity"
                             and getattr(shape, "strokeColor", None) is not None
-                            and getattr(shape.strokeColor, "alpha", 1) != 1  # type: ignore
+                            and getattr(shape.strokeColor, "alpha", 1) != 1
                         ):
-                            svgAttrValue = shape.strokeColor.alpha  # type: ignore
+                            svgAttrValue = shape.strokeColor.alpha
                         else:
                             svgAttrValue = defaults[index]  # type: ignore
                     if svgAttrValue == "currentColor":

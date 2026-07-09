@@ -31,7 +31,7 @@ lint: ## Run the formatter and linter.
 
 .PHONY: typecheck
 typecheck: ## Run the type checker.
-	uv run mypy --ignore-missing-imports src tests
+	uv run mypy src tests
 
 .PHONY: hooks
 hooks:  ## Run all pre-commit hooks.
