@@ -29,7 +29,7 @@ from reportlab.graphics.shapes import (
 )
 from reportlab.lib import colors
 from reportlab.lib.units import cm, inch
-from reportlab.pdfgen.canvas import FILL_EVEN_ODD
+from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 
 from svglib import svglib, utils
 from svglib.svglib import ClippingPath
@@ -383,6 +383,7 @@ class TestPaths:
 
             assert clipping is not None
             assert max(clipping.points) == 50
+            assert clipping.fillMode == FILL_NON_ZERO
 
     def test_clipping_path_with_transform_url(self):
         clipping_paths = [
@@ -426,6 +427,39 @@ class TestPaths:
 
             assert clipping is not None
             assert max(clipping.points) == 50
+            assert clipping.fillMode == FILL_NON_ZERO
+
+    def test_clipping_path_fill_rule(self):
+        clipping_paths = [
+            '<rect fill-rule="evenodd" height="100" width="100" x="0" y="0"/>',
+            '<rect fill-rule="evenodd" height="100" width="100" x="0" y="0" rx="20" '
+            + 'ry="20"/>',
+            '<path fill-rule="evenodd" d="M 0 0 H 100 V 100 H 0 Z"/>',
+            '<circle fill-rule="evenodd" cx="50" cy="50" r="50"/>',
+            '<ellipse fill-rule="evenodd" cx="50" cy="50" rx="50" ry="50"/>',
+            '<polygon fill-rule="evenodd" points="0,100 50,25 50,75 100,0" />',
+        ]
+
+        for clipping_path in clipping_paths:
+            drawing = drawing_from_svg(f"""
+                <svg namespace="http://www.w3.org/XML/1998/namespace"
+                     xmlns="http://www.w3.org/2000/svg"
+                     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                     viewBox="0 0 100 50" width="100" height="50">
+
+                    <defs>
+                        <clipPath id="clip-1">
+                            {clipping_path}
+                        </clipPath>
+                    </defs>
+                    <g clip-path="url(#clip-1)">
+                        <path fill="green" d="M 0 0 H 50 V 50 H 0 Z"/>
+                    </g>
+                </svg>
+            """)
+
+            clipping = self.find_clipping(drawing)
+            assert clipping.fillMode == FILL_EVEN_ODD
 
     @pytest.mark.skipif(not has_renderpm_backend(), reason="needs a renderPM backend")
     def test_clipping_path_with_transform_visual(self):
