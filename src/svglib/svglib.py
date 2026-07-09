@@ -1569,7 +1569,10 @@ class SvgRenderer:
                 # The missing definition should appear later in the file
                 self.waiting_use_nodes[fragment].append((node, group))
                 return DELAYED
-            return None
+
+        # The target could not be resolved (e.g. an external SVG with no root
+        # node, or an unresolved fragment): make the fall-through explicit.
+        return None
 
     def renderTitle_(self, node: NodeTracker) -> None:
         """Handle the <title> element (currently a no-op)."""
