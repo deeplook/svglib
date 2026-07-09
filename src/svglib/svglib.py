@@ -29,10 +29,21 @@ import pathlib
 import re
 import shlex
 import shutil
-import sys
 from collections import defaultdict, namedtuple
 from io import BytesIO
-from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
+from typing import (
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TextIO,
+    Tuple,
+    TypedDict,
+    Union,
+    cast,
+)
 
 from PIL import Image as PILImage
 from reportlab.graphics.shapes import (
@@ -92,6 +103,40 @@ from .utils import (
 
 # SVG user units are px; ReportLab works in points.  1 px = 0.75 pt (96 dpi / 72 dpi).
 PX_TO_PT = 0.75
+
+# An SVG source accepted by the public API: a path, a path-like object, or an
+# already-open binary/text file object.
+SVGSource = Union[str, os.PathLike[str], BinaryIO, TextIO]
+
+# A single gradient stop: (offset, ReportLab color). The color is untyped
+# because ReportLab ships no stubs.
+GradientStop = Tuple[float, Any]
+
+
+class _GradientDefBase(TypedDict):
+    """Keys always present on a parsed gradient definition."""
+
+    type: str  # "linear" or "radial"
+    gradientUnits: str
+    spreadMethod: str
+    stops: List[GradientStop]
+    href: Optional[str]
+
+
+class _GradientDef(_GradientDefBase, total=False):
+    """Geometry keys present depending on ``type`` (linear vs radial)."""
+
+    # linearGradient
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+    # radialGradient
+    cx: float
+    cy: float
+    r: float
+    fx: float
+    fy: float
 
 
 def _convert_palette_to_rgba(image: PILImage.Image) -> PILImage.Image:
@@ -243,7 +288,7 @@ class NoStrokePath(Path):
 
     def getProperties(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Return the properties of the path, ensuring no stroke is applied."""
-        props = super().getProperties(*args, **kwargs)
+        props: Dict[str, Any] = super().getProperties(*args, **kwargs)
         if "strokeWidth" in props:
             props["strokeWidth"] = 0
         if "strokeColor" in props:
@@ -267,7 +312,7 @@ class ClippingPath(Path):
 
     def getProperties(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Return the properties of the path, ensuring no fill or stroke."""
-        props = Path.getProperties(self, *args, **kwargs)
+        props: Dict[str, Any] = Path.getProperties(self, *args, **kwargs)
         if "fillColor" in props:
             props["fillColor"] = None
         if "strokeColor" in props:
@@ -372,7 +417,7 @@ class AttributeConverter:
                         svgNode.attrib[key] = val
                 svgNode.attrib["__rules_applied"] = "1"
 
-        attr_value = svgNode.attrib.get(name, "").strip()
+        attr_value: str = svgNode.attrib.get(name, "").strip()
 
         if attr_value and attr_value != "inherit":
             return attr_value
@@ -540,7 +585,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                     "Unable to detect if node %r is width or height", attr_name
                 )
                 return float(text[:-1])
-            return float(text[:-1]) / 100 * full
+            return cast(float, float(text[:-1]) / 100 * full)
         elif text.endswith("pc"):
             # 1 pc = 12 pt = 16 px user units
             return float(text[:-2]) * 16
@@ -555,29 +600,31 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             if self.main_box is None:
                 logger.error("Unable to resolve vmin unit without a main box")
                 return default
-            return (
-                float(text[:-4]) / 100 * min(self.main_box.width, self.main_box.height)
+            return cast(
+                float,
+                float(text[:-4]) / 100 * min(self.main_box.width, self.main_box.height),
             )
         elif text.endswith("vmax"):
             if self.main_box is None:
                 logger.error("Unable to resolve vmax unit without a main box")
                 return default
-            return (
-                float(text[:-4]) / 100 * max(self.main_box.width, self.main_box.height)
+            return cast(
+                float,
+                float(text[:-4]) / 100 * max(self.main_box.width, self.main_box.height),
             )
         elif text.endswith("vw"):
             if self.main_box is None:
                 logger.error("Unable to resolve vw unit without a main box")
                 return default
-            return float(text[:-2]) / 100 * self.main_box.width
+            return cast(float, float(text[:-2]) / 100 * self.main_box.width)
         elif text.endswith("vh"):
             if self.main_box is None:
                 logger.error("Unable to resolve vh unit without a main box")
                 return default
-            return float(text[:-2]) / 100 * self.main_box.height
+            return cast(float, float(text[:-2]) / 100 * self.main_box.height)
         elif text.endswith("q"):
             # 1q = 0.25 mm
-            return float(text[:-1]) * toLength("1mm") / (4 * PX_TO_PT)
+            return cast(float, float(text[:-1]) * toLength("1mm") / (4 * PX_TO_PT))
         elif text.endswith("px"):
             # px are user units (1:1)
             return float(text[:-2])
@@ -597,7 +644,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         except ValueError:
             pass
         # toLength handles mm, cm, in, etc. and returns points; convert to user units.
-        return toLength(text) / PX_TO_PT
+        return cast(float, toLength(text) / PX_TO_PT)
 
     def convertLengthList(self, svgAttr: str) -> List[Union[float, List[float]]]:
         """Convert a space-separated list of lengths into a list of floats."""
@@ -624,10 +671,13 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
     def convertFillRule(self, svgAttr: str) -> Union[int, str]:
         """Convert an SVG fill-rule string to a ReportLab fill rule."""
-        return {
-            "nonzero": FILL_NON_ZERO,
-            "evenodd": FILL_EVEN_ODD,
-        }.get(svgAttr, "")
+        return cast(
+            Union[int, str],
+            {
+                "nonzero": FILL_NON_ZERO,
+                "evenodd": FILL_EVEN_ODD,
+            }.get(svgAttr, ""),
+        )
 
     def convertColor(self, svgAttr: str) -> Any:
         """Convert an SVG color string to a ReportLab color object.
@@ -749,7 +799,7 @@ class NodeTracker(cssselect2.ElementWrapper):
         """Get an attribute value and record that it has been used."""
         if name not in self.usedAttrs:
             self.usedAttrs.append(name)
-        return self.etree_element.attrib.get(name, "")
+        return cast(str, self.etree_element.attrib.get(name, ""))
 
     def __getattr__(self, name: str) -> Any:
         """Forward attribute access to the wrapped lxml node."""
@@ -813,7 +863,7 @@ _BEZIER_KAPPA = 0.5523  # cubic bezier constant for circle approximation
 _GRADIENT_URL_RE = re.compile(r"url\(#([^)]+)\)")
 
 
-def _shape_to_pdf_path(canvas, shape):
+def _shape_to_pdf_path(canvas: Any, shape: Any) -> Any:
     """Convert a ReportLab shape to a PDFPathObject for use as a clip path.
 
     Handles Path, Rect, Circle, Ellipse, and Polygon; falls back to the
@@ -898,7 +948,7 @@ def _shape_to_pdf_path(canvas, shape):
     return pdfPath
 
 
-def _find_clip_shape(item):
+def _find_clip_shape(item: Any) -> Optional[Any]:
     """Return the first Path/Rect/Circle/Ellipse/Polygon found in item or its group."""
     if isinstance(item, (Path, Rect, Circle, Ellipse, Polygon)):
         return item
@@ -913,7 +963,17 @@ def _find_clip_shape(item):
 class _LinearGradientShape(DirectDraw):
     """Fills a clipped region with a linear gradient via PDF shading."""
 
-    def __init__(self, clip_shape, x0, y0, x1, y1, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Any,
+        x0: float,
+        y0: float,
+        x1: float,
+        y1: float,
+        rl_colors: List[Any],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
         self._x1, self._y1 = x1, y1
@@ -921,7 +981,7 @@ class _LinearGradientShape(DirectDraw):
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -941,14 +1001,23 @@ class _LinearGradientShape(DirectDraw):
 class _RadialGradientShape(DirectDraw):
     """Fills a clipped region with a radial gradient via PDF shading."""
 
-    def __init__(self, clip_shape, cx, cy, r, rl_colors, positions, extend=True):
+    def __init__(
+        self,
+        clip_shape: Any,
+        cx: float,
+        cy: float,
+        r: float,
+        rl_colors: List[Any],
+        positions: List[float],
+        extend: bool = True,
+    ) -> None:
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
         self._rl_colors = rl_colors
         self._positions = positions
         self._extend = extend
 
-    def drawDirectly(self, renderer):
+    def drawDirectly(self, renderer: Any) -> None:
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -976,12 +1045,12 @@ class SvgRenderer:
 
     def __init__(
         self,
-        path: Union[str, os.PathLike[str]],
+        path: SVGSource,
         color_converter: Optional[Any] = None,
         parent_svgs: Optional[List[str]] = None,
         font_map: Optional[Any] = None,
     ) -> None:
-        self.source_path: Union[str, os.PathLike[str]] = path
+        self.source_path: SVGSource = path
         self._parent_chain: List[str] = parent_svgs or []  # To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(
             color_converter=color_converter, font_map=font_map
@@ -989,8 +1058,8 @@ class SvgRenderer:
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions: Dict[str, Any] = {}
-        self.gradient_defs: Dict[str, dict] = {}
-        self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Any]]]] = (
+        self.gradient_defs: Dict[str, _GradientDef] = {}
+        self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Group]]]] = (
             defaultdict(list)
         )
         self._external_svgs: Dict[str, ExternalSVG] = {}
@@ -1050,7 +1119,7 @@ class SvgRenderer:
         drawing.add(main_group)
         return drawing
 
-    def renderNode(self, node: NodeTracker, parent: Optional[Any] = None) -> None:
+    def renderNode(self, node: NodeTracker, parent: Optional[Group] = None) -> None:
         """Render a single SVG node and add it to a parent group.
 
         Args:
@@ -1160,7 +1229,7 @@ class SvgRenderer:
             return
         grad_type = node_name(node)  # "linearGradient" or "radialGradient"
 
-        def _float_attr(attr, default):
+        def _float_attr(attr: str, default: float) -> float:
             raw = node.attrib.get(attr, "").strip()
             if raw.endswith("%"):
                 try:
@@ -1181,7 +1250,7 @@ class SvgRenderer:
         spread = node.attrib.get("spreadMethod", "pad")
 
         # Collect stop elements (direct children with tag "stop")
-        stops = []
+        stops: List[GradientStop] = []
         for child in node:
             child_name = node_name(child)
             if child_name != "stop":
@@ -1200,7 +1269,7 @@ class SvgRenderer:
 
             # stop-color and stop-opacity can be in style or as direct attrs
             style_str = child.attrib.get("style", "")
-            style_attrs: dict = {}
+            style_attrs: Dict[str, Any] = {}
             if style_str:
                 style_attrs = self.attrConverter.parseMultiAttributes(style_str)
 
@@ -1222,7 +1291,7 @@ class SvgRenderer:
             rl_color.alpha = opacity
             stops.append((offset, rl_color))
 
-        grad_def: dict = {
+        grad_def: _GradientDef = {
             "type": "linear" if grad_type == "linearGradient" else "radial",
             "gradientUnits": grad_units,
             "spreadMethod": spread,
@@ -1244,9 +1313,9 @@ class SvgRenderer:
 
         self.gradient_defs[grad_id] = grad_def
 
-    def _resolve_gradient(self, grad_id: str) -> Optional[dict]:
+    def _resolve_gradient(self, grad_id: str) -> Optional[_GradientDef]:
         """Return a fully resolved gradient dict, following xlink:href chains."""
-        visited = set()
+        visited: Set[str] = set()
         result = self.gradient_defs.get(grad_id)
         while result is not None:
             href = result.get("href")
@@ -1256,16 +1325,17 @@ class SvgRenderer:
             if parent is None:
                 break
             visited.add(href)
-            # Merge: current overrides parent for all keys except missing stops
-            merged = dict(parent)
+            # Merge: current overrides parent for all keys except missing stops.
+            # The merge is by dynamic key, so build a plain dict and cast back.
+            merged: Dict[str, Any] = dict(parent)
             for k, v in result.items():
                 if k == "stops" and not v:
                     continue  # inherit parent's stops
                 merged[k] = v
-            result = merged
+            result = cast(_GradientDef, merged)
         return result
 
-    def _apply_gradient_fill(self, item: Any, grad_def: dict) -> Any:
+    def _apply_gradient_fill(self, item: Any, grad_def: _GradientDef) -> Any:
         """Wrap a shape in a Group that paints the gradient fill then the stroke."""
         clip_shape = _find_clip_shape(item)
         if clip_shape is None:
@@ -1406,7 +1476,9 @@ class SvgRenderer:
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
 
-    def xlink_href_target(self, node: NodeTracker, group: Optional[Any] = None) -> Any:
+    def xlink_href_target(
+        self, node: NodeTracker, group: Optional[Group] = None
+    ) -> Any:
         """Resolve an xlink:href attribute to its target.
 
         The target can be an internal fragment, an external SVG file, or a
@@ -1497,7 +1569,10 @@ class SvgRenderer:
                 # The missing definition should appear later in the file
                 self.waiting_use_nodes[fragment].append((node, group))
                 return DELAYED
-            return None
+
+        # The target could not be resolved (e.g. an external SVG with no root
+        # node, or an unresolved fragment): make the fall-through explicit.
+        return None
 
     def renderTitle_(self, node: NodeTracker) -> None:
         """Handle the <title> element (currently a no-op)."""
@@ -1712,7 +1787,7 @@ class SvgRenderer:
     def renderUse(
         self,
         node: NodeTracker,
-        group: Optional[Any] = None,
+        group: Optional[Group] = None,
         clipping: Optional[Any] = None,
     ) -> Any:
         """Render a <use> element by cloning a defined element.
@@ -1764,7 +1839,7 @@ class SvgShapeConverter:
 
     def __init__(
         self,
-        path: Union[str, os.PathLike[str]],
+        path: SVGSource,
         attrConverter: Optional[Svg2RlgAttributeConverter] = None,
     ) -> None:
         self.attrConverter = attrConverter or Svg2RlgAttributeConverter()
@@ -1943,8 +2018,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
         ff = attrConv.convertFontFamily(ff, fw, fstyle)
-        fs = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
-        fs = attrConv.convertLength(fs)  # type: ignore  (user units, used as em_base)
+        fs_attr = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
+        # font-size is always a single value, so convertLength returns a float.
+        fs = cast(float, attrConv.convertLength(fs_attr))  # user units, em_base
         fs_pt = fs * PX_TO_PT  # absolute points for ReportLab font metrics
         x: List[float]
         y: List[float]
@@ -1957,29 +2033,31 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             dy: Union[float, List[float]] = 0
             baseLineShift: Union[float, int] = 0
             if not is_tail:
-                x1, y1, dx, dy = self.convert_length_attrs(  # type: ignore
+                x1, y1, dx, dy = self.convert_length_attrs(
                     subnode,
                     "x",
                     "y",
                     "dx",
                     "dy",
-                    em_base=fs,  # type: ignore
+                    em_base=fs,
                 )
                 has_x, has_y = (
                     subnode.attrib.get("x", "") != "",
                     subnode.attrib.get("y", "") != "",
                 )
-                dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)  # type: ignore
-                dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)  # type: ignore
-            baseLineShift = subnode.attrib.get("baseline-shift", "0")
-            if baseLineShift in ("sub", "super", "baseline"):
-                baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[  # type: ignore
-                    baseLineShift  # type: ignore
+                dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)
+                dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
+            baseLineShift_raw = subnode.attrib.get("baseline-shift", "0")
+            if baseLineShift_raw in ("sub", "super", "baseline"):
+                baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[
+                    baseLineShift_raw
                 ]
             else:
-                baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)  # type: ignore
+                baseLineShift = cast(
+                    float, attrConv.convertLength(baseLineShift_raw, em_base=fs)
+                )
 
-            frag_lengths.append(stringWidth(text, ff, fs_pt))  # type: ignore
+            frag_lengths.append(stringWidth(text, ff, fs_pt))
 
             # When x, y, dx, or dy is a list, we calculate position for each char of
             # text.
@@ -2249,7 +2327,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     values = values, 0
                 group.translate(*values)
             elif op == "rotate":
-                if not isinstance(values, tuple) or len(values) == 1:  # type: ignore
+                if not isinstance(values, tuple) or len(values) == 1:
                     group.rotate(values)
                 elif len(values) == 3:
                     angle, cx, cy = values
@@ -2329,15 +2407,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                         if (
                             svgAttrName == "fill-opacity"
                             and getattr(shape, "fillColor", None) is not None
-                            and getattr(shape.fillColor, "alpha", 1) != 1  # type: ignore
+                            and getattr(shape.fillColor, "alpha", 1) != 1
                         ):
-                            svgAttrValue = shape.fillColor.alpha  # type: ignore
+                            svgAttrValue = shape.fillColor.alpha
                         elif (
                             svgAttrName == "stroke-opacity"
                             and getattr(shape, "strokeColor", None) is not None
-                            and getattr(shape.strokeColor, "alpha", 1) != 1  # type: ignore
+                            and getattr(shape.strokeColor, "alpha", 1) != 1
                         ):
-                            svgAttrValue = shape.strokeColor.alpha  # type: ignore
+                            svgAttrValue = shape.strokeColor.alpha
                         else:
                             svgAttrValue = defaults[index]  # type: ignore
                     if svgAttrValue == "currentColor":
@@ -2350,8 +2428,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 try:
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(*svgAttrValues))
-                except (AttributeError, KeyError, ValueError):
-                    exc_type = sys.exc_info()[0].__name__
+                except (AttributeError, KeyError, ValueError) as exc:
+                    exc_type = type(exc).__name__
                     logger.debug(
                         "applyStyleOnShape setattr({},{!r},{}(*{!r}))"
                         " caused {} exception".format(
@@ -2547,12 +2625,12 @@ def svg2rlg(
         path = str(path)
 
     # unzip .svgz file into .svg
-    unzipped = False
+    unzipped_path: Optional[str] = None
     if isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
         with gzip.open(path, "rb") as f_in, open(path[:-1], "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
         path = path[:-1]
-        unzipped = True
+        unzipped_path = path
 
     svg_root = load_svg_file(path, resolve_entities=resolve_entities)
     if svg_root is None:
@@ -2563,8 +2641,8 @@ def svg2rlg(
     drawing = svgRenderer.render(svg_root)
 
     # remove unzipped .svgz file (.svg)
-    if unzipped:
-        os.remove(path)
+    if unzipped_path is not None:
+        os.remove(unzipped_path)
 
     return drawing
 
@@ -2592,9 +2670,7 @@ def nudge_points(points: List[float]) -> None:
         points[0] *= 1.0000001
 
 
-def load_svg_file(
-    path: Union[str, os.PathLike[str]], resolve_entities: bool = False
-) -> Optional[Any]:
+def load_svg_file(path: SVGSource, resolve_entities: bool = False) -> Optional[Any]:
     """Load an SVG file and return the root lxml node.
 
     Args:
@@ -2627,7 +2703,7 @@ def node_name(node: Any) -> Optional[str]:
         The node name as a string, or None if the node is invalid.
     """
     try:
-        return node.tag.split("}")[-1]
+        return cast(str, node.tag.split("}")[-1])
     except AttributeError:
         return None
 

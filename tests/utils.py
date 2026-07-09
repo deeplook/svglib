@@ -13,7 +13,7 @@ from svglib.svglib import NodeTracker, svg2rlg
 
 def drawing_from_svg(content: str) -> Any:
     """Convert a SVG string to a ReportLab Drawing."""
-    return svg2rlg(StringIO(dedent(content)))  # type: ignore
+    return svg2rlg(StringIO(dedent(content)))
 
 
 def minimal_svg_node(content: str) -> NodeTracker:
@@ -52,6 +52,7 @@ def svg_raster_difference(
 
     with open(full_svg_path, "rb") as svg_file:
         drawing = svg2rlg(svg_file)
+        assert drawing is not None
         if scale and scale != 1:
             drawing.width *= scale
             drawing.height *= scale

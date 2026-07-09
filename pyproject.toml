@@ -78,3 +78,16 @@ select = [
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+warn_unused_ignores = true
+
+# svglib subclasses untyped 3rd-party base classes (reportlab's Path/DirectDraw,
+# cssselect2's Matcher/ElementWrapper). Their missing stubs make the bases Any,
+# which trips disallow_subclassing_any under --strict. Allow it for this module
+# only, keeping strictness on the rest of svglib's own code.
+[[tool.mypy.overrides]]
+module = "svglib.svglib"
+disallow_subclassing_any = false

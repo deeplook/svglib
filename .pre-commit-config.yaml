@@ -1,6 +1,12 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
+# The local `mypy` hook shells out to `uv run mypy`, but pre-commit.ci's
+# sandbox has no `uv` (and no project deps). mypy is already enforced there by
+# the dedicated `type-check.yml` CI workflow, so skip it on pre-commit.ci.
+ci:
+  skip: [mypy]
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
@@ -21,3 +27,13 @@ repos:
   - id: ruff
     types_or: ["python"]
     args: ["--fix"]
+
+- repo: local
+  hooks:
+  - id: mypy
+    name: mypy
+    # Run in the project environment so deps resolve and [tool.mypy] applies.
+    entry: uv run mypy src tests
+    language: system
+    types_or: ["python"]
+    pass_filenames: false

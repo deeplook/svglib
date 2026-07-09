@@ -1,0 +1,32 @@
+name: Type Check
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  mypy:
+    name: "mypy (config-driven)"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: Setup native build dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y libxml2-dev libxslt1-dev libjpeg-dev
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+
+      - name: Create Virtual Environment
+        run: uv venv
+
+      - name: "Install dependencies"
+        run: uv pip install -e . --group lint
+
+      # Config-driven (see [tool.mypy] in pyproject.toml); python_version = "3.9"
+      # pins the lowest supported floor, so this single run validates all versions.
+      - name: "Run mypy"
+        run: uv run mypy src tests

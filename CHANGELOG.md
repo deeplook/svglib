@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+Type-safety and tooling improvements — no runtime behavior changes.
+
+- Completed static type annotations for `svglib.py`; the package now passes
+  `mypy --strict` on its own source, with a single documented per-module
+  override for the untyped reportlab/cssselect2 base classes it subclasses.
+- Pinned a `[tool.mypy]` configuration in `pyproject.toml` and now enforce mypy
+  in CI (new `type-check.yml` workflow) and via a local pre-commit hook, so type
+  regressions fail before merge.
+- Tightened internal gradient handling types: parsed gradient definitions now
+  use a `TypedDict` instead of an opaque `Dict[str, Any]`, and the internal
+  group/parent parameters are typed as `Optional[Group]`.
+
 ## 2.0.2 (2026-06-18)
 
 Supply-chain hygiene release — no code changes.
