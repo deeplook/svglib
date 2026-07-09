@@ -18,6 +18,9 @@ Type-safety and tooling improvements — no runtime behavior changes.
   They appear in the rendered `Drawing` tree and were never meant to be
   private, so the leading underscore was misleading. The old underscore-
   prefixed names remain as deprecated aliases and will be **removed in 2.1.0**.
+- Added docstrings to the remaining undocumented functions in `svglib.py`,
+  bringing documentation coverage to 100% and clearing the recurring
+  DeepSource doc-coverage failure.
 
 ## 2.0.2 (2026-06-18)
 

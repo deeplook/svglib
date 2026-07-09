@@ -282,6 +282,7 @@ class NoStrokePath(Path):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the path, optionally copying state from another shape."""
         copy_from = kwargs.pop("copy_from", None)
         super().__init__(*args, **kwargs)
         if copy_from:
@@ -305,6 +306,7 @@ class ClippingPath(Path):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the clipping path, optionally copying state from another shape."""
         copy_from = kwargs.pop("copy_from", None)
         Path.__init__(self, *args, **kwargs)
         if copy_from:
@@ -356,6 +358,7 @@ class AttributeConverter:
     """An abstract class for converting SVG attributes to ReportLab properties."""
 
     def __init__(self) -> None:
+        """Initialize the converter's per-render state (CSS rules, boxes, caches)."""
         self.css_rules: Optional[CSSMatcher] = None
         self.main_box: Optional[Box] = None
         # Resolved once at render time from the root <svg> font-size; used by rem.
@@ -516,6 +519,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         color_converter: Optional[Any] = None,
         font_map: Optional[Any] = None,
     ) -> None:
+        """Initialize the converter with optional colour- and font-mapping hooks."""
         super().__init__()
         self.color_converter = color_converter or self.identity_color_converter
         self._font_map = font_map or get_global_font_map()
@@ -790,10 +794,12 @@ class NodeTracker(cssselect2.ElementWrapper):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the wrapper and the list of accessed attribute names."""
         super().__init__(*args, **kwargs)
         self.usedAttrs: List[str] = []
 
     def __repr__(self) -> str:
+        """Return a debug representation naming the wrapped element."""
         return f"<NodeTracker for node {self.etree_element}>"
 
     def getAttribute(self, name: str) -> str:
@@ -838,6 +844,7 @@ class ExternalSVG:
         path: Union[str, os.PathLike[str]],
         renderer: "SvgRenderer",
     ) -> None:
+        """Load and parse an external SVG referenced by the given path."""
         self.root_node = load_svg_file(path)
         self.renderer = SvgRenderer(
             path, parent_svgs=renderer._parent_chain + [str(renderer.source_path)]
@@ -975,6 +982,7 @@ class LinearGradientShape(DirectDraw):
         positions: List[float],
         extend: bool = True,
     ) -> None:
+        """Store the clip shape, gradient axis, colours and stop positions."""
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
         self._x1, self._y1 = x1, y1
@@ -983,6 +991,7 @@ class LinearGradientShape(DirectDraw):
         self._extend = extend
 
     def drawDirectly(self, renderer: Any) -> None:
+        """Paint the linear gradient into the clipped region on the PDF canvas."""
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -1016,6 +1025,7 @@ class RadialGradientShape(DirectDraw):
         positions: List[float],
         extend: bool = True,
     ) -> None:
+        """Store the clip shape, centre, radius, colours and stop positions."""
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
         self._rl_colors = rl_colors
@@ -1023,6 +1033,7 @@ class RadialGradientShape(DirectDraw):
         self._extend = extend
 
     def drawDirectly(self, renderer: Any) -> None:
+        """Paint the radial gradient into the clipped region on the PDF canvas."""
         canvas = renderer._canvas
         canvas.saveState()
         pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
@@ -1066,6 +1077,7 @@ class SvgRenderer:
         parent_svgs: Optional[List[str]] = None,
         font_map: Optional[Any] = None,
     ) -> None:
+        """Initialize the renderer for the given SVG source and converters."""
         self.source_path: SVGSource = path
         self._parent_chain: List[str] = parent_svgs or []  # To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(
@@ -1082,6 +1094,7 @@ class SvgRenderer:
         self.attrConverter.css_rules = CSSMatcher()
 
     def _set_root_font_size(self, root_node: Any) -> None:
+        """Resolve and store the root font-size, used to convert rem units."""
         fs_str = self.attrConverter.findAttr(root_node, "font-size")
         if fs_str:
             fs_px = self.attrConverter.convertLength(fs_str)
@@ -1089,6 +1102,7 @@ class SvgRenderer:
                 self.attrConverter.root_font_size = float(fs_px)  # type: ignore[arg-type]
 
     def _warn_old_inkscape(self, svg_node: Any) -> None:
+        """Log a warning if the SVG was produced by an outdated Inkscape."""
         inkscape_version = svg_node.get(f"{{{INKSCAPE_NS}}}version", "")
         if not inkscape_version:
             return
@@ -1246,6 +1260,7 @@ class SvgRenderer:
         grad_type = node_name(node)  # "linearGradient" or "radialGradient"
 
         def _float_attr(attr: str, default: float) -> float:
+            """Return a gradient geometry attribute as a float, resolving percent."""
             raw = node.attrib.get(attr, "").strip()
             if raw.endswith("%"):
                 try:
@@ -1416,6 +1431,7 @@ class SvgRenderer:
         """
 
         def get_shape_from_group(group: Any) -> Optional[Any]:
+            """Return the first drawable shape found within a group, recursively."""
             for elem in group.contents:
                 if isinstance(elem, Group):
                     return get_shape_from_group(elem)
@@ -1424,6 +1440,7 @@ class SvgRenderer:
             return None
 
         def get_shape_from_node(node: Any) -> Optional[Any]:
+            """Return the shape converted from the first supported child node."""
             for child in node.iter_children():
                 child_name = node_name(child)
                 valid_nodes = ["path", "rect", "circle", "ellipse", "polygon"]
@@ -1858,6 +1875,7 @@ class SvgShapeConverter:
         path: SVGSource,
         attrConverter: Optional[Svg2RlgAttributeConverter] = None,
     ) -> None:
+        """Initialize the shape converter with its source and attribute converter."""
         self.attrConverter = attrConverter or Svg2RlgAttributeConverter()
         self.svg_source_file = path
         self.preserve_space = False
