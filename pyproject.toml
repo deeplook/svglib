@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Documentation",
     "Topic :: Utilities",
@@ -91,3 +92,11 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 module = "svglib.svglib"
 disallow_subclassing_any = false
+
+# Pillow ships py.typed as of 12.x, but its PixelAccess/Image stubs are loose
+# (e.g. indexing an RGB pixel is typed as a scalar float, so unpacking a 3-tuple
+# looks invalid). svglib uses Pillow at the same untyped-graphics boundary as
+# reportlab, so skip its stubs and treat it as Any for consistency.
+[[tool.mypy.overrides]]
+module = "PIL.*"
+follow_imports = "skip"

@@ -4,6 +4,8 @@
 
 ### Added
 
+- Declared support for **Python 3.14** (added the classifier and CI matrix
+  entry across Ubuntu, macOS, and Windows, alongside the existing 3.9–3.13).
 - **Clipping paths** now support `<circle>`, `<ellipse>`, and `<polygon>` clip
   shapes, in addition to paths and rectangles, and clipping masks referenced
   from within a `<use>` element.
