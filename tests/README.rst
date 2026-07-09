@@ -103,12 +103,6 @@ more code being executed and a higher test coverage)::
 
     =============== 32 passed, 4 skipped in 637.65 seconds ===============
 
-As an experimental feature some of the tests try using a vector
-conversion tool named `UniConvertor
-<http://sourceforge.net/projects/uniconvertor>`_
-(if installed) for producing PDFs for comparison with `svglib`.
-(This was not used for years, though, during development/testing.)
-
 Calling ``renderPM.drawToFile()`` in ``TestW3CSVG.test_convert_pdf_png()``
 is known to raise a ``TypeError`` sometimes in reportlab which was
 fixed in ``reportlab`` 3.3.26. See
