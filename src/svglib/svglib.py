@@ -2356,7 +2356,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         # If the width and/or height were not set then the image size
         # needs to be used as a fallback
-        if not width or not height and image and image.size:
+        if (not width or not height) and image and image.size:
             image_width, image_height = image.size
 
             if image_width and image_height:
