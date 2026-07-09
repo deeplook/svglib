@@ -1,8 +1,6 @@
 """Testsuite for svglib.
 
 This module tests conversion of sample SVG files into PDF files.
-Some tests try using a tool called uniconv (if installed)
-to convert SVG files into PDF for comparision with svglib.
 
 Run with one of these lines from inside the test directory:
 
@@ -20,7 +18,7 @@ import tarfile
 import textwrap
 import time
 from http.client import HTTPSConnection
-from os.path import basename, dirname, exists, getsize, join, splitext
+from os.path import basename, dirname, exists, join, splitext
 from typing import Any
 from urllib.parse import quote, unquote, urlparse
 
@@ -41,13 +39,6 @@ def has_renderpm_backend() -> bool:
     except renderPM.RenderPMError:
         return False
     return True
-
-
-def found_uniconv() -> bool:
-    "Do we have uniconv installed?"
-
-    res = os.popen("which uniconv").read().strip()
-    return len(res) > 0
 
 
 def fetch_file(
@@ -142,18 +133,6 @@ class TestSVGSamples:
             base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
-    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
-    def test_create_pdf_uniconv(self):
-        "Test converting sample SVG files to PDF using uniconverter."
-
-        paths = glob.glob(f"{TEST_ROOT}/samples/misc/*.svg")
-        for path in paths:
-            out = splitext(path)[0] + "-uniconv.pdf"
-            cmd = f"uniconv '{path}' '{out}'"
-            os.popen(cmd).read()
-            if exists(out) and getsize(out) == 0:
-                os.remove(out)
-
 
 class TestWikipediaSymbols:
     "Tests on sample symbol SVG files from wikipedia.org."
@@ -227,19 +206,6 @@ class TestWikipediaSymbols:
             # save as PDF
             base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
-
-    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
-    def test_convert_pdf_uniconv(self):
-        "Test converting symbol SVG files to PDF using uniconverter."
-
-        paths = glob.glob(f"{self.folder_path}/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
-        for path in paths:
-            out = splitext(path)[0] + "-uniconv.pdf"
-            cmd = f"uniconv '{path}' '{out}'"
-            os.popen(cmd).read()
-            if exists(out) and getsize(out) == 0:
-                os.remove(out)
 
 
 class TestWikipediaFlags:
@@ -362,19 +328,6 @@ class TestWikipediaFlags:
             base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
-    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
-    def test_convert_pdf_uniconv(self):
-        "Test converting flag SVG files to PDF using uniconverer."
-
-        paths = glob.glob(f"{self.folder_path}/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
-        for path in paths:
-            out = splitext(path)[0] + "-uniconv.pdf"
-            cmd = f"uniconv '{path}' '{out}'"
-            os.popen(cmd).read()
-            if exists(out) and getsize(out) == 0:
-                os.remove(out)
-
 
 class TestW3CSVG:
     "Tests using the official W3C SVG testsuite."
@@ -411,7 +364,6 @@ class TestW3CSVG:
         "Remove generated files when running this test class."
 
         paths = glob.glob(join(self.folder_path, "svg/*-svglib.pdf"))
-        paths += glob.glob(join(self.folder_path, "svg/*-uniconv.pdf"))
         paths += glob.glob(join(self.folder_path, "svg/*-svglib.png"))
         for i, path in enumerate(paths):
             print(f"deleting [{i}] {path}")
@@ -462,19 +414,6 @@ class TestW3CSVG:
             except TypeError:
                 print("Svglib: Consider upgrading reportlab to version >= 3.3.26!")
                 raise
-
-    @pytest.mark.skipif(not found_uniconv(), reason="needs uniconv")
-    def test_convert_pdf_uniconv(self):
-        "Test converting W3C SVG files to PDF using uniconverter."
-
-        paths = glob.glob(f"{self.folder_path}/svg/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
-        for path in paths:
-            out = splitext(path)[0] + "-uniconv.pdf"
-            cmd = f"uniconv '{path}' '{out}'"
-            os.popen(cmd).read()
-            if exists(out) and getsize(out) == 0:
-                os.remove(out)
 
 
 class TestOtherFiles:
