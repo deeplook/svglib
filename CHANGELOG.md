@@ -43,6 +43,11 @@
 - Removed the long-defunct `uniconv` sample tests. They contained no assertions
   and shelled out to UniConvertor, an abandoned Python 2 tool, so they had been
   permanently skipped.
+- Fixed and revived the Windows CI workflow. It was a disabled placeholder that
+  compiled GTK/Cairo from source (a ~20–40 minute step); it now runs a real
+  CPython 3.9/3.13 matrix in well under a minute by dropping the source build
+  and skipping the network-heavy sample tests on Windows (they already run on
+  Ubuntu and macOS). The redundant manual Windows workflow was removed.
 
 ## 2.0.2 (2026-06-18)
 
