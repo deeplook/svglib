@@ -21,6 +21,7 @@ from reportlab.graphics.shapes import (
     _LINETO,
     _MOVETO,
     Group,
+    Image,
     Line,
     Path,
     Polygon,
@@ -1678,6 +1679,93 @@ class TestEmbedded:
         # FIXME: test the error log when we can require pytest >= 3.4
         # No image as relative path in file-like input cannot be determined.
         assert drawing.contents[0].contents == []
+
+    def find_image_in_drawing(self, item):
+        if isinstance(item, Image):
+            return item
+
+        if isinstance(item, Group):
+            for child in item.contents:
+                result = self.find_image_in_drawing(child)
+                if result:
+                    return result
+
+        return None
+
+    def test_image_size_fallback_no_size(self):
+        # The embedded image is a 5px x 5px red square.
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 viewBox="0,0,5,5" width="5" height="5" version="1.1">
+
+                <image id="image-1" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANS
+                UhEUgAAAAUAAAAFCAYAAACNbyblAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAGXRFWHRTb2Z0
+                d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAABVJREFUCJlj/M/A8J8BDTChC1BBEADOqQI
+                IH8PejQAAAABJRU5ErkJggg=="/>
+            </svg>
+        """
+        )
+
+        image = self.find_image_in_drawing(drawing)
+
+        assert image is not None
+        assert image.width == 5
+        assert image.height == 5
+
+    def test_image_size_fallback_only_width(self):
+        """
+        The image size aspect ratio should be preserved. The image is 5px x 10px
+        and a width of 3px should scale the height to 6px.
+        """
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 viewBox="0,0,5,5" width="5" height="5" version="1.1">
+
+                <image xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAA
+                AKCAYAAAB8OZQwAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAGXRFWHRTb2Z0d2FyZQB3d3cua
+                W5rc2NhcGUub3Jnm+48GgAAABVJREFUCJlj/M/A8J8BDTChCwwlQQCmdgISIETfOwAAAABJ
+                RU5ErkJggg==" width="3"/>
+            </svg>
+        """
+        )
+
+        image = self.find_image_in_drawing(drawing)
+
+        assert image is not None
+        assert image.width == 3
+        assert image.height == 6
+
+    def test_image_size_fallback_only_height(self):
+        """
+        The image size aspect ratio should be preserved. The image is 5px x 10px
+        and a height of 8px should scale the width to 4px.
+        """
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 viewBox="0,0,5,5" width="5" height="5" version="1.1">
+
+                <image xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAA
+                AKCAYAAAB8OZQwAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAGXRFWHRTb2Z0d2FyZQB3d3cua
+                W5rc2NhcGUub3Jnm+48GgAAABVJREFUCJlj/M/A8J8BDTChCwwlQQCmdgISIETfOwAAAABJ
+                RU5ErkJggg==" height="8"/>
+            </svg>
+        """
+        )
+
+        image = self.find_image_in_drawing(drawing)
+
+        assert image is not None
+        assert image.width == 4
+        assert image.height == 8
 
 
 class TestGradients:
