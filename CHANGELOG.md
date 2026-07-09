@@ -13,6 +13,11 @@ Type-safety and tooling improvements — no runtime behavior changes.
 - Tightened internal gradient handling types: parsed gradient definitions now
   use a `TypedDict` instead of an opaque `Dict[str, Any]`, and the internal
   group/parent parameters are typed as `Optional[Group]`.
+- Renamed the gradient shape classes `_LinearGradientShape` and
+  `_RadialGradientShape` to `LinearGradientShape` and `RadialGradientShape`.
+  They appear in the rendered `Drawing` tree and were never meant to be
+  private, so the leading underscore was misleading. The old underscore-
+  prefixed names remain as deprecated aliases and will be **removed in 2.1.0**.
 
 ## 2.0.2 (2026-06-18)
 
