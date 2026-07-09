@@ -22,7 +22,6 @@ import base64
 import copy
 import gzip
 import itertools
-import locale
 import logging
 import os
 import pathlib
@@ -968,6 +967,26 @@ def _find_clip_shape(item: Any) -> Optional[Any]:
     return None
 
 
+def _default_language() -> str:
+    """Return the user's preferred language from the environment.
+
+    Reads the standard locale environment variables and returns a language code
+    such as ``en_US`` (or an empty string if none is set). This replaces
+    ``locale.getdefaultlocale()``, which is deprecated and removed in Python
+    3.15; unlike ``locale.getlocale()`` it reflects the environment without
+    requiring a global ``setlocale()`` call.
+    """
+    for var in ("LC_ALL", "LC_CTYPE", "LANG", "LANGUAGE"):
+        value = os.environ.get(var, "")
+        if not value or value in ("C", "POSIX"):
+            continue
+        # LANGUAGE may hold a colon-separated priority list; take the first.
+        value = value.split(":")[0]
+        # Drop the encoding (".UTF-8") and modifier ("@euro") suffixes.
+        return value.split(".")[0].split("@")[0]
+    return ""
+
+
 class LinearGradientShape(DirectDraw):
     """Fills a clipped region with a linear gradient via PDF shading."""
 
@@ -1776,7 +1795,7 @@ class SvgRenderer:
         requiredExtensions, and systemLanguage conditions are all satisfied
         is rendered; remaining children are skipped.
         """
-        sys_lang = locale.getdefaultlocale()[0] or ""
+        sys_lang = _default_language()
         sys_lang_prefix = sys_lang.split("_")[0]
 
         for child in node:

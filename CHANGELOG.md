@@ -23,6 +23,14 @@
   private, so the leading underscore was misleading. The old underscore-
   prefixed names remain as deprecated aliases and will be **removed in 2.1.0**.
 
+### Fixed
+
+- Replaced `locale.getdefaultlocale()` (used for `<switch>` `systemLanguage`
+  matching) with a small environment-variable lookup. `getdefaultlocale()` is
+  deprecated and is **removed in Python 3.15**; the replacement keeps the same
+  behaviour, emits no deprecation warning on 3.12–3.14, and adds unit tests for
+  the language-matching path.
+
 ### Type safety and internal quality (no behavior change)
 
 - Completed static type annotations for `svglib.py`; the package now passes
