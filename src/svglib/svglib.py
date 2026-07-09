@@ -31,7 +31,19 @@ import shlex
 import shutil
 from collections import defaultdict, namedtuple
 from io import BytesIO
-from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union, cast
+from typing import (
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    Set,
+    TextIO,
+    Tuple,
+    TypedDict,
+    Union,
+    cast,
+)
 
 from PIL import Image as PILImage
 from reportlab.graphics.shapes import (
@@ -95,6 +107,36 @@ PX_TO_PT = 0.75
 # An SVG source accepted by the public API: a path, a path-like object, or an
 # already-open binary/text file object.
 SVGSource = Union[str, os.PathLike[str], BinaryIO, TextIO]
+
+# A single gradient stop: (offset, ReportLab color). The color is untyped
+# because ReportLab ships no stubs.
+GradientStop = Tuple[float, Any]
+
+
+class _GradientDefBase(TypedDict):
+    """Keys always present on a parsed gradient definition."""
+
+    type: str  # "linear" or "radial"
+    gradientUnits: str
+    spreadMethod: str
+    stops: List[GradientStop]
+    href: Optional[str]
+
+
+class _GradientDef(_GradientDefBase, total=False):
+    """Geometry keys present depending on ``type`` (linear vs radial)."""
+
+    # linearGradient
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+    # radialGradient
+    cx: float
+    cy: float
+    r: float
+    fx: float
+    fy: float
 
 
 def _convert_palette_to_rgba(image: PILImage.Image) -> PILImage.Image:
@@ -1016,8 +1058,8 @@ class SvgRenderer:
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions: Dict[str, Any] = {}
-        self.gradient_defs: Dict[str, Dict[str, Any]] = {}
-        self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Any]]]] = (
+        self.gradient_defs: Dict[str, _GradientDef] = {}
+        self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Group]]]] = (
             defaultdict(list)
         )
         self._external_svgs: Dict[str, ExternalSVG] = {}
@@ -1077,7 +1119,7 @@ class SvgRenderer:
         drawing.add(main_group)
         return drawing
 
-    def renderNode(self, node: NodeTracker, parent: Optional[Any] = None) -> None:
+    def renderNode(self, node: NodeTracker, parent: Optional[Group] = None) -> None:
         """Render a single SVG node and add it to a parent group.
 
         Args:
@@ -1208,7 +1250,7 @@ class SvgRenderer:
         spread = node.attrib.get("spreadMethod", "pad")
 
         # Collect stop elements (direct children with tag "stop")
-        stops = []
+        stops: List[GradientStop] = []
         for child in node:
             child_name = node_name(child)
             if child_name != "stop":
@@ -1249,7 +1291,7 @@ class SvgRenderer:
             rl_color.alpha = opacity
             stops.append((offset, rl_color))
 
-        grad_def: Dict[str, Any] = {
+        grad_def: _GradientDef = {
             "type": "linear" if grad_type == "linearGradient" else "radial",
             "gradientUnits": grad_units,
             "spreadMethod": spread,
@@ -1271,9 +1313,9 @@ class SvgRenderer:
 
         self.gradient_defs[grad_id] = grad_def
 
-    def _resolve_gradient(self, grad_id: str) -> Optional[Dict[str, Any]]:
+    def _resolve_gradient(self, grad_id: str) -> Optional[_GradientDef]:
         """Return a fully resolved gradient dict, following xlink:href chains."""
-        visited = set()
+        visited: Set[str] = set()
         result = self.gradient_defs.get(grad_id)
         while result is not None:
             href = result.get("href")
@@ -1283,16 +1325,17 @@ class SvgRenderer:
             if parent is None:
                 break
             visited.add(href)
-            # Merge: current overrides parent for all keys except missing stops
-            merged = dict(parent)
+            # Merge: current overrides parent for all keys except missing stops.
+            # The merge is by dynamic key, so build a plain dict and cast back.
+            merged: Dict[str, Any] = dict(parent)
             for k, v in result.items():
                 if k == "stops" and not v:
                     continue  # inherit parent's stops
                 merged[k] = v
-            result = merged
+            result = cast(_GradientDef, merged)
         return result
 
-    def _apply_gradient_fill(self, item: Any, grad_def: Dict[str, Any]) -> Any:
+    def _apply_gradient_fill(self, item: Any, grad_def: _GradientDef) -> Any:
         """Wrap a shape in a Group that paints the gradient fill then the stroke."""
         clip_shape = _find_clip_shape(item)
         if clip_shape is None:
@@ -1433,7 +1476,9 @@ class SvgRenderer:
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
 
-    def xlink_href_target(self, node: NodeTracker, group: Optional[Any] = None) -> Any:
+    def xlink_href_target(
+        self, node: NodeTracker, group: Optional[Group] = None
+    ) -> Any:
         """Resolve an xlink:href attribute to its target.
 
         The target can be an internal fragment, an external SVG file, or a
@@ -1739,7 +1784,7 @@ class SvgRenderer:
     def renderUse(
         self,
         node: NodeTracker,
-        group: Optional[Any] = None,
+        group: Optional[Group] = None,
         clipping: Optional[Any] = None,
     ) -> Any:
         """Render a <use> element by cloning a defined element.
