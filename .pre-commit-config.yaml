@@ -21,3 +21,13 @@ repos:
   - id: ruff
     types_or: ["python"]
     args: ["--fix"]
+
+- repo: local
+  hooks:
+  - id: mypy
+    name: mypy
+    # Run in the project environment so deps resolve and [tool.mypy] applies.
+    entry: uv run mypy src tests
+    language: system
+    types_or: ["python"]
+    pass_filenames: false
