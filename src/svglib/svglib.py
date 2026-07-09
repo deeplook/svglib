@@ -29,10 +29,9 @@ import pathlib
 import re
 import shlex
 import shutil
-import sys
 from collections import defaultdict, namedtuple
 from io import BytesIO
-from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union
+from typing import Any, BinaryIO, Dict, List, Optional, TextIO, Tuple, Union, cast
 
 from PIL import Image as PILImage
 from reportlab.graphics.shapes import (
@@ -92,6 +91,10 @@ from .utils import (
 
 # SVG user units are px; ReportLab works in points.  1 px = 0.75 pt (96 dpi / 72 dpi).
 PX_TO_PT = 0.75
+
+# An SVG source accepted by the public API: a path, a path-like object, or an
+# already-open binary/text file object.
+SVGSource = Union[str, os.PathLike[str], BinaryIO, TextIO]
 
 
 def _convert_palette_to_rgba(image: PILImage.Image) -> PILImage.Image:
@@ -976,12 +979,12 @@ class SvgRenderer:
 
     def __init__(
         self,
-        path: Union[str, os.PathLike[str]],
+        path: SVGSource,
         color_converter: Optional[Any] = None,
         parent_svgs: Optional[List[str]] = None,
         font_map: Optional[Any] = None,
     ) -> None:
-        self.source_path: Union[str, os.PathLike[str]] = path
+        self.source_path: SVGSource = path
         self._parent_chain: List[str] = parent_svgs or []  # To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(
             color_converter=color_converter, font_map=font_map
@@ -1764,7 +1767,7 @@ class SvgShapeConverter:
 
     def __init__(
         self,
-        path: Union[str, os.PathLike[str]],
+        path: SVGSource,
         attrConverter: Optional[Svg2RlgAttributeConverter] = None,
     ) -> None:
         self.attrConverter = attrConverter or Svg2RlgAttributeConverter()
@@ -1943,8 +1946,9 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
         ff = attrConv.convertFontFamily(ff, fw, fstyle)
-        fs = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
-        fs = attrConv.convertLength(fs)  # type: ignore  (user units, used as em_base)
+        fs_attr = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
+        # font-size is always a single value, so convertLength returns a float.
+        fs = cast(float, attrConv.convertLength(fs_attr))  # user units, em_base
         fs_pt = fs * PX_TO_PT  # absolute points for ReportLab font metrics
         x: List[float]
         y: List[float]
@@ -2350,8 +2354,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 try:
                     meth = getattr(ac, func)
                     setattr(shape, rlgAttr, meth(*svgAttrValues))
-                except (AttributeError, KeyError, ValueError):
-                    exc_type = sys.exc_info()[0].__name__
+                except (AttributeError, KeyError, ValueError) as exc:
+                    exc_type = type(exc).__name__
                     logger.debug(
                         "applyStyleOnShape setattr({},{!r},{}(*{!r}))"
                         " caused {} exception".format(
@@ -2547,12 +2551,12 @@ def svg2rlg(
         path = str(path)
 
     # unzip .svgz file into .svg
-    unzipped = False
+    unzipped_path: Optional[str] = None
     if isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
         with gzip.open(path, "rb") as f_in, open(path[:-1], "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
         path = path[:-1]
-        unzipped = True
+        unzipped_path = path
 
     svg_root = load_svg_file(path, resolve_entities=resolve_entities)
     if svg_root is None:
@@ -2563,8 +2567,8 @@ def svg2rlg(
     drawing = svgRenderer.render(svg_root)
 
     # remove unzipped .svgz file (.svg)
-    if unzipped:
-        os.remove(path)
+    if unzipped_path is not None:
+        os.remove(unzipped_path)
 
     return drawing
 
@@ -2592,9 +2596,7 @@ def nudge_points(points: List[float]) -> None:
         points[0] *= 1.0000001
 
 
-def load_svg_file(
-    path: Union[str, os.PathLike[str]], resolve_entities: bool = False
-) -> Optional[Any]:
+def load_svg_file(path: SVGSource, resolve_entities: bool = False) -> Optional[Any]:
     """Load an SVG file and return the root lxml node.
 
     Args:

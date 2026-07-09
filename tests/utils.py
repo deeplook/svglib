@@ -52,6 +52,7 @@ def svg_raster_difference(
 
     with open(full_svg_path, "rb") as svg_file:
         drawing = svg2rlg(svg_file)
+        assert drawing is not None
         if scale and scale != 1:
             drawing.width *= scale
             drawing.height *= scale
