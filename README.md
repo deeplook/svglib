@@ -57,7 +57,8 @@ and some selected [symbols from Wikipedia](https://en.wikipedia.org/wiki/List_of
 
 - `@import` rules in stylesheets are ignored. CSS is supported, but the range
   of supported attributes is still limited
-- clipping is limited to single paths, no mask support
+- clip paths support `path`, `rect`, `circle`, `ellipse` and `polygon` shapes, but only one shape per `clipPath`
+- SVG `mask` elements are not supported
 - SVG `ForeignObject` elements are not supported.
 
 
