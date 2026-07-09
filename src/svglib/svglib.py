@@ -246,7 +246,7 @@ class NoStrokePath(Path):
 
     def getProperties(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Return the properties of the path, ensuring no stroke is applied."""
-        props = super().getProperties(*args, **kwargs)
+        props: Dict[str, Any] = super().getProperties(*args, **kwargs)
         if "strokeWidth" in props:
             props["strokeWidth"] = 0
         if "strokeColor" in props:
@@ -270,7 +270,7 @@ class ClippingPath(Path):
 
     def getProperties(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Return the properties of the path, ensuring no fill or stroke."""
-        props = Path.getProperties(self, *args, **kwargs)
+        props: Dict[str, Any] = Path.getProperties(self, *args, **kwargs)
         if "fillColor" in props:
             props["fillColor"] = None
         if "strokeColor" in props:
@@ -375,7 +375,7 @@ class AttributeConverter:
                         svgNode.attrib[key] = val
                 svgNode.attrib["__rules_applied"] = "1"
 
-        attr_value = svgNode.attrib.get(name, "").strip()
+        attr_value: str = svgNode.attrib.get(name, "").strip()
 
         if attr_value and attr_value != "inherit":
             return attr_value
@@ -543,7 +543,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                     "Unable to detect if node %r is width or height", attr_name
                 )
                 return float(text[:-1])
-            return float(text[:-1]) / 100 * full
+            return cast(float, float(text[:-1]) / 100 * full)
         elif text.endswith("pc"):
             # 1 pc = 12 pt = 16 px user units
             return float(text[:-2]) * 16
@@ -558,29 +558,31 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             if self.main_box is None:
                 logger.error("Unable to resolve vmin unit without a main box")
                 return default
-            return (
-                float(text[:-4]) / 100 * min(self.main_box.width, self.main_box.height)
+            return cast(
+                float,
+                float(text[:-4]) / 100 * min(self.main_box.width, self.main_box.height),
             )
         elif text.endswith("vmax"):
             if self.main_box is None:
                 logger.error("Unable to resolve vmax unit without a main box")
                 return default
-            return (
-                float(text[:-4]) / 100 * max(self.main_box.width, self.main_box.height)
+            return cast(
+                float,
+                float(text[:-4]) / 100 * max(self.main_box.width, self.main_box.height),
             )
         elif text.endswith("vw"):
             if self.main_box is None:
                 logger.error("Unable to resolve vw unit without a main box")
                 return default
-            return float(text[:-2]) / 100 * self.main_box.width
+            return cast(float, float(text[:-2]) / 100 * self.main_box.width)
         elif text.endswith("vh"):
             if self.main_box is None:
                 logger.error("Unable to resolve vh unit without a main box")
                 return default
-            return float(text[:-2]) / 100 * self.main_box.height
+            return cast(float, float(text[:-2]) / 100 * self.main_box.height)
         elif text.endswith("q"):
             # 1q = 0.25 mm
-            return float(text[:-1]) * toLength("1mm") / (4 * PX_TO_PT)
+            return cast(float, float(text[:-1]) * toLength("1mm") / (4 * PX_TO_PT))
         elif text.endswith("px"):
             # px are user units (1:1)
             return float(text[:-2])
@@ -600,7 +602,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         except ValueError:
             pass
         # toLength handles mm, cm, in, etc. and returns points; convert to user units.
-        return toLength(text) / PX_TO_PT
+        return cast(float, toLength(text) / PX_TO_PT)
 
     def convertLengthList(self, svgAttr: str) -> List[Union[float, List[float]]]:
         """Convert a space-separated list of lengths into a list of floats."""
@@ -627,10 +629,13 @@ class Svg2RlgAttributeConverter(AttributeConverter):
 
     def convertFillRule(self, svgAttr: str) -> Union[int, str]:
         """Convert an SVG fill-rule string to a ReportLab fill rule."""
-        return {
-            "nonzero": FILL_NON_ZERO,
-            "evenodd": FILL_EVEN_ODD,
-        }.get(svgAttr, "")
+        return cast(
+            Union[int, str],
+            {
+                "nonzero": FILL_NON_ZERO,
+                "evenodd": FILL_EVEN_ODD,
+            }.get(svgAttr, ""),
+        )
 
     def convertColor(self, svgAttr: str) -> Any:
         """Convert an SVG color string to a ReportLab color object.
@@ -752,7 +757,7 @@ class NodeTracker(cssselect2.ElementWrapper):
         """Get an attribute value and record that it has been used."""
         if name not in self.usedAttrs:
             self.usedAttrs.append(name)
-        return self.etree_element.attrib.get(name, "")
+        return cast(str, self.etree_element.attrib.get(name, ""))
 
     def __getattr__(self, name: str) -> Any:
         """Forward attribute access to the wrapped lxml node."""
@@ -1994,13 +1999,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 )
                 dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)
                 dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
-            baseLineShift = subnode.attrib.get("baseline-shift", "0")
-            if baseLineShift in ("sub", "super", "baseline"):
+            baseLineShift_raw = subnode.attrib.get("baseline-shift", "0")
+            if baseLineShift_raw in ("sub", "super", "baseline"):
                 baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[
-                    baseLineShift  # type: ignore
+                    baseLineShift_raw
                 ]
             else:
-                baseLineShift = attrConv.convertLength(baseLineShift, em_base=fs)  # type: ignore
+                baseLineShift = cast(
+                    float, attrConv.convertLength(baseLineShift_raw, em_base=fs)
+                )
 
             frag_lengths.append(stringWidth(text, ff, fs_pt))
 
@@ -2648,7 +2655,7 @@ def node_name(node: Any) -> Optional[str]:
         The node name as a string, or None if the node is invalid.
     """
     try:
-        return node.tag.split("}")[-1]
+        return cast(str, node.tag.split("}")[-1])
     except AttributeError:
         return None
 
