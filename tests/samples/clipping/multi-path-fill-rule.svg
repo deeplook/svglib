@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 300 90" width="300" height="90">
+    <defs>
+        <clipPath id="clip-1">
+            <polygon points="50,0 21,90 98,35 2,35 79,90" />
+            <path d="M110,0 h90 v90 h-90 z M130,20 h50 v50 h-50 z" />
+            <path d="M210,0 h90 v90 h-90 z M230,20 v50 h50 v-50 z" />
+        </clipPath>
+    </defs>
+    <g>
+        <rect fill="black" height="90" width="300" x="0" y="0"/>
+        <g clip-path="url(#clip-1)">
+            <rect fill="green" height="90" width="300" x="0" y="0"/>
+        </g>
+    </g>
+</svg>

@@ -432,13 +432,13 @@ class TestPaths:
 
     def test_clipping_path_fill_rule(self):
         clipping_paths = [
-            '<rect fill-rule="evenodd" height="100" width="100" x="0" y="0"/>',
-            '<rect fill-rule="evenodd" height="100" width="100" x="0" y="0" rx="20" '
+            '<rect clip-rule="evenodd" height="100" width="100" x="0" y="0"/>',
+            '<rect clip-rule="evenodd" height="100" width="100" x="0" y="0" rx="20" '
             + 'ry="20"/>',
-            '<path fill-rule="evenodd" d="M 0 0 H 100 V 100 H 0 Z"/>',
-            '<circle fill-rule="evenodd" cx="50" cy="50" r="50"/>',
-            '<ellipse fill-rule="evenodd" cx="50" cy="50" rx="50" ry="50"/>',
-            '<polygon fill-rule="evenodd" points="0,100 50,25 50,75 100,0" />',
+            '<path clip-rule="evenodd" d="M 0 0 H 100 V 100 H 0 Z"/>',
+            '<circle clip-rule="evenodd" cx="50" cy="50" r="50"/>',
+            '<ellipse clip-rule="evenodd" cx="50" cy="50" rx="50" ry="50"/>',
+            '<polygon clip-rule="evenodd" points="0,100 50,25 50,75 100,0" />',
         ]
 
         for clipping_path in clipping_paths:
@@ -472,6 +472,23 @@ class TestPaths:
             "ellipse",
             "circle",
             "polygon",
+            "double-path",
+            "overlapping-double-path",
+            "overlapping-double-path-inset",
+            "multi-path-fill-rule",
+        ]
+
+        for test_file in test_files:
+            svg = f"clipping/{test_file}.svg"
+            raster = f"clipping/{test_file}.png"
+
+            assert svg_raster_difference(svg, raster, 4 / 3) == 0
+
+    @pytest.mark.skipif(not has_renderpm_backend(), reason="needs a renderPM backend")
+    @pytest.mark.xfail(reason="Mixed clip-rule clipping paths are not supported")
+    def test_mixed_fill_rules(self):
+        test_files = [
+            "mixed-fill-rule",
         ]
 
         for test_file in test_files:
