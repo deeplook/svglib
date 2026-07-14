@@ -1801,6 +1801,31 @@ class TestEmbedded:
         assert image.width == 4
         assert image.height == 8
 
+    def test_image_with_transform(self):
+        """
+        This test will ensure that the image transform is correctly applied
+        to the image in a single group.
+        """
+        drawing = drawing_from_svg("""
+        <svg version="1.1" viewBox="0 0 50 50" width="50" height="50"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:svg="http://www.w3.org/2000/svg">
+            <image x="0" y="0" width="100" height="100" transform="scale(0.5, 0.5)"
+            xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAA
+            Bw4pVUAAAACXBIWXMAAAfPAAAHzwGGUVlPAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcG
+            Uub3Jnm+48GgAAAQxJREFUeJzt3LENwEAIwEA+++/8qTNBLHQ3Acii5dyZOwucFVvMPH8PwJ
+            cgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSI
+            wgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSIwgMYLECBIjSM
+            yZu+Oj3BYuJEaQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJE
+            aQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJEaQGEFiBIkRJE
+            aQGEFiBIkRJOYFi6UFwwW3DeAAAAAASUVORK5CYII="/>
+        </svg>
+        """)
+
+        image_group = drawing.contents[0].contents[0]
+        assert image_group.transform == (0.5, 0.0, 0.0, -0.5, 0.0, 100.0)
+
 
 class TestGradients:
     """Tests for SVG linearGradient and radialGradient support."""

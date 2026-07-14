@@ -1941,7 +1941,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 group.add(shape)
                 shape = group
 
-            self.applyTransformOnGroup(transform, shape)
+            # Matrix multiplication is non-commutative, need to apply in order
+            temp_group = Group()
+            self.applyTransformOnGroup(transform, temp_group)
+            shape.transform = mmult(temp_group.transform, shape.transform)
 
         return shape
 
