@@ -2371,7 +2371,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     width = image_width
                     height = image_height
 
-        image = Image(int(x), int(y + height), int(width), int(height), image)
+        image = Image(x, y + height, width, height, image)
 
         group = Group(image)
         group.translate(0, (y + height) * 2)
