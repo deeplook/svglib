@@ -25,6 +25,12 @@
 
 ### Fixed
 
+- Embedded `<image>` geometry is no longer truncated to whole points. The
+  `x`, `y`, `width`, and `height` of an SVG `<image>` were each passed through
+  `int()`, so a raster placed at fractional coordinates landed up to ~1pt away
+  from a vector element with identical coordinates. Because width/height were
+  truncated too, the error grew across the image rather than being a constant
+  shift (issue #490).
 - Replaced `locale.getdefaultlocale()` (used for `<switch>` `systemLanguage`
   matching) with a small environment-variable lookup. `getdefaultlocale()` is
   deprecated and is **removed in Python 3.15**; the replacement keeps the same

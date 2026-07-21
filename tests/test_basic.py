@@ -1826,6 +1826,40 @@ class TestEmbedded:
         image_group = drawing.contents[0].contents[0]
         assert image_group.transform == (0.5, 0.0, 0.0, -0.5, 0.0, 100.0)
 
+    def test_image_fractional_geometry_not_truncated(self):
+        """Fractional <image> geometry must be preserved, not truncated to ints.
+
+        A raster placed at fractional coordinates should land at the same
+        position as a vector element with identical coordinates. Truncating
+        x/y/width/height to whole points offset the raster by up to ~1pt and,
+        because width/height were truncated too, the error grew across the
+        image rather than being a constant shift (see issue #490).
+        """
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 width="100" height="100" version="1.1">
+
+                <image x="10.7" y="20.7" width="50.7" height="50.7"
+                    xlink:href="data:image/png;base64,iVBORw0KGgoAAAANS
+                UhEUgAAAAUAAAAFCAYAAACNbyblAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAGXRFWHRTb2Z0
+                d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAABVJREFUCJlj/M/A8J8BDTChC1BBEADOqQI
+                IH8PejQAAAABJRU5ErkJggg=="/>
+            </svg>
+        """
+        )
+
+        image = self.find_image_in_drawing(drawing)
+
+        assert image is not None
+        assert image.x == 10.7
+        assert image.width == 50.7
+        assert image.height == 50.7
+        # y is stored flipped as y + height; the enclosing group re-flips it.
+        assert image.y == pytest.approx(20.7 + 50.7)
+
 
 class TestGradients:
     """Tests for SVG linearGradient and radialGradient support."""
