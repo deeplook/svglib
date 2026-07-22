@@ -1449,18 +1449,36 @@ class SvgRenderer:
             A ClippingPath object, or None if no valid clipping path is found.
         """
 
-        def get_shape_from_group(group: Any) -> Optional[Any]:
-            """Return the first drawable shape found within a group, recursively."""
+        def find_shapes_from_group(
+            group: Any,
+            shapes: list[Path],
+            clip_rule: int,
+        ) -> None:
+            """Recursively find drawable shapes found within a group."""
             for elem in group.contents:
                 if isinstance(elem, Group):
-                    return get_shape_from_group(elem)
+                    find_shapes_from_group(elem, shapes, clip_rule)
                 elif isinstance(elem, SolidShape):
-                    return self.shape_converter.shapeToPath(elem, group.transform)
-            return None
+                    result = self.shape_converter.shapeToPath(elem, group.transform)
+                    if result:
+                        result.fillMode = clip_rule
+                        shapes.append(result)
+                    else:
+                        logger.error(
+                            "Unsupported shape type %s for clipping",
+                            elem.__class__.__name__,
+                        )
 
-        def get_shape_from_node(node: Any) -> Optional[Any]:
-            """Return the shape converted from the first supported child node."""
+        def find_shapes_from_node(node: Any, shapes: list[Path]) -> None:
+            """Find the shapes from the node."""
             for child in node.iter_children():
+                # Normally the fill-rule is used for the reportlab fillMode,
+                # but clip-rule is used instead when clipping.
+                clip_rule_value = self.attrConverter.findAttr(child, "clip-rule")
+                clip_rule = FILL_NON_ZERO
+                if clip_rule_value and "evenodd" in clip_rule_value:
+                    clip_rule = FILL_EVEN_ODD
+
                 child_name = node_name(child)
                 valid_nodes = ["path", "rect", "circle", "ellipse", "polygon"]
                 if child_name in valid_nodes:
@@ -1468,16 +1486,23 @@ class SvgRenderer:
 
                     # The transform will be applied in the get_shape_from_group
                     if isinstance(item, Group):
-                        return get_shape_from_group(item)
-
-                    return self.shape_converter.shapeToPath(item, None)
+                        find_shapes_from_group(item, shapes, clip_rule)
+                    else:
+                        result = self.shape_converter.shapeToPath(item, None)
+                        if result:
+                            result.fillMode = clip_rule
+                            shapes.append(result)
+                        else:
+                            logger.error(
+                                "Unsupported shape type %s for clipping",
+                                item.__class__.__name__,
+                            )
 
                 elif child_name == "use":
                     grp = self.renderUse(child)
-                    return get_shape_from_group(grp)
+                    find_shapes_from_group(grp, shapes, clip_rule)
                 else:
-                    return get_shape_from_node(child)
-            return None
+                    find_shapes_from_node(child, shapes)
 
         clip_path = node.getAttribute("clip-path")
         if not clip_path:
@@ -1490,14 +1515,22 @@ class SvgRenderer:
             logger.warning("Unable to find a clipping path with id %s", ref)
             return None
 
-        shape = get_shape_from_node(self.definitions[ref])
-        if shape and isinstance(shape, Path):
-            return ClippingPath(copy_from=shape)
-        elif shape:
-            logger.error(
-                "Unsupported shape type %s for clipping", shape.__class__.__name__
-            )
-        return None
+        found_shapes: list[Path] = []
+        find_shapes_from_node(self.definitions[ref], found_shapes)
+        if len(found_shapes) == 0:
+            return None
+
+        combined_shape = found_shapes[0]
+        for other in found_shapes[1:]:
+            combined_shape.points = [*combined_shape.points, *other.points]
+            combined_shape.operators = [*combined_shape.operators, *other.operators]
+
+            if combined_shape.fillMode != other.fillMode:
+                logger.warning(
+                    "Mixed clip-rule shapes within a single clip path is not supported."
+                )
+
+        return ClippingPath(copy_from=combined_shape)
 
     def print_unused_attributes(self, node: NodeTracker) -> None:
         """Print any attributes that were not used during rendering.
