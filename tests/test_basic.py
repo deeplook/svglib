@@ -923,6 +923,31 @@ class TestGroupNode:
         assert pth_gr.svgid == "path819"
         assert isinstance(pth_gr, Group)
 
+    def test_display_none_in_style_attribute(self):
+        """display:none set through the style attribute hides the node."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg width="100" height="100">
+                <rect x="5" y="5" width="10" height="10"/>
+                <rect x="5" y="25" width="10" height="10" style="display:none"/>
+                <g style="display:none">
+                    <rect x="5" y="45" width="10" height="10"/>
+                </g>
+            </svg>
+        """
+        )
+        rects = []
+
+        def collect(node):
+            for child in getattr(node, "contents", []):
+                if isinstance(child, Rect):
+                    rects.append(child)
+                collect(child)
+
+        collect(drawing)
+        assert [rect.y for rect in rects] == [5]
+
     def test_svg_layers_have_label(self):
         drawing = drawing_from_svg(
             """

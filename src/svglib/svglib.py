@@ -1192,7 +1192,7 @@ class SvgRenderer:
             item = self.renderA(node)
             parent.add(item)
         elif name == "g":
-            display = node.getAttribute("display")
+            display = self.get_display(node)
             item = self.renderG(node, clipping=clipping)
             if display != "none":
                 parent.add(item)
@@ -1238,7 +1238,7 @@ class SvgRenderer:
                     node._resolved_target = target
 
             item = self.shape_converter.convertShape(name, node, clipping)
-            display = node.getAttribute("display")
+            display = self.get_display(node)
             if item and display != "none":
                 fill_val = self.attrConverter.findAttr(node, "fill")
                 m = _GRADIENT_URL_RE.fullmatch(fill_val.strip()) if fill_val else None
@@ -1438,6 +1438,27 @@ class SvgRenderer:
         group.add(grad_shape)
         group.add(item)
         return group
+
+    def get_display(self, node: NodeTracker) -> str:
+        """Return the effective 'display' value of a node.
+
+        The value may be set either as a presentation attribute
+        (``display="none"``) or inside the ``style`` attribute
+        (``style="display:none"``); both forms are equivalent in SVG.
+
+        Args:
+            node: The NodeTracker object for the SVG node.
+
+        Returns:
+            The display value, or an empty string if it is not set.
+        """
+        display = node.getAttribute("display")
+        style = node.getAttribute("style")
+        if style:
+            display = self.attrConverter.parseMultiAttributes(style).get(
+                "display", display
+            )
+        return display.strip()
 
     def get_clippath(self, node: NodeTracker) -> Optional[Any]:
         """Get the clipping path object referenced by a node's 'clip-path' attribute.
