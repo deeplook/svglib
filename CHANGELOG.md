@@ -25,6 +25,10 @@
 
 ### Fixed
 
+- `display: none` set through a `style` attribute is now respected. Only the
+  `display` presentation attribute was read, so `<g style="display:none">` and
+  `<rect style="display:none"/>` were still rendered (issue #401).
+
 - Embedded `<image>` geometry is no longer truncated to whole points. The
   `x`, `y`, `width`, and `height` of an SVG `<image>` were each passed through
   `int()`, so a raster placed at fractional coordinates landed up to ~1pt away
