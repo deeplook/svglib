@@ -405,3 +405,20 @@ def test_font_family() -> None:
         "Arial",
         "New Times Roman",
     ]
+
+
+def test_font_family_unquoted_name_with_space() -> None:
+    """An unquoted font-family name containing a space must be looked up whole.
+
+    See https://github.com/deeplook/svglib/issues/374 - splitting on spaces
+    turned "Cascadia Code" into "Cascadia" and "Code", so a font registered
+    under its full name was never found.
+    """
+    font_map = FontMap()
+    font_map.register_default_fonts()
+    font_map.register_font("Cascadia Code", rlgFontName="Courier")
+    converter = Svg2RlgAttributeConverter(font_map=font_map)
+
+    assert converter.convertFontFamily("Cascadia Code") == "Courier"
+    assert converter.convertFontFamily("'Cascadia Code'") == "Courier"
+    assert converter.convertFontFamily("Cascadia Code, Arial") == "Courier"

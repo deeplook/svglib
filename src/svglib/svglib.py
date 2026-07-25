@@ -533,6 +533,28 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         """Split a string of attributes into a list."""
         return shlex.split(attr.strip().replace(",", " "))
 
+    @staticmethod
+    def split_font_family_list(attr: str) -> List[str]:
+        """Split an SVG/CSS font-family attribute into family names to try.
+
+        Per CSS, only commas separate family names, so an unquoted name
+        containing spaces (e.g. ``Cascadia Code``) is yielded intact first.
+        Each space-separated word is also yielded afterwards, preserving the
+        previous lookup behaviour as a fallback.
+        """
+        names = []
+        for segment in attr.strip().split(","):
+            words = shlex.split(segment.strip())
+            if not words:
+                continue
+            full_name = " ".join(words)
+            if full_name not in names:
+                names.append(full_name)
+            for word in words:
+                if word not in names:
+                    names.append(word)
+        return names
+
     def convertLength(
         self,
         svgAttr: str,
@@ -763,7 +785,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if not fontAttr:
             return ""
         # split the fontAttr in actual font family names
-        font_names = self.split_attr_list(fontAttr)
+        font_names = self.split_font_family_list(fontAttr)
 
         non_exact_matches = []
         for font_name in font_names:
