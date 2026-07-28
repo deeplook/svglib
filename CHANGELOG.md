@@ -30,6 +30,8 @@
   deprecated and is **removed in Python 3.15**; the replacement keeps the same
   behaviour, emits no deprecation warning on 3.12–3.14, and adds unit tests for
   the language-matching path.
+- Clipping paths now support the `clip-rule` attribute instead of incorrectly
+  using `fill-rule` (issue #485).
 
 ### Type safety and internal quality (no behavior change)
 

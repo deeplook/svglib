@@ -1501,7 +1501,7 @@ class SvgRenderer:
                             )
 
                 elif child_name == "use":
-                    # The lip-rule on the referenced element isn't handled yet.
+                    # The clip-rule on the referenced element isn't handled yet.
                     grp = self.renderUse(child)
                     find_shapes_from_group(grp, shapes, clip_rule)
                 else:
