@@ -1476,8 +1476,10 @@ class SvgRenderer:
                 # but clip-rule is used instead when clipping.
                 clip_rule_value = self.attrConverter.findAttr(child, "clip-rule")
                 clip_rule = FILL_NON_ZERO
-                if clip_rule_value and "evenodd" in clip_rule_value:
-                    clip_rule = FILL_EVEN_ODD
+                if clip_rule_value:
+                    clip_rule_value = clip_rule_value.replace("!important", "").strip()
+                    if clip_rule_value == "evenodd":
+                        clip_rule = FILL_EVEN_ODD
 
                 child_name = node_name(child)
                 valid_nodes = ["path", "rect", "circle", "ellipse", "polygon"]
@@ -1499,6 +1501,7 @@ class SvgRenderer:
                             )
 
                 elif child_name == "use":
+                    # The lip-rule on the referenced element isn't handled yet.
                     grp = self.renderUse(child)
                     find_shapes_from_group(grp, shapes, clip_rule)
                 else:
