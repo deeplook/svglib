@@ -8,7 +8,7 @@ inside the test directory:
 """
 
 import subprocess
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import pytest
 from reportlab.pdfbase.ttfonts import TTFError, TTFOpenFile
@@ -98,7 +98,7 @@ def test_register_return(
     weight: str,
     style: str,
     rlgName: Optional[str],
-    expected: Tuple[Optional[str], bool],
+    expected: tuple[Optional[str], bool],
 ) -> None:
     """
     Check if the result of the register_font function matches the expected results

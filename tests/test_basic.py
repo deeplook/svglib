@@ -12,7 +12,7 @@ import os
 import pathlib
 import textwrap
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable
 
 import pytest
 from reportlab.graphics.shapes import (
@@ -43,11 +43,11 @@ from tests.utils import (
 
 
 def _testit(
-    func: Callable[..., Any], mapping: List[Tuple[Any, Any]]
-) -> List[Tuple[Any, Any, Any]]:
+    func: Callable[..., Any], mapping: list[tuple[Any, Any]]
+) -> list[tuple[Any, Any, Any]]:
     "Call `func` on input in mapping and return list of failed tests."
 
-    failed: List[Tuple[Any, Any, Any]] = []
+    failed: list[tuple[Any, Any, Any]] = []
     for input, expected in mapping:
         if isinstance(input, dict):
             result = func(**input)

@@ -15,7 +15,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 from reportlab.pdfbase.pdfmetrics import registerFont
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
@@ -71,8 +71,8 @@ class FontMap:
         Internal names are normalized for efficient lookup and follow the pattern:
         'Family-WeightStyle' (e.g., 'Arial-BoldItalic').
         """
-        self._map: Dict[str, Dict[str, Union[str, bool, int]]] = {}
-        self._family_index: Dict[str, str] = {}  # lowercase family → canonical family
+        self._map: dict[str, dict[str, Union[str, bool, int]]] = {}
+        self._family_index: dict[str, str] = {}  # lowercase family → canonical family
 
         self.register_default_fonts()
 
@@ -154,7 +154,7 @@ class FontMap:
 
     def use_fontconfig(
         self, font_name: str, weight: str = "normal", style: str = "normal"
-    ) -> Tuple[Optional[str], bool]:
+    ) -> tuple[Optional[str], bool]:
         """Find and register a font using system fontconfig.
 
         Uses the system's fontconfig utility to locate and register fonts that
@@ -352,7 +352,7 @@ class FontMap:
         weight: str = "normal",
         style: str = "normal",
         rlgFontName: Optional[str] = None,
-    ) -> Tuple[Optional[str], bool]:
+    ) -> tuple[Optional[str], bool]:
         """Register a font or create a mapping to a ReportLab font name.
 
         This method handles two scenarios:
@@ -426,7 +426,7 @@ class FontMap:
 
     def find_font(
         self, font_name: str, weight: str = "normal", style: str = "normal"
-    ) -> Tuple[str, bool]:
+    ) -> tuple[str, bool]:
         """Find the best matching ReportLab font for given specifications.
 
         Searches through the font registry to find the most appropriate font match.
@@ -480,7 +480,7 @@ def register_font(
     weight: str = "normal",
     style: str = "normal",
     rlgFontName: Optional[str] = None,
-) -> Tuple[Optional[str], bool]:
+) -> tuple[Optional[str], bool]:
     """Register a font with the global font map.
 
     Convenience function that delegates to the global FontMap instance.
@@ -505,7 +505,7 @@ def register_font(
 
 def find_font(
     font_name: str, weight: str = "normal", style: str = "normal"
-) -> Tuple[str, bool]:
+) -> tuple[str, bool]:
     """Find the best matching font from the global font registry.
 
     Convenience function that delegates to the global FontMap instance.

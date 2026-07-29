@@ -122,7 +122,7 @@ class TestSVGSamples:
         "Test convert sample SVG files to PDF using svglib."
 
         paths = glob.glob(f"{TEST_ROOT}/samples/misc/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in {".svg", ".svgz"}]
         for i, path in enumerate(paths):
             print(f"working on [{i}] {path}")
 
@@ -196,7 +196,7 @@ class TestWikipediaSymbols:
         "Test converting symbol SVG files to PDF using svglib."
 
         paths = glob.glob(f"{self.folder_path}/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in {".svg", ".svgz"}]
         for i, path in enumerate(paths):
             print(f"working on [{i}] {path}")
 
@@ -317,7 +317,7 @@ class TestWikipediaFlags:
         "Test converting flag SVG files to PDF using svglib."
 
         paths = glob.glob(f"{self.folder_path}/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in {".svg", ".svgz"}]
         for i, path in enumerate(paths):
             print(f"working on [{i}] {path}")
 

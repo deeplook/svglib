@@ -15,12 +15,12 @@ The module includes:
 
 import re
 from math import acos, ceil, copysign, cos, degrees, fabs, hypot, radians, sin, sqrt
-from typing import List, Tuple, Union, cast
+from typing import Union, cast
 
 from reportlab.graphics.shapes import mmult, rotate, transformPoint, translate
 
 
-def split_floats(op: str, min_num: int, value: str) -> List[Union[str, List[float]]]:
+def split_floats(op: str, min_num: int, value: str) -> list[Union[str, list[float]]]:
     """Parse SVG coordinate string into alternating operators and coordinate lists.
 
     Splits a string of numeric values into groups and pairs each group with the
@@ -52,15 +52,15 @@ def split_floats(op: str, min_num: int, value: str) -> List[Union[str, List[floa
         for seq in re.findall(r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)", value)
         if seq
     ]
-    res: List[Union[str, List[float]]] = []
+    res: list[Union[str, list[float]]] = []
     for i in range(0, len(floats), min_num):
         if i > 0 and op in {"m", "M"}:
             op = "l" if op == "m" else "L"
-        res.extend([op, cast(List[float], list(floats[i : i + min_num]))])
+        res.extend([op, cast(list[float], list(floats[i : i + min_num]))])
     return res
 
 
-def split_arc_values(op: str, value: str) -> List[Union[str, List[float]]]:
+def split_arc_values(op: str, value: str) -> list[Union[str, list[float]]]:
     """Parse SVG elliptical arc parameters into structured format.
 
     Parses SVG arc command parameters which consist of: rx, ry, x-axis-rotation,
@@ -97,13 +97,13 @@ def split_arc_values(op: str, value: str) -> List[Union[str, List[float]]]:
         )
         + r"[\s,]*"
     )
-    res: List[Union[str, List[float]]] = []
+    res: list[Union[str, list[float]]] = []
     for seq in re.finditer(a_seq_re, value.strip()):
-        res.extend([op, cast(List[float], list(float(num) for num in seq.groups()))])
+        res.extend([op, cast(list[float], list(float(num) for num in seq.groups()))])
     return res
 
 
-def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
+def normalise_svg_path(attr: str) -> list[Union[str, list[float]]]:
     """Normalize SVG path data into structured format.
 
     Parses raw SVG path string and converts it into a standardized list format
@@ -158,7 +158,7 @@ def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
     }
     op_keys = ops.keys()
 
-    result: List[Union[str, List[float]]] = []
+    result: list[Union[str, list[float]]] = []
     groups = re.split("([achlmqstvz])", attr.strip(), flags=re.I)
     op = ""
     for item in groups:
@@ -179,9 +179,9 @@ def normalise_svg_path(attr: str) -> List[Union[str, List[float]]]:
 
 
 def convert_quadratic_to_cubic_path(
-    q0: Tuple[float, float], q1: Tuple[float, float], q2: Tuple[float, float]
-) -> Tuple[
-    Tuple[float, float], Tuple[float, float], Tuple[float, float], Tuple[float, float]
+    q0: tuple[float, float], q1: tuple[float, float], q2: tuple[float, float]
+) -> tuple[
+    tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]
 ]:
     """Convert quadratic Bezier curve to cubic Bezier curve.
 
@@ -222,7 +222,7 @@ def convert_quadratic_to_cubic_path(
 # ***********************************************
 
 
-def vector_angle(u: Tuple[float, float], v: Tuple[float, float]) -> float:
+def vector_angle(u: tuple[float, float], v: tuple[float, float]) -> float:
     """Calculate the signed angle between two 2D vectors.
 
     Computes the angle between vectors u and v using the atan2 method to
@@ -275,7 +275,7 @@ def end_point_to_center_parameters(
     rx: float,
     ry: float,
     phi: float = 0,
-) -> Tuple[float, float, float, float, float, float]:
+) -> tuple[float, float, float, float, float, float]:
     """Convert SVG arc endpoint parameters to center-based representation.
 
     Implements the algorithm from W3C SVG specification for converting
@@ -397,7 +397,7 @@ def end_point_to_center_parameters(
 
 def bezier_arc_from_centre(
     cx: float, cy: float, rx: float, ry: float, start_ang: float = 0, extent: float = 90
-) -> List[Tuple[float, float, float, float, float, float, float, float]]:
+) -> list[tuple[float, float, float, float, float, float, float, float]]:
     """Convert elliptical arc to cubic Bezier curve segments.
 
     Approximates an elliptical arc with cubic Bezier curves using the kappa
@@ -495,7 +495,7 @@ def bezier_arc_from_end_points(
     fS: int,
     x2: float,
     y2: float,
-) -> List[Tuple[float, float, float, float, float, float, float, float]]:
+) -> list[tuple[float, float, float, float, float, float, float, float]]:
     """Convert SVG elliptical arc to cubic Bezier curve segments.
 
     High-level function that converts SVG elliptical arc parameters (endpoint format)
