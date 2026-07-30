@@ -867,7 +867,8 @@ class ExternalSVG:
 
 _BEZIER_KAPPA = 0.5523  # cubic bezier constant for circle approximation
 
-_GRADIENT_URL_RE = re.compile(r"url\(#([^)]+)\)")
+# Match values: url(#name), url('#name'), url("#name"), url( "#name" )
+_GRADIENT_URL_RE = re.compile(r"""url\(\s*(['"]?)#([^'"]+?)\1\s*\)""")
 
 
 def _shape_to_pdf_path(canvas: Any, shape: Any) -> Any:
@@ -1243,7 +1244,7 @@ class SvgRenderer:
                 fill_val = self.attrConverter.findAttr(node, "fill")
                 m = _GRADIENT_URL_RE.fullmatch(fill_val.strip()) if fill_val else None
                 if m:
-                    grad_id = m.group(1)
+                    grad_id = m.group(2)
                     grad_def = self._resolve_gradient(grad_id)
                     if grad_def is not None:
                         item = self._apply_gradient_fill(item, grad_def)

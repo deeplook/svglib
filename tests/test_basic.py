@@ -33,7 +33,7 @@ from reportlab.lib.units import cm, inch
 from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 
 from svglib import svglib, utils
-from svglib.svglib import ClippingPath
+from svglib.svglib import ClippingPath, LinearGradientShape
 from tests.test_samples import has_renderpm_backend
 from tests.utils import (
     drawing_from_svg,
@@ -2065,3 +2065,95 @@ class TestGradients:
         assert grad is not None
         stop0_color = grad["stops"][0][1]
         assert stop0_color.alpha == pytest.approx(0.5)
+
+    def _get_svg(self, fill, name):
+        return f"""
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="{name}" x1="0" y1="0" x2="1" y2="0"
+                            gradientUnits="objectBoundingBox">
+                        <stop offset="0" stop-color="red" stop-opacity="1"/>
+                        <stop offset="1" stop-color="blue" stop-opacity="1"/>
+                    </linearGradient>
+                </defs>
+                <rect x="10" y="10" width="80" height="80" fill={fill}/>
+            </svg>"""
+
+    def _process_test_fill_url(self, fill, name="grad1"):
+        """Process test fill url."""
+        drawing = drawing_from_svg(self._get_svg(fill, name))
+
+        assert len(drawing.contents) == 1
+        group = drawing.contents[0]
+        assert isinstance(group, Group)
+
+        assert len(group.contents) == 1
+        group2 = group.contents[0]
+        assert isinstance(group2, Group)
+
+        gradient, rect = group2.contents
+        assert isinstance(gradient, LinearGradientShape)
+        assert isinstance(rect, Rect)
+
+        assert gradient._positions == [0.0, 1.0]
+        assert gradient._rl_colors == [
+            colors.Color(1, 0, 0, 1),
+            colors.Color(0, 0, 1, 1),
+        ]
+
+    def test_fill_url_witout_quotes(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url(#grad1)"')
+
+    def test_fill_url_witout_quotes_space(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url(#grad 1)"', "grad 1")
+
+    def test_fill_url_witout_quotes_parenthesis(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url(#grad)1)"', "grad)1")
+
+    def test_fill_url_witout_quotes_strip(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url( #grad1 )"')
+
+    def test_fill_url_witout_quotes_strip_space(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url( #grad 1 )"', "grad 1")
+
+    def test_fill_url_enclosed_single_quotes(self):
+        """Fill url enclosed single quotes."""
+        self._process_test_fill_url('''"url('#grad1')"''')
+
+    def test_fill_url_enclosed_single_quotes_space(self):
+        """Fill url enclosed single quotes."""
+        self._process_test_fill_url('''"url('#grad 1')"''', "grad 1")
+
+    def test_fill_url_enclosed_single_quotes_strip(self):
+        """Fill url enclosed single quotes."""
+        self._process_test_fill_url('''"url( '#grad1' )"''')
+
+    def test_fill_url_enclosed_single_quotes_strip_space(self):
+        """Fill url enclosed single quotes."""
+        self._process_test_fill_url('''"url( '#grad 1' )"''', "grad 1")
+
+    def test_fill_url_enclosed_double_quotes(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url("#grad1")'""")
+
+    def test_fill_url_enclosed_double_quotes_parenthesis(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url("#grad())1")'""", "grad())1")
+
+    def test_fill_url_enclosed_double_quotes_strip(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url( "#grad1" )'""")
+
+    def test_fill_url_enclosed_double_quotes_strip_space(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url( "#grad 1" )'""", "grad 1")
+
+    def test_fill_url_enclosed_double_quotes_strip_parenthesis(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url( "#grad)1" )'""", "grad)1")
