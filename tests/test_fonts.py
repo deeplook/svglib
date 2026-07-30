@@ -422,3 +422,24 @@ def test_font_family_unquoted_name_with_space() -> None:
     assert converter.convertFontFamily("Cascadia Code") == "Courier"
     assert converter.convertFontFamily("'Cascadia Code'") == "Courier"
     assert converter.convertFontFamily("Cascadia Code, Arial") == "Courier"
+
+
+def test_font_family_quoted_name_containing_comma() -> None:
+    """A comma inside a quoted family name must not split the family list.
+
+    Splitting naively on "," handed shlex.split() unmatched quote fragments
+    and raised ValueError("No closing quotation"), aborting the conversion of
+    an otherwise valid font-family value.
+    """
+    converter = Svg2RlgAttributeConverter()
+
+    assert converter.split_font_family_list('"Foo, Bar", Arial') == [
+        "Foo, Bar",
+        "Arial",
+    ]
+    assert converter.split_font_family_list("'Foo, Bar', Arial") == [
+        "Foo, Bar",
+        "Arial",
+    ]
+    # A valid value must never abort the conversion.
+    assert converter.convertFontFamily('"Foo, Bar", Arial') == "Arial"

@@ -534,6 +534,39 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         return shlex.split(attr.strip().replace(",", " "))
 
     @staticmethod
+    def _split_outside_quotes(attr: str) -> List[str]:
+        """Split on commas that are outside quoted strings, respecting escapes."""
+        segments = []
+        current = []
+        quote_char = None
+        escaped = False
+        for char in attr:
+            if escaped:
+                current.append(char)
+                escaped = False
+                continue
+            if char == "\\":
+                current.append(char)
+                escaped = True
+                continue
+            if quote_char is not None:
+                current.append(char)
+                if char == quote_char:
+                    quote_char = None
+                continue
+            if char in "\"'":
+                quote_char = char
+                current.append(char)
+                continue
+            if char == ",":
+                segments.append("".join(current))
+                current = []
+                continue
+            current.append(char)
+        segments.append("".join(current))
+        return segments
+
+    @staticmethod
     def split_font_family_list(attr: str) -> List[str]:
         """Split an SVG/CSS font-family attribute into family names to try.
 
@@ -543,7 +576,9 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         previous lookup behaviour as a fallback.
         """
         names = []
-        for segment in attr.strip().split(","):
+        for segment in Svg2RlgAttributeConverter._split_outside_quotes(
+            attr.strip()
+        ):
             words = shlex.split(segment.strip())
             if not words:
                 continue
