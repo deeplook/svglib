@@ -576,9 +576,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         previous lookup behaviour as a fallback.
         """
         names = []
-        for segment in Svg2RlgAttributeConverter._split_outside_quotes(
-            attr.strip()
-        ):
+        for segment in Svg2RlgAttributeConverter._split_outside_quotes(attr.strip()):
             words = shlex.split(segment.strip())
             if not words:
                 continue
