@@ -2066,12 +2066,13 @@ class TestGradients:
         stop0_color = grad["stops"][0][1]
         assert stop0_color.alpha == pytest.approx(0.5)
 
-    def _get_svg(self, fill):
+    def _get_svg(self, fill, name):
         return f"""
             <?xml version="1.0"?>
             <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
                 <defs>
-                    <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+                    <linearGradient id="{name}" x1="0" y1="0" x2="1" y2="0"
+                            gradientUnits="objectBoundingBox">
                         <stop offset="0" stop-color="red" stop-opacity="1"/>
                         <stop offset="1" stop-color="blue" stop-opacity="1"/>
                     </linearGradient>
@@ -2079,9 +2080,9 @@ class TestGradients:
                 <rect x="10" y="10" width="80" height="80" fill={fill}/>
             </svg>"""
 
-    def _process_test_fill_url(self, name):
+    def _process_test_fill_url(self, fill, name="grad1"):
         """Process test fill url."""
-        drawing = drawing_from_svg(self._get_svg(name))
+        drawing = drawing_from_svg(self._get_svg(fill, name))
 
         assert len(drawing.contents) == 1
         group = drawing.contents[0]
@@ -2096,7 +2097,10 @@ class TestGradients:
         assert isinstance(rect, Rect)
 
         assert gradient._positions == [0.0, 1.0]
-        assert gradient._rl_colors == [colors.Color(1,0,0,1), colors.Color(0,0,1,1)]
+        assert gradient._rl_colors == [
+            colors.Color(1, 0, 0, 1),
+            colors.Color(0, 0, 1, 1),
+        ]
 
     def test_fill_url_witout_quotes(self):
         """Fill url witout quotes."""
@@ -2104,7 +2108,19 @@ class TestGradients:
 
     def test_fill_url_witout_quotes_space(self):
         """Fill url witout quotes."""
+        self._process_test_fill_url('"url(#grad 1)"', "grad 1")
+
+    def test_fill_url_witout_quotes_parenthesis(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url(#grad)1)"', "grad)1")
+
+    def test_fill_url_witout_quotes_strip(self):
+        """Fill url witout quotes."""
         self._process_test_fill_url('"url( #grad1 )"')
+
+    def test_fill_url_witout_quotes_strip_space(self):
+        """Fill url witout quotes."""
+        self._process_test_fill_url('"url( #grad 1 )"', "grad 1")
 
     def test_fill_url_enclosed_single_quotes(self):
         """Fill url enclosed single quotes."""
@@ -2112,12 +2128,32 @@ class TestGradients:
 
     def test_fill_url_enclosed_single_quotes_space(self):
         """Fill url enclosed single quotes."""
+        self._process_test_fill_url('''"url('#grad 1')"''', "grad 1")
+
+    def test_fill_url_enclosed_single_quotes_strip(self):
+        """Fill url enclosed single quotes."""
         self._process_test_fill_url('''"url( '#grad1' )"''')
+
+    def test_fill_url_enclosed_single_quotes_strip_space(self):
+        """Fill url enclosed single quotes."""
+        self._process_test_fill_url('''"url( '#grad 1' )"''', "grad 1")
 
     def test_fill_url_enclosed_double_quotes(self):
         """Fill url enclosed double quotes."""
         self._process_test_fill_url("""'url("#grad1")'""")
 
-    def test_fill_url_enclosed_double_quotes_space(self):
+    def test_fill_url_enclosed_double_quotes_parenthesis(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url("#grad())1")'""", "grad())1")
+
+    def test_fill_url_enclosed_double_quotes_strip(self):
         """Fill url enclosed double quotes."""
         self._process_test_fill_url("""'url( "#grad1" )'""")
+
+    def test_fill_url_enclosed_double_quotes_strip_space(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url( "#grad 1" )'""", "grad 1")
+
+    def test_fill_url_enclosed_double_quotes_strip_parenthesis(self):
+        """Fill url enclosed double quotes."""
+        self._process_test_fill_url("""'url( "#grad)1" )'""", "grad)1")

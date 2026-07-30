@@ -868,7 +868,7 @@ class ExternalSVG:
 _BEZIER_KAPPA = 0.5523  # cubic bezier constant for circle approximation
 
 # Match values: url(#name), url('#name'), url("#name"), url( "#name" )
-_GRADIENT_URL_RE = re.compile(r"""url\(\s*(['"]?)#([^'")\s]+)\1\s*\)""")
+_GRADIENT_URL_RE = re.compile(r"""url\(\s*(['"]?)#([^'"]+?)\1\s*\)""")
 
 
 def _shape_to_pdf_path(canvas: Any, shape: Any) -> Any:
