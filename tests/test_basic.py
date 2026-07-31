@@ -965,6 +965,33 @@ class TestGroupNode:
         collect(drawing)
         assert [rect.y for rect in rects] == [5]
 
+    def test_visibility_hidden(self):
+        """visibility hidden/collapse hides the node, and is inheritable."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg width="100" height="100">
+                <rect x="5" y="5" width="10" height="10"/>
+                <rect x="5" y="25" width="10" height="10" visibility="hidden"/>
+                <rect x="5" y="45" width="10" height="10" style="visibility:collapse"/>
+                <g visibility="hidden">
+                    <rect x="5" y="65" width="10" height="10"/>
+                    <rect x="5" y="85" width="10" height="10" visibility="visible"/>
+                </g>
+            </svg>
+        """
+        )
+        rects = []
+
+        def collect(node):
+            for child in getattr(node, "contents", []):
+                if isinstance(child, Rect):
+                    rects.append(child)
+                collect(child)
+
+        collect(drawing)
+        assert [rect.y for rect in rects] == [5, 85]
+
     def test_svg_layers_have_label(self):
         drawing = drawing_from_svg(
             """
