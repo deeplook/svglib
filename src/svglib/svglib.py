@@ -1295,7 +1295,8 @@ class SvgRenderer:
 
             item = self.shape_converter.convertShape(name, node, clipping)
             display = self.get_display(node)
-            if item and display != "none":
+            visibility = self.attrConverter.findAttr(node, "visibility")
+            if item and display != "none" and visibility not in ("hidden", "collapse"):
                 fill_val = self.attrConverter.findAttr(node, "fill")
                 m = _GRADIENT_URL_RE.fullmatch(fill_val.strip()) if fill_val else None
                 if m:

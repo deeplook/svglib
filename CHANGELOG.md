@@ -25,6 +25,10 @@
 
 ### Fixed
 
+- The `visibility` property is now respected on shapes. Elements with
+  `visibility="hidden"` (or `collapse`), set directly or inherited from an
+  ancestor, were still rendered (issue #359).
+
 - `display: none` set through a `style` attribute is now respected. Only the
   `display` presentation attribute was read, so `<g style="display:none">` and
   `<rect style="display:none"/>` were still rendered (issue #401).
