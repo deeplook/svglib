@@ -45,6 +45,7 @@ from typing import (
 )
 
 from PIL import Image as PILImage
+from reportlab.graphics.renderSVG import SVGCanvas
 from reportlab.graphics.shapes import (
     _CLOSEPATH,
     Circle,
@@ -932,6 +933,11 @@ def _shape_to_pdf_path(canvas: Any, shape: Any) -> Any:
     Handles Path, Rect, Circle, Ellipse, and Polygon; falls back to the
     shape's bounding box for other types.
     """
+    if isinstance(canvas, SVGCanvas) and not hasattr(canvas, "beginPath"):
+        # SVGCanvas doesn't have function beginPath. It is used here:
+        # easy-thumbnails[svg]==2.10.1
+        # https://github.com/SmileyChris/easy-thumbnails/blob/2.10.1/easy_thumbnails/VIL/Image.py#L21
+        return None
     pdfPath = canvas.beginPath()
     if isinstance(shape, Path):
         draw_funcs = (pdfPath.moveTo, pdfPath.lineTo, pdfPath.curveTo, pdfPath.close)
@@ -1069,18 +1075,18 @@ class LinearGradientShape(DirectDraw):
         """Paint the linear gradient into the clipped region on the PDF canvas."""
         canvas = renderer._canvas
         canvas.saveState()
-        pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
-        canvas.clipPath(pdfPath, fill=1, stroke=0)
-        canvas.linearGradient(
-            self._x0,
-            self._y0,
-            self._x1,
-            self._y1,
-            self._rl_colors,
-            self._positions,
-            self._extend,
-        )
-        canvas.restoreState()
+        if pdfPath := _shape_to_pdf_path(canvas, self._clip_shape):
+            canvas.clipPath(pdfPath, fill=1, stroke=0)
+            canvas.linearGradient(
+                self._x0,
+                self._y0,
+                self._x1,
+                self._y1,
+                self._rl_colors,
+                self._positions,
+                self._extend,
+            )
+            canvas.restoreState()
 
     def getBounds(self) -> Tuple[float, float, float, float]:
         """Return the bounds of the clipped region this gradient fills."""
@@ -1111,17 +1117,17 @@ class RadialGradientShape(DirectDraw):
         """Paint the radial gradient into the clipped region on the PDF canvas."""
         canvas = renderer._canvas
         canvas.saveState()
-        pdfPath = _shape_to_pdf_path(canvas, self._clip_shape)
-        canvas.clipPath(pdfPath, fill=1, stroke=0)
-        canvas.radialGradient(
-            self._cx,
-            self._cy,
-            self._r,
-            self._rl_colors,
-            self._positions,
-            self._extend,
-        )
-        canvas.restoreState()
+        if pdfPath := _shape_to_pdf_path(canvas, self._clip_shape):
+            canvas.clipPath(pdfPath, fill=1, stroke=0)
+            canvas.radialGradient(
+                self._cx,
+                self._cy,
+                self._r,
+                self._rl_colors,
+                self._positions,
+                self._extend,
+            )
+            canvas.restoreState()
 
     def getBounds(self) -> Tuple[float, float, float, float]:
         """Return the bounds of the clipped region this gradient fills."""
