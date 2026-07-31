@@ -23,7 +23,7 @@ from typing import Any
 from urllib.parse import quote, unquote, urlparse
 
 import pytest
-from reportlab.graphics import renderPDF, renderPM
+from reportlab.graphics import renderPDF, renderPM, renderSVG
 from reportlab.graphics.shapes import Group, Rect
 
 from svglib import svglib
@@ -132,6 +132,31 @@ class TestSVGSamples:
             # save as PDF
             base = splitext(path)[0] + "-svglib.pdf"
             renderPDF.drawToFile(drawing, base, showBoundary=0)
+
+
+class TestSVGCanvas:
+    "Test SVGCanvas."
+
+    def test_canvas(self):
+        "Test SVGCanvas for _shape_to_pdf_path."
+        paths = [
+            f"{TEST_ROOT}/samples/misc/{filename}"
+            for filename in (
+                "firefox-logo.svg",
+                "gradient_showcase.svg",
+                "Python_logo_and_wordmark.svg",
+            )
+        ]
+        for i, path in enumerate(paths):
+            print(f"working on [{i}] {path}")
+            drawing = svglib.svg2rlg(path)
+            canvas = renderSVG.SVGCanvas()
+            renderSVG.draw(drawing, canvas)
+            buffer = io.StringIO()
+            canvas.save(buffer)
+            content = buffer.getvalue()
+            assert "<title>...</title>" in content
+            assert "<desc>...</desc>" in content
 
 
 class TestWikipediaSymbols:
