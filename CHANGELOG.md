@@ -35,6 +35,13 @@
   from a vector element with identical coordinates. Because width/height were
   truncated too, the error grew across the image rather than being a constant
   shift (issue #490).
+- `font-family` values are now split per CSS instead of on whitespace. An
+  unquoted multi-word name such as `font-family: Cascadia Code` was split into
+  `Cascadia` and `Code`, so a font registered under its full name was never
+  found (issue #374). Commas inside a quoted name (`font-family: "Foo, Bar",
+  Arial`) no longer split the list either; that previously handed `shlex` an
+  unbalanced quote and raised `ValueError: No closing quotation`, aborting the
+  conversion of a valid value.
 - Replaced `locale.getdefaultlocale()` (used for `<switch>` `systemLanguage`
   matching) with a small environment-variable lookup. `getdefaultlocale()` is
   deprecated and is **removed in Python 3.15**; the replacement keeps the same

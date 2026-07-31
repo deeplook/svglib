@@ -533,6 +533,61 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         """Split a string of attributes into a list."""
         return shlex.split(attr.strip().replace(",", " "))
 
+    @staticmethod
+    def _split_outside_quotes(attr: str) -> List[str]:
+        """Split on commas that are outside quoted strings, respecting escapes."""
+        segments = []
+        current = []
+        quote_char = None
+        escaped = False
+        for char in attr:
+            if escaped:
+                current.append(char)
+                escaped = False
+                continue
+            if char == "\\":
+                current.append(char)
+                escaped = True
+                continue
+            if quote_char is not None:
+                current.append(char)
+                if char == quote_char:
+                    quote_char = None
+                continue
+            if char in "\"'":
+                quote_char = char
+                current.append(char)
+                continue
+            if char == ",":
+                segments.append("".join(current))
+                current = []
+                continue
+            current.append(char)
+        segments.append("".join(current))
+        return segments
+
+    @staticmethod
+    def split_font_family_list(attr: str) -> List[str]:
+        """Split an SVG/CSS font-family attribute into family names to try.
+
+        Per CSS, only commas separate family names, so an unquoted name
+        containing spaces (e.g. ``Cascadia Code``) is yielded intact first.
+        Each space-separated word is also yielded afterwards, preserving the
+        previous lookup behaviour as a fallback.
+        """
+        names = []
+        for segment in Svg2RlgAttributeConverter._split_outside_quotes(attr.strip()):
+            words = shlex.split(segment.strip())
+            if not words:
+                continue
+            full_name = " ".join(words)
+            if full_name not in names:
+                names.append(full_name)
+            for word in words:
+                if word not in names:
+                    names.append(word)
+        return names
+
     def convertLength(
         self,
         svgAttr: str,
@@ -763,7 +818,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         if not fontAttr:
             return ""
         # split the fontAttr in actual font family names
-        font_names = self.split_attr_list(fontAttr)
+        font_names = self.split_font_family_list(fontAttr)
 
         non_exact_matches = []
         for font_name in font_names:

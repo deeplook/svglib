@@ -405,3 +405,43 @@ def test_font_family() -> None:
         "Arial",
         "New Times Roman",
     ]
+
+
+def test_font_family_unquoted_name_with_space() -> None:
+    """An unquoted font-family name containing a space must be looked up whole.
+
+    See https://github.com/deeplook/svglib/issues/374 - splitting on spaces
+    turned "Cascadia Code" into "Cascadia" and "Code", so a font registered
+    under its full name was never found.
+    """
+    font_map = FontMap()
+    font_map.register_default_fonts()
+    font_map.register_font("Cascadia Code", rlgFontName="Courier")
+    converter = Svg2RlgAttributeConverter(font_map=font_map)
+
+    assert converter.convertFontFamily("Cascadia Code") == "Courier"
+    assert converter.convertFontFamily("'Cascadia Code'") == "Courier"
+    assert converter.convertFontFamily("Cascadia Code, Arial") == "Courier"
+
+
+def test_font_family_quoted_name_containing_comma() -> None:
+    """A comma inside a quoted family name must not split the family list.
+
+    Splitting naively on "," handed shlex.split() unmatched quote fragments
+    and raised ValueError("No closing quotation"), aborting the conversion of
+    an otherwise valid font-family value.
+    """
+    converter = Svg2RlgAttributeConverter()
+
+    assert converter.split_font_family_list('"Foo, Bar", Arial') == [
+        "Foo, Bar",
+        "Arial",
+    ]
+    assert converter.split_font_family_list("'Foo, Bar', Arial") == [
+        "Foo, Bar",
+        "Arial",
+    ]
+    # A valid value must never abort the conversion. Which name is returned
+    # depends on the fonts registered in the environment, so only assert that
+    # a name comes back instead of the ValueError this used to raise.
+    assert converter.convertFontFamily('"Foo, Bar", Arial')
