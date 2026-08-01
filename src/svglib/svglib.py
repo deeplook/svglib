@@ -1134,13 +1134,6 @@ class RadialGradientShape(DirectDraw):
         return cast(Tuple[float, float, float, float], self._clip_shape.getBounds())
 
 
-# Deprecated aliases for the underscore-prefixed names these classes had before
-# they were made public. They were never meant to be private, but the leading
-# underscore wrongly signalled so. Scheduled for removal in 2.1.0.
-_LinearGradientShape = LinearGradientShape
-_RadialGradientShape = RadialGradientShape
-
-
 # ## the main meat ###
 
 

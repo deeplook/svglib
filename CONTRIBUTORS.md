@@ -9,6 +9,8 @@ This is the (preliminary) list of contributors in no particular order:
 - Tom Turner
 - Danny Elfanbaum
 - Blayze Wilhelm
+- Sanjay Santhanam
+- Zdeněk Böhm
 
 If you are not listed here, but feel like you should be, please contact
 the maintainers. If you create a pull request, feel free to add your
