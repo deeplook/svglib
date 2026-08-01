@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 (2026-08-01)
 
 ### Added
 
@@ -20,8 +20,12 @@
 - Renamed the gradient shape classes `_LinearGradientShape` and
   `_RadialGradientShape` to `LinearGradientShape` and `RadialGradientShape`.
   They appear in the rendered `Drawing` tree and were never meant to be
-  private, so the leading underscore was misleading. The old underscore-
-  prefixed names remain as deprecated aliases and will be **removed in 2.1.0**.
+  private, so the leading underscore was misleading.
+
+### Removed
+
+- Removed the deprecated `_LinearGradientShape` and `_RadialGradientShape`
+  aliases. Use `LinearGradientShape` and `RadialGradientShape` instead.
 
 ### Fixed
 
@@ -53,6 +57,15 @@
   the language-matching path.
 - Clipping paths now support the `clip-rule` attribute instead of incorrectly
   using `fill-rule` (issue #485).
+- `fill="url(...)"` and gradient `xlink:href` values are now matched correctly
+  when the referenced id is quoted (`url('#name')`, `url("#name")`) or
+  contains a right parenthesis; the previous regex rejected or truncated
+  these forms.
+- Rendering to `reportlab.graphics.renderSVG.SVGCanvas` (as used by
+  `easy-thumbnails[svg]`) no longer raises
+  `AttributeError: 'SVGCanvas' object has no attribute 'beginPath'` when
+  drawing a clipped gradient; that canvas doesn't implement `beginPath()`,
+  so the gradient's clip path is now skipped on it instead of erroring.
 
 ### Type safety and internal quality (no behavior change)
 
