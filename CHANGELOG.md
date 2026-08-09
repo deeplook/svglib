@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `font-size` no longer has `PX_TO_PT` applied twice. The viewport group
+  already carries the conversion, but `String.fontSize` and the advance widths
+  used to position text fragments were converted to points as well. Text
+  therefore rendered at 0.75x the size of the geometry in the same document,
+  and multi-`tspan` runs were laid out in the wrong unit (issue #502). Both now
+  stay in user units, like every other coordinate below the transform.
+  `String.fontSize` in the shape tree is in user units accordingly; multiply by
+  the enclosing group's transform to get the rendered size.
+
 ## 2.1.0 (2026-08-01)
 
 ### Added

@@ -15,7 +15,9 @@ bitmap with svglib:
   - Physical units (``mm``, ``cm``, ``in``) produce the correct point
     size for the declared physical measurement.
   - Font sizes follow the same rules: a bare-number/px font-size of N
-    results in a ReportLab fontSize of N × 0.75 pt.
+    renders at N × 0.75 pt. That is the size in the *output*; inside the
+    Drawing, ``String.fontSize`` is in user units like every other
+    coordinate below the viewport group.
 
 Run with: uv run pytest -v tests/test_units.py
 """
@@ -24,7 +26,8 @@ import io
 import math
 
 from lxml import etree
-from reportlab.graphics.shapes import String
+from reportlab.graphics.shapes import Rect, String
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 from svglib.svglib import PX_TO_PT, SvgRenderer
 from tests.utils import drawing_from_svg
@@ -47,23 +50,46 @@ def _drawing(width_attr, height_attr, extra_attrs=""):
     return drawing_from_svg(svg)
 
 
-def _font_size_pt(fs_attr):
-    """Return the ReportLab fontSize (in pt) for a <text> element whose
-    font-size attribute is *fs_attr*.
+def _render(svg):
+    """Return the Drawing for an SVG string."""
+    root = etree.parse(io.BytesIO(svg.encode())).getroot()
+    return SvgRenderer("").render(root)
+
+
+def _shapes_with_scale(drawing):
+    """Yield every leaf shape with the total scale applied to it.
+
+    Shapes below the viewport group are in user units; multiplying by the
+    scale yielded here gives their size in the output.
+    """
+
+    def walk(node, scale):
+        for item in getattr(node, "contents", []):
+            item_scale = scale * abs(getattr(item, "transform", (1,))[0])
+            if hasattr(item, "contents"):
+                yield from walk(item, item_scale)
+            else:
+                yield item, item_scale
+
+    yield from walk(drawing, abs(drawing.transform[0]))
+
+
+def _rendered_font_size(
+    fs_attr, root_attrs='width="200" height="50" viewBox="0 0 200 50"'
+):
+    """Return the size in pt at which a <text> is rendered.
+
+    Deliberately not ``String.fontSize``: that lives below the viewport
+    transform and so does not tell you how large the text comes out.
     """
     svg = f"""<?xml version="1.0"?>
-    <svg xmlns="http://www.w3.org/2000/svg"
-         width="200" height="50" viewBox="0 0 200 50">
+    <svg xmlns="http://www.w3.org/2000/svg" {root_attrs}>
         <text font-size="{fs_attr}">x</text>
     </svg>"""
-    root = etree.parse(io.BytesIO(svg.encode())).getroot()
-    drawing = SvgRenderer("").render(root)
-    # Walk into the drawing tree to find the first String shape.
-    node = drawing.contents[0]
-    while hasattr(node, "contents"):
-        node = node.contents[0]
-    assert isinstance(node, String), f"Expected String, got {type(node)}"
-    return node.fontSize
+    for shape, scale in _shapes_with_scale(_render(svg)):
+        if isinstance(shape, String):
+            return shape.fontSize * scale
+    raise AssertionError("no String shape in the drawing")
 
 
 # ---------------------------------------------------------------------------
@@ -192,50 +218,161 @@ class TestDrawingDimensionsPhysical:
 class TestFontSizeUnits:
     """Font-size unit handling.
 
-    Font sizes are lengths like any other in SVG.  They are parsed to
-    user units (px) and then multiplied by PX_TO_PT for ReportLab.
+    Font sizes are lengths like any other in SVG. They are parsed to user
+    units (px) and converted to points once by the viewport transform.
 
     Key fact: font-size="16" (bare/px) → 12 pt in the PDF,
               font-size="12pt"          → 12 pt in the PDF.
+
+    These assert the *rendered* size: ``String.fontSize`` alone cannot express
+    that, since the viewport transform still applies to it.
     """
 
     def test_bare_font_size_scaled_to_pt(self):
-        """font-size="16" (bare) → fontSize == 12 pt in ReportLab."""
-        assert math.isclose(_font_size_pt("16"), 16 * PX_TO_PT)
+        """font-size="16" (bare) → renders at 12 pt."""
+        assert math.isclose(_rendered_font_size("16"), 16 * PX_TO_PT)
 
     def test_px_font_size_scaled_to_pt(self):
-        """font-size="16px" → fontSize == 12 pt in ReportLab."""
-        assert math.isclose(_font_size_pt("16px"), 16 * PX_TO_PT)
+        """font-size="16px" → renders at 12 pt."""
+        assert math.isclose(_rendered_font_size("16px"), 16 * PX_TO_PT)
 
     def test_pt_font_size_preserved(self):
-        """font-size="12pt" → fontSize == 12 pt (no scaling surprise)."""
-        assert math.isclose(_font_size_pt("12pt"), 12.0, rel_tol=1e-4)
+        """font-size="12pt" → renders at 12 pt (no scaling surprise)."""
+        assert math.isclose(_rendered_font_size("12pt"), 12.0, rel_tol=1e-4)
 
     def test_bare_and_px_font_size_identical(self):
-        """font-size="N" and font-size="Npx" must produce identical fontSize."""
+        """font-size="N" and font-size="Npx" must render identically."""
         for n in (10, 13, 16, 24):
             assert math.isclose(
-                _font_size_pt(str(n)),
-                _font_size_pt(f"{n}px"),
+                _rendered_font_size(str(n)),
+                _rendered_font_size(f"{n}px"),
             ), f"font-size mismatch for {n}"
 
     def test_16px_equals_12pt(self):
-        """font-size="16px" and font-size="12pt" must produce the same fontSize.
+        """font-size="16px" and font-size="12pt" must render at the same size.
 
         16 CSS px × 0.75 = 12 pt — both specify the same physical text size.
         """
         assert math.isclose(
-            _font_size_pt("16px"),
-            _font_size_pt("12pt"),
+            _rendered_font_size("16px"),
+            _rendered_font_size("12pt"),
             rel_tol=1e-4,
         )
 
     def test_96px_equals_72pt_font(self):
         """font-size="96px" and font-size="72pt" — one inch of text."""
         assert math.isclose(
-            _font_size_pt("96px"),
-            _font_size_pt("72pt"),
+            _rendered_font_size("96px"),
+            _rendered_font_size("72pt"),
             rel_tol=1e-4,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Text relative to the geometry it belongs to (issue #502)
+# ---------------------------------------------------------------------------
+
+
+class TestTextToGeometryScale:
+    """Text and geometry must be scaled by the same amount.
+
+    A conversion applied to ``font-size`` on top of the viewport transform
+    shows up in no single absolute measurement, only as a ratio: text ends up
+    at 0.75x the size of the artwork it labels (issue #502).
+    """
+
+    # In any renderer the text is a third of the bar.
+    BAR_WIDTH = 48
+    FONT_SIZE = 16
+
+    def _ratio(self, root_attrs):
+        """Return rendered font size / rendered bar width for a root element."""
+        svg = f"""<?xml version="1.0"?>
+        <svg xmlns="http://www.w3.org/2000/svg" {root_attrs}>
+            <rect x="0" y="0" width="{self.BAR_WIDTH}" height="8"/>
+            <text x="10" y="50" font-size="{self.FONT_SIZE}">x</text>
+        </svg>"""
+        font_size = bar_width = None
+        for shape, scale in _shapes_with_scale(_render(svg)):
+            if isinstance(shape, String):
+                font_size = shape.fontSize * scale
+            elif isinstance(shape, Rect):
+                bar_width = shape.width * scale
+        assert font_size is not None and bar_width is not None
+        return font_size / bar_width
+
+    def test_ratio_is_preserved_for_every_root_unit(self):
+        """The ratio survives every way of sizing the root.
+
+        The last two give a viewport scale of 1.0 and 1.5 rather than 0.75, so
+        a fix that merely cancels one particular factor still fails here.
+        """
+        expected = self.FONT_SIZE / self.BAR_WIDTH
+        for root_attrs in (
+            'viewBox="0 0 96 96"',
+            'width="96" height="96" viewBox="0 0 96 96"',
+            'width="96px" height="96px" viewBox="0 0 96 96"',
+            'width="72pt" height="72pt" viewBox="0 0 96 96"',
+            'width="96" height="96"',
+            'width="100pt" height="100pt" viewBox="0 0 96 96"',
+            'width="96" height="96" viewBox="0 0 48 48"',
+        ):
+            assert math.isclose(self._ratio(root_attrs), expected, rel_tol=1e-6), (
+                f"text-to-geometry ratio wrong for {root_attrs}"
+            )
+
+
+class TestTextFragmentPositioning:
+    """Advance widths must be measured in the units of the coordinates.
+
+    ``convertText`` places each fragment after the first by adding the width of
+    the preceding text to an x coordinate in user units. Measuring in points
+    instead shifts every fragment but the first (issue #502).
+    """
+
+    def _strings(self, body, root_attrs='width="200" height="50" viewBox="0 0 200 50"'):
+        """Return the String shapes for an SVG body, in document order."""
+        svg = f"""<?xml version="1.0"?>
+        <svg xmlns="http://www.w3.org/2000/svg" {root_attrs}>{body}</svg>"""
+        return [
+            shape
+            for shape, _scale in _shapes_with_scale(_render(svg))
+            if isinstance(shape, String)
+        ]
+
+    def test_second_tspan_starts_where_the_first_ends(self):
+        """A tspan without its own x continues where the previous one ends.
+
+        The gap is derived from the font size in the source, not from the
+        String's own fontSize, which would make the assertion self-consistent.
+        """
+        body = (
+            '<text x="0" y="20" font-size="16" font-family="Helvetica">'
+            "<tspan>AAA</tspan><tspan>BBB</tspan></text>"
+        )
+        first, second = self._strings(body)
+
+        assert math.isclose(
+            second.x - first.x,
+            stringWidth("AAA", "Helvetica", 16),
+            rel_tol=1e-6,
+        )
+
+    def test_per_character_positions_advance_in_user_units(self):
+        """Characters beyond the x list advance by their own width.
+
+        Fewer ``x`` values than characters reaches the per-character branch,
+        which calls stringWidth separately from the fragment case above.
+        """
+        body = '<text x="0 30" y="20" font-size="16" font-family="Helvetica">abc</text>'
+        shapes = self._strings(body)
+
+        assert [s.text for s in shapes] == ["a", "b", "c"]
+        # "c" has no x of its own and must follow "b" by b's width.
+        assert math.isclose(
+            shapes[2].x,
+            30.0 + stringWidth("b", "Helvetica", 16),
+            rel_tol=1e-6,
         )
 
 
