@@ -2190,7 +2190,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fs_attr = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
         # font-size is always a single value, so convertLength returns a float.
         fs = cast(float, attrConv.convertLength(fs_attr))  # user units, em_base
-        fs_pt = fs * PX_TO_PT  # absolute points for ReportLab font metrics
         x: List[float]
         y: List[float]
         x, y = self.convert_length_attrs(node, "x", "y", em_base=fs)  # type: ignore
@@ -2226,7 +2225,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     float, attrConv.convertLength(baseLineShift_raw, em_base=fs)
                 )
 
-            frag_lengths.append(stringWidth(text, ff, fs_pt))
+            # User units, like the x coordinates these widths are added to.
+            frag_lengths.append(stringWidth(text, ff, fs))
 
             # When x, y, dx, or dy is a list, we calculate position for each char of
             # text.
@@ -2252,7 +2252,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     if char_dy is None:
                         char_dy = 0
                     new_x = char_dx + (
-                        last_x + stringWidth(last_char, ff, fs_pt)
+                        last_x + stringWidth(last_char, ff, fs)
                         if char_x is None
                         else char_x
                     )
@@ -2562,10 +2562,11 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 "convertFontFamily",
                 [DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE],
             ),
+            # User units: the viewport group already applies PX_TO_PT.
             (
                 ["font-size"],
                 "fontSize",
-                "convertLengthToPt",
+                "convertLength",
                 [f"{DEFAULT_FONT_SIZE}pt"],
             ),
             (["text-anchor"], "textAnchor", "id", ["start"]),
