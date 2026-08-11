@@ -20,7 +20,7 @@ repos:
     language_version: python3.12
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.16.1
+  rev: v0.16.2
   hooks:
   - id: ruff-format
     types_or: ["python"]
