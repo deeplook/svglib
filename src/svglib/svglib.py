@@ -33,12 +33,8 @@ from io import BytesIO
 from typing import (
     Any,
     BinaryIO,
-    Dict,
-    List,
     Optional,
-    Set,
     TextIO,
-    Tuple,
     TypedDict,
     Union,
     cast,
@@ -111,7 +107,7 @@ SVGSource = Union[str, os.PathLike[str], BinaryIO, TextIO]
 
 # A single gradient stop: (offset, ReportLab color). The color is untyped
 # because ReportLab ships no stubs.
-GradientStop = Tuple[float, Any]
+GradientStop = tuple[float, Any]
 
 
 class _GradientDefBase(TypedDict):
@@ -120,7 +116,7 @@ class _GradientDefBase(TypedDict):
     type: str  # "linear" or "radial"
     gradientUnits: str
     spreadMethod: str
-    stops: List[GradientStop]
+    stops: list[GradientStop]
     href: Optional[str]
 
 
@@ -166,7 +162,7 @@ def register_font(
     weight: str = "normal",
     style: str = "normal",
     rlgFontName: Optional[str] = None,
-) -> Tuple[Optional[str], bool]:
+) -> tuple[Optional[str], bool]:
     """Register a font for use in SVG processing.
 
     This function serves as a backward-compatible wrapper for the font
@@ -188,7 +184,7 @@ def register_font(
 
 def find_font(
     font_name: str, weight: str = "normal", style: str = "normal"
-) -> Tuple[str, bool]:
+) -> tuple[str, bool]:
     """Find a registered font by its properties.
 
     This function serves as a backward-compatible wrapper for the font
@@ -288,9 +284,9 @@ class NoStrokePath(Path):
         if copy_from:
             self.__dict__.update(copy.deepcopy(copy_from.__dict__))
 
-    def getProperties(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def getProperties(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Return the properties of the path, ensuring no stroke is applied."""
-        props: Dict[str, Any] = super().getProperties(*args, **kwargs)
+        props: dict[str, Any] = super().getProperties(*args, **kwargs)
         if "strokeWidth" in props:
             props["strokeWidth"] = 0
         if "strokeColor" in props:
@@ -313,9 +309,9 @@ class ClippingPath(Path):
             self.__dict__.update(copy.deepcopy(copy_from.__dict__))
         self.isClipPath = 1
 
-    def getProperties(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def getProperties(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Return the properties of the path, ensuring no fill or stroke."""
-        props: Dict[str, Any] = Path.getProperties(self, *args, **kwargs)
+        props: dict[str, Any] = Path.getProperties(self, *args, **kwargs)
         if "fillColor" in props:
             props["fillColor"] = None
         if "strokeColor" in props:
@@ -372,7 +368,7 @@ class AttributeConverter:
         """
         self.main_box = main_box
 
-    def parseMultiAttributes(self, line: str) -> Dict[str, str]:
+    def parseMultiAttributes(self, line: str) -> dict[str, str]:
         """Parse a compound attribute string into a dictionary.
 
         Args:
@@ -429,7 +425,7 @@ class AttributeConverter:
             return self.findAttr(svgNode.parent, name)
         return ""
 
-    def getAllAttributes(self, svgNode: Any) -> Dict[str, str]:
+    def getAllAttributes(self, svgNode: Any) -> dict[str, str]:
         """Return a dictionary of all attributes of a node and its ancestors.
 
         Args:
@@ -461,7 +457,7 @@ class AttributeConverter:
     def convertTransform(
         self,
         svgAttr: str,
-    ) -> List[Tuple[str, Union[float, Tuple[float, ...]]]]:
+    ) -> list[tuple[str, Union[float, tuple[float, ...]]]]:
         """Parse a transform attribute string into a list of operations.
 
         Args:
@@ -479,8 +475,8 @@ class AttributeConverter:
         line = svgAttr.strip()
 
         ops: str = line[:]
-        brackets: List[int] = []
-        indices: List[Union[float, Tuple[float, ...]]] = []
+        brackets: list[int] = []
+        indices: list[Union[float, tuple[float, ...]]] = []
         for i, lin in enumerate(line):
             if lin in "()":
                 brackets.append(i)
@@ -498,7 +494,7 @@ class AttributeConverter:
             except ValueError:
                 continue
             ops = ops[:bi] + " " * (bj - bi + 1) + ops[bj + 1 :]
-        ops_list: List[str] = ops.replace(",", " ").split()
+        ops_list: list[str] = ops.replace(",", " ").split()
 
         if len(ops_list) != len(indices):
             logger.warning("Unable to parse transform expression %r", svgAttr)
@@ -530,12 +526,12 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         return c
 
     @staticmethod
-    def split_attr_list(attr: str) -> List[str]:
+    def split_attr_list(attr: str) -> list[str]:
         """Split a string of attributes into a list."""
         return shlex.split(attr.strip().replace(",", " "))
 
     @staticmethod
-    def _split_outside_quotes(attr: str) -> List[str]:
+    def _split_outside_quotes(attr: str) -> list[str]:
         """Split on commas that are outside quoted strings, respecting escapes."""
         segments = []
         current = []
@@ -568,7 +564,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         return segments
 
     @staticmethod
-    def split_font_family_list(attr: str) -> List[str]:
+    def split_font_family_list(attr: str) -> list[str]:
         """Split an SVG/CSS font-family attribute into family names to try.
 
         Per CSS, only commas separate family names, so an unquoted name
@@ -595,7 +591,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
         attr_name: Optional[str] = None,
         default: float = 0.0,
-    ) -> Union[float, List[float]]:
+    ) -> Union[float, list[float]]:
         """Convert an SVG length string to user units (px).
 
         Args:
@@ -619,7 +615,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                 )
                 for val in self.split_attr_list(text)
             ]
-            result: List[float] = []
+            result: list[float] = []
             for item in items:
                 if isinstance(item, list):
                     result.extend(item)
@@ -706,7 +702,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         # toLength handles mm, cm, in, etc. and returns points; convert to user units.
         return cast(float, toLength(text) / PX_TO_PT)
 
-    def convertLengthList(self, svgAttr: str) -> List[Union[float, List[float]]]:
+    def convertLengthList(self, svgAttr: str) -> list[Union[float, list[float]]]:
         """Convert a space-separated list of lengths into a list of floats."""
         return [self.convertLength(a) for a in self.split_attr_list(svgAttr)]
 
@@ -716,7 +712,7 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
         attr_name: Optional[str] = None,
         default: float = 0.0,
-    ) -> Union[float, List[float]]:
+    ) -> Union[float, list[float]]:
         """Convert an SVG length string to points (user units × PX_TO_PT)."""
         result = self.convertLength(
             svgAttr, em_base=em_base, attr_name=attr_name, default=default
@@ -790,12 +786,12 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         """Convert an SVG stroke-linecap string to a ReportLab line cap."""
         return {"butt": 0, "round": 1, "square": 2}[svgAttr]
 
-    def convertDashArray(self, svgAttr: str) -> List[Union[float, List[float]]]:
+    def convertDashArray(self, svgAttr: str) -> list[Union[float, list[float]]]:
         """Convert an SVG stroke-dasharray string to a list of lengths."""
         strokeDashArray = self.convertLengthList(svgAttr)
         return strokeDashArray
 
-    def convertDashOffset(self, svgAttr: str) -> Union[float, List[float]]:
+    def convertDashOffset(self, svgAttr: str) -> Union[float, list[float]]:
         """Convert an SVG stroke-dashoffset string to a length."""
         strokeDashOffset = self.convertLength(svgAttr)
         return strokeDashOffset
@@ -851,7 +847,7 @@ class NodeTracker(cssselect2.ElementWrapper):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the wrapper and the list of accessed attribute names."""
         super().__init__(*args, **kwargs)
-        self.usedAttrs: List[str] = []
+        self.usedAttrs: list[str] = []
 
     def __repr__(self) -> str:
         """Return a debug representation naming the wrapped element."""
@@ -1059,8 +1055,8 @@ class LinearGradientShape(DirectDraw):
         y0: float,
         x1: float,
         y1: float,
-        rl_colors: List[colors.Color],
-        positions: List[float],
+        rl_colors: list[colors.Color],
+        positions: list[float],
         extend: bool = True,
     ) -> None:
         """Store the clip shape, gradient axis, colours and stop positions."""
@@ -1088,9 +1084,9 @@ class LinearGradientShape(DirectDraw):
             )
             canvas.restoreState()
 
-    def getBounds(self) -> Tuple[float, float, float, float]:
+    def getBounds(self) -> tuple[float, float, float, float]:
         """Return the bounds of the clipped region this gradient fills."""
-        return cast(Tuple[float, float, float, float], self._clip_shape.getBounds())
+        return cast(tuple[float, float, float, float], self._clip_shape.getBounds())
 
 
 class RadialGradientShape(DirectDraw):
@@ -1102,8 +1098,8 @@ class RadialGradientShape(DirectDraw):
         cx: float,
         cy: float,
         r: float,
-        rl_colors: List[colors.Color],
-        positions: List[float],
+        rl_colors: list[colors.Color],
+        positions: list[float],
         extend: bool = True,
     ) -> None:
         """Store the clip shape, centre, radius, colours and stop positions."""
@@ -1129,9 +1125,9 @@ class RadialGradientShape(DirectDraw):
             )
             canvas.restoreState()
 
-    def getBounds(self) -> Tuple[float, float, float, float]:
+    def getBounds(self) -> tuple[float, float, float, float]:
         """Return the bounds of the clipped region this gradient fills."""
-        return cast(Tuple[float, float, float, float], self._clip_shape.getBounds())
+        return cast(tuple[float, float, float, float], self._clip_shape.getBounds())
 
 
 # ## the main meat ###
@@ -1148,23 +1144,23 @@ class SvgRenderer:
         self,
         path: SVGSource,
         color_converter: Optional[Any] = None,
-        parent_svgs: Optional[List[str]] = None,
+        parent_svgs: Optional[list[str]] = None,
         font_map: Optional[Any] = None,
     ) -> None:
         """Initialize the renderer for the given SVG source and converters."""
         self.source_path: SVGSource = path
-        self._parent_chain: List[str] = parent_svgs or []  # To detect circular refs.
+        self._parent_chain: list[str] = parent_svgs or []  # To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(
             color_converter=color_converter, font_map=font_map
         )
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
-        self.definitions: Dict[str, Any] = {}
-        self.gradient_defs: Dict[str, _GradientDef] = {}
-        self.waiting_use_nodes: Dict[str, List[Tuple[NodeTracker, Optional[Group]]]] = (
+        self.definitions: dict[str, Any] = {}
+        self.gradient_defs: dict[str, _GradientDef] = {}
+        self.waiting_use_nodes: dict[str, list[tuple[NodeTracker, Optional[Group]]]] = (
             defaultdict(list)
         )
-        self._external_svgs: Dict[str, ExternalSVG] = {}
+        self._external_svgs: dict[str, ExternalSVG] = {}
         self.attrConverter.css_rules = CSSMatcher()
 
     def _set_root_font_size(self, root_node: Any) -> None:
@@ -1356,7 +1352,7 @@ class SvgRenderer:
         spread = node.attrib.get("spreadMethod", "pad")
 
         # Collect stop elements (direct children with tag "stop")
-        stops: List[GradientStop] = []
+        stops: list[GradientStop] = []
         for child in node:
             child_name = node_name(child)
             if child_name != "stop":
@@ -1375,7 +1371,7 @@ class SvgRenderer:
 
             # stop-color and stop-opacity can be in style or as direct attrs
             style_str = child.attrib.get("style", "")
-            style_attrs: Dict[str, Any] = {}
+            style_attrs: dict[str, Any] = {}
             if style_str:
                 style_attrs = self.attrConverter.parseMultiAttributes(style_str)
 
@@ -1421,7 +1417,7 @@ class SvgRenderer:
 
     def _resolve_gradient(self, grad_id: str) -> Optional[_GradientDef]:
         """Return a fully resolved gradient dict, following xlink:href chains."""
-        visited: Set[str] = set()
+        visited: set[str] = set()
         result = self.gradient_defs.get(grad_id)
         while result is not None:
             href = result.get("href")
@@ -1433,7 +1429,7 @@ class SvgRenderer:
             visited.add(href)
             # Merge: current overrides parent for all keys except missing stops.
             # The merge is by dynamic key, so build a plain dict and cast back.
-            merged: Dict[str, Any] = dict(parent)
+            merged: dict[str, Any] = dict(parent)
             for k, v in result.items():
                 if k == "stops" and not v:
                     continue  # inherit parent's stops
@@ -1597,7 +1593,7 @@ class SvgRenderer:
 
         found_shapes: list[Path] = []
         find_shapes_from_node(self.definitions[ref], found_shapes)
-        if len(found_shapes) == 0:
+        if not found_shapes:
             return None
 
         combined_shape = found_shapes[0]
@@ -2013,7 +2009,7 @@ class SvgShapeConverter:
         self.preserve_space = False
 
     @classmethod
-    def get_handled_shapes(cls) -> List[str]:
+    def get_handled_shapes(cls) -> list[str]:
         """Return a list of SVG shape names that this converter can handle."""
         return [key[7:].lower() for key in dir(cls) if key.startswith("convert")]
 
@@ -2067,7 +2063,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         *attrs: str,
         em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
         **kwargs: Any,
-    ) -> List[float]:
+    ) -> list[float]:
         """Convert a list of length attributes from a node.
 
         Args:
@@ -2130,7 +2126,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = points.replace(",", " ")
         points = points.split()
         points = list(map(self.attrConverter.convertLength, points))
-        if len(points) % 2 != 0 or len(points) == 0:
+        if len(points) % 2 != 0 or not points:
             # Odd number of coordinates or no coordinates, invalid polyline
             return None
 
@@ -2158,7 +2154,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         points = points.replace(",", " ")
         points = points.split()
         points = list(map(self.attrConverter.convertLength, points))
-        if len(points) % 2 != 0 or len(points) == 0:
+        if len(points) % 2 != 0 or not points:
             # Odd number of coordinates or no coordinates, invalid polygon
             return None
         nudge_points(points)
@@ -2177,12 +2173,12 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         gr = Group()
 
-        frag_lengths: List[float] = []
+        frag_lengths: list[float] = []
 
         dx0: float = 0
         dy0: float = 0
-        x1: Union[float, List[float]] = 0
-        y1: Union[float, List[float]] = 0
+        x1: Union[float, list[float]] = 0
+        y1: Union[float, list[float]] = 0
         ff = attrConv.findAttr(node, "font-family") or DEFAULT_FONT_NAME
         fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
@@ -2190,15 +2186,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fs_attr = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
         # font-size is always a single value, so convertLength returns a float.
         fs = cast(float, attrConv.convertLength(fs_attr))  # user units, em_base
-        x: List[float]
-        y: List[float]
+        x: list[float]
+        y: list[float]
         x, y = self.convert_length_attrs(node, "x", "y", em_base=fs)  # type: ignore
         for subnode, text, is_tail in iter_text_node(node, preserve_space):
             if not text:
                 continue
             has_x, has_y = False, False
-            dx: Union[float, List[float]] = 0
-            dy: Union[float, List[float]] = 0
+            dx: Union[float, list[float]] = 0
+            dy: Union[float, list[float]] = 0
             baseLineShift: Union[float, int] = 0
             if not is_tail:
                 x1, y1, dx, dy = self.convert_length_attrs(
@@ -2213,8 +2209,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     subnode.attrib.get("x", "") != "",
                     subnode.attrib.get("y", "") != "",
                 )
-                dx0 = dx0 + (dx[0] if isinstance(dx, list) else dx)
-                dy0 = dy0 + (dy[0] if isinstance(dy, list) else dy)
+                dx0 += dx[0] if isinstance(dx, list) else dx
+                dy0 += dy[0] if isinstance(dy, list) else dy
             baseLineShift_raw = subnode.attrib.get("baseline-shift", "0")
             if baseLineShift_raw in ("sub", "super", "baseline"):
                 baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[
@@ -2287,14 +2283,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         path = Path()
         points = path.points
         # Track subpaths needing to be closed later
-        unclosed_subpath_pointers: List[int] = []
-        subpath_start: List[float] = []
+        unclosed_subpath_pointers: list[int] = []
+        subpath_start: list[float] = []
         lastop = ""
-        last_quadratic_cp: Optional[Tuple[float, float]] = None
+        last_quadratic_cp: Optional[tuple[float, float]] = None
 
         for i in range(0, len(normPath), 2):
             op: str
-            nums: List[float]
+            nums: list[float]
             op, nums = normPath[i : i + 2]  # type: ignore
 
             if op in ("m", "M") and i > 0 and path.operators[-1] != _CLOSEPATH:
@@ -2639,7 +2635,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
     def shapeToPath(
         self,
         shape: SolidShape,
-        transform: Optional[Tuple[float, float, float, float, float, float]] = None,
+        transform: Optional[tuple[float, float, float, float, float, float]] = None,
     ) -> Optional[Path]:
         """
         Convert a solid shape into path.
@@ -2835,7 +2831,7 @@ def svg2rlg(
     return drawing
 
 
-def nudge_points(points: List[float]) -> None:
+def nudge_points(points: list[float]) -> None:
     """Nudge the first coordinate if all coordinate pairs are identical.
 
     This is a workaround for a ReportLab issue where shapes of size zero

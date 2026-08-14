@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Tooling and housekeeping
+
+- Modernized type annotations across `src/svglib/` and `tests/` to use PEP
+  585 builtin generics (`list[...]`, `dict[...]`, `tuple[...]`, `set[...]`)
+  instead of `typing.List`/`Dict`/`Tuple`/`Set`, and simplified a few
+  emptiness/membership checks (`not points` instead of `len(points) == 0`,
+  a set literal instead of a list for `in` checks). No behavior change.
+
 ### Fixed
 
 - `font-size` no longer has `PX_TO_PT` applied twice. The viewport group
