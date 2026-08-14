@@ -9,6 +9,13 @@
   instead of `typing.List`/`Dict`/`Tuple`/`Set`, and simplified a few
   emptiness/membership checks (`not points` instead of `len(points) == 0`,
   a set literal instead of a list for `in` checks). No behavior change.
+- Silenced a `UserWarning` from `test_convert_pdf_png` that came from
+  ReportLab's own `renderPM.drawImage`, not from svglib: it reopens a
+  `<image>` file referenced by path and converts it straight to RGB without
+  normalizing palette-with-transparency PNGs first, unlike svglib's own
+  handling of base64-embedded images. The referenced PNG (a dedicated
+  tRNS-chunk test fixture) still renders correctly; there was nothing to fix
+  in svglib's output.
 
 ### Fixed
 
