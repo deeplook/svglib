@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 (2026-08-14)
 
 ### Tooling and housekeeping
 
