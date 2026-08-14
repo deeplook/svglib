@@ -122,7 +122,7 @@ class TestSVGSamples:
         "Test convert sample SVG files to PDF using svglib."
 
         paths = glob.glob(f"{TEST_ROOT}/samples/misc/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in {".svg", ".svgz"}]
         for i, path in enumerate(paths):
             print(f"working on [{i}] {path}")
 
@@ -221,7 +221,7 @@ class TestWikipediaSymbols:
         "Test converting symbol SVG files to PDF using svglib."
 
         paths = glob.glob(f"{self.folder_path}/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in {".svg", ".svgz"}]
         for i, path in enumerate(paths):
             print(f"working on [{i}] {path}")
 
@@ -342,7 +342,7 @@ class TestWikipediaFlags:
         "Test converting flag SVG files to PDF using svglib."
 
         paths = glob.glob(f"{self.folder_path}/*")
-        paths = [p for p in paths if splitext(p.lower())[1] in [".svg", ".svgz"]]
+        paths = [p for p in paths if splitext(p.lower())[1] in {".svg", ".svgz"}]
         for i, path in enumerate(paths):
             print(f"working on [{i}] {path}")
 
@@ -395,6 +395,7 @@ class TestW3CSVG:
             os.remove(path)
 
     @pytest.mark.skipif(not has_renderpm_backend(), reason="needs a renderPM backend")
+    @pytest.mark.filterwarnings("ignore:Palette images with Transparency.*:UserWarning")
     def test_convert_pdf_png(self):
         """
         Test converting W3C SVG files to PDF and PNG using svglib.
@@ -402,6 +403,17 @@ class TestW3CSVG:
         ``renderPM.drawToFile()`` used in this test is known to trigger an
         error sometimes in reportlab which was fixed in reportlab 3.3.26.
         See https://github.com/deeplook/svglib/issues/47
+
+        struct-image-09-t.svg references a palette PNG with a tRNS chunk by
+        file path. svglib only normalizes palette+transparency images to
+        RGBA for base64-embedded `<image>` data (see
+        ``_convert_palette_to_rgba``); for a file path it passes the path
+        straight to ReportLab's ``Image`` shape, which is the correct,
+        efficient choice for PDF embedding. It's reportlab's own
+        ``renderPM.drawImage`` that reopens that file and calls
+        ``PIL.Image.convert('RGB')`` directly, without normalizing first,
+        which is what triggers this warning. The PNG still renders
+        correctly; there's nothing to fix on the svglib side.
         """
 
         exclude_list = [
