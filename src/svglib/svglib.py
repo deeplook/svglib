@@ -480,7 +480,9 @@ class AttributeConverter:
         for i, lin in enumerate(line):
             if lin in "()":
                 brackets.append(i)
-        for i in range(0, len(brackets), 2):
+        # Step in pairs and stop before a final unmatched "(" or ")" so an
+        # unbalanced transform (e.g. "scale(2") does not index past the list.
+        for i in range(0, len(brackets) - 1, 2):
             bi, bj = brackets[i], brackets[i + 1]
             subline = line[bi + 1 : bj]
             subline = subline.strip()
