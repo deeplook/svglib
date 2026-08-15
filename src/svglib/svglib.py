@@ -1757,8 +1757,14 @@ class SvgRenderer:
         if view_box:
             # viewBox defines a unitless user-coordinate space (SVG spec §8.1).
             # Parse as raw floats — never apply unit conversion here.
-            values = [float(v) for v in view_box.replace(",", " ").split()]
-            return Box(*values)
+            try:
+                values = [float(v) for v in view_box.replace(",", " ").split()]
+            except ValueError:
+                values = []
+            if len(values) == 4:
+                return Box(*values)
+            # A viewBox that is not four numbers is invalid and ignored per the
+            # SVG spec; fall through to the width/height fallback below.
         if default_box:
             width, height = map(svg_node.getAttribute, ("width", "height"))
             width, height = map(self.attrConverter.convertLength, (width, height))  # type: ignore

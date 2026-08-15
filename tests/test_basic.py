@@ -112,6 +112,18 @@ class TestSvg2rlgInput:
             os.unlink(file_path)
 
 
+def test_malformed_viewbox_is_ignored():
+    # A viewBox that is not four numbers used to raise TypeError from
+    # Box(*values); per the SVG spec an invalid viewBox is ignored, falling
+    # back to width/height, instead of crashing.
+    for view_box in ("0 0 100", "0 0 100 100 200", "0 0 abc 100", "0,0,100"):
+        drawing = drawing_from_svg(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="40" '
+            'viewBox="%s"><rect x="1" y="1" width="5" height="5"/></svg>' % view_box
+        )
+        assert drawing is not None
+
+
 class TestPaths:
     """Testing path-related code."""
 
