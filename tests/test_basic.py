@@ -649,6 +649,9 @@ class TestTransformAttrConverter:
             # Invalid/unsupported expressions return empty list
             ("scale(0.9), translate", []),
             ("ref(svg)", []),
+            # Unbalanced parentheses used to raise IndexError
+            ("scale(2", []),
+            ("rotate(45", []),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.convertTransform, mapping)
