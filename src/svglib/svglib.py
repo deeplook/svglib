@@ -900,7 +900,9 @@ class ExternalSVG:
         """Load and parse an external SVG referenced by the given path."""
         self.root_node = load_svg_file(path)
         self.renderer = SvgRenderer(
-            path, parent_svgs=renderer._parent_chain + [str(renderer.source_path)]
+            path,
+            parent_svgs=renderer._parent_chain + [str(renderer.source_path)],
+            external_reference_root=renderer.external_reference_root,
         )
         self.rendered = False
 
@@ -1148,9 +1150,14 @@ class SvgRenderer:
         color_converter: Optional[Any] = None,
         parent_svgs: Optional[list[str]] = None,
         font_map: Optional[Any] = None,
+        external_reference_root: Optional[str] = None,
     ) -> None:
         """Initialize the renderer for the given SVG source and converters."""
         self.source_path: SVGSource = path
+        # Optional trusted root for resolving external <image>/<use> references.
+        # When set, references resolving outside it are refused; recommended when
+        # rendering SVGs from an untrusted source. See xlink_href_target().
+        self.external_reference_root: Optional[str] = external_reference_root
         self._parent_chain: list[str] = parent_svgs or []  # To detect circular refs.
         self.attrConverter = Svg2RlgAttributeConverter(
             color_converter=color_converter, font_map=font_map
@@ -1688,9 +1695,33 @@ class SvgRenderer:
                     iri,
                 )
                 return None
+            # Absolute references were never supported ("Only local relative
+            # paths are supported yet") and let a crafted SVG name any file the
+            # process can read, so refuse them outright.
+            if os.path.isabs(iri):
+                logger.error("Refusing absolute external reference %r.", iri)
+                return None
             path = os.path.normpath(
                 os.path.join(os.path.dirname(self.source_path), iri)
             )
+            # Optional containment for untrusted input: when a trusted root is
+            # configured, refuse any reference resolving outside it. realpath
+            # collapses symlinks so they cannot be used to escape. The default
+            # (None) keeps the historical behaviour for relative references,
+            # including "..".
+            root = self.external_reference_root
+            if root is not None:
+                root = os.path.realpath(root)
+                try:
+                    contained = (
+                        os.path.commonpath([root, os.path.realpath(path)]) == root
+                    )
+                except ValueError:
+                    # Different drives or mixed path kinds: treat as out of root.
+                    contained = False
+                if not contained:
+                    logger.error("Refusing out-of-root reference %r.", iri)
+                    return None
             if not os.access(path, os.R_OK):
                 return None
             if path == self.source_path:
@@ -2808,7 +2839,10 @@ def svg2rlg(
     Args:
         path: A file path, file-like object, or pathlib.Path to the SVG file.
         resolve_entities: Whether to resolve XML entities (default False).
-        **kwargs: Additional keyword arguments for the SvgRenderer.
+        **kwargs: Additional keyword arguments for the SvgRenderer, notably
+            external_reference_root: a trusted directory outside of which
+            external <image>/<use> references are refused. Set it when the SVG
+            comes from an untrusted source.
 
     Returns:
         A ReportLab Drawing object, or None if the file cannot be processed.

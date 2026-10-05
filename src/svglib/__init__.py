@@ -28,7 +28,11 @@ except PackageNotFoundError:
     __version__ = "unknown"
 
 
-def svg2pdf(path: str, outputPat: Optional[str] = None) -> None:
+def svg2pdf(
+    path: str,
+    outputPat: Optional[str] = None,
+    external_reference_root: Optional[str] = None,
+) -> None:
     """Convert an SVG file to PDF format.
 
     High-level function that loads an SVG file, converts it to a ReportLab drawing,
@@ -44,6 +48,9 @@ def svg2pdf(path: str, outputPat: Optional[str] = None) -> None:
             - %(now)s: Current datetime object
             - %(format)s: Output format (always "pdf")
             Also supports {name} format strings.
+        external_reference_root: Optional directory that external <image>/<use>
+            references must resolve inside. None (the default) keeps the
+            library's behaviour of allowing any relative reference.
 
     Returns:
         None. The PDF file is written to disk.
@@ -89,7 +96,7 @@ def svg2pdf(path: str, outputPat: Optional[str] = None) -> None:
 
     # generate a drawing from the SVG file
     try:
-        drawing = svglib.svg2rlg(path)
+        drawing = svglib.svg2rlg(path, external_reference_root=external_reference_root)
     except:
         print("Rendering failed.")
         raise
@@ -159,6 +166,16 @@ def main() -> None:
     )
 
     p.add_argument(
+        "-R",
+        "--external-root",
+        metavar="DIR",
+        help="Directory that external image/use references must stay inside. "
+        "Defaults to the input file's own directory, so a converted SVG "
+        "cannot read files elsewhere on disk. Pass a parent directory to "
+        "allow shared assets, or / to allow any relative reference.",
+    )
+
+    p.add_argument(
         "input",
         metavar="PATH",
         nargs="*",
@@ -177,4 +194,8 @@ def main() -> None:
 
     paths = [a for a in args.input if exists(a)]
     for path in paths:
-        svg2pdf(path, outputPat=args.output)
+        # Command-line input is routinely untrusted (a downloaded or uploaded
+        # file), so confine external references to the document's own directory
+        # unless the caller widens the root explicitly.
+        root = args.external_root or dirname(path) or "."
+        svg2pdf(path, outputPat=args.output, external_reference_root=root)

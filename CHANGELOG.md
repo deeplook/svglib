@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Security
+
+- External `<image>`/`<use>` references can no longer escape the document's own
+  directory. `xlink_href_target()` joined the reference onto the source
+  directory and only checked `os.access()`, so an absolute reference discarded
+  that directory and `..` climbed above it, letting an untrusted SVG name any
+  file the process could read (CWE-22, GHSA-2p5c-8vcc-4rcw). Absolute
+  references are now refused, and the new opt-in `external_reference_root` on
+  `svg2rlg()`/`SvgRenderer` confines resolution to a trusted directory,
+  propagated into nested external-SVG renderers. Relative references, including
+  `..`, keep working by default.
+
+- The `svg2pdf` command line tool now sets `external_reference_root` to the
+  input file's own directory, since a file converted from the command line is
+  routinely one the user did not author. Pass `-R`/`--external-root` with a
+  parent directory to allow shared assets, or `/` to allow any relative
+  reference. Library callers are unaffected: the default stays `None`.
+
 ## 2.2.0 (2026-08-14)
 
 ### Tooling and housekeeping
