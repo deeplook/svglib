@@ -27,7 +27,6 @@ import os
 import pathlib
 import re
 import shlex
-import shutil
 from collections import defaultdict, namedtuple
 from io import BytesIO
 from typing import (
@@ -2850,25 +2849,17 @@ def svg2rlg(
     if isinstance(path, pathlib.Path):
         path = str(path)
 
-    # unzip .svgz file into .svg
-    unzipped_path: Optional[str] = None
     if isinstance(path, str) and os.path.splitext(path)[1].lower() == ".svgz":
-        with gzip.open(path, "rb") as f_in, open(path[:-1], "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
-        path = path[:-1]
-        unzipped_path = path
-
-    svg_root = load_svg_file(path, resolve_entities=resolve_entities)
+        with gzip.open(path, "rb") as source:
+            svg_root = load_svg_file(source, resolve_entities=resolve_entities)
+    else:
+        svg_root = load_svg_file(path, resolve_entities=resolve_entities)
     if svg_root is None:
         return None
 
     # convert to a RLG drawing
     svgRenderer = SvgRenderer(path, **kwargs)
     drawing = svgRenderer.render(svg_root)
-
-    # remove unzipped .svgz file (.svg)
-    if unzipped_path is not None:
-        os.remove(unzipped_path)
 
     return drawing
 

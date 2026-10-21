@@ -7,6 +7,7 @@ inside the test directory:
     $ uv run pytest -v -s test_basic.py
 """
 
+import gzip
 import io
 import os
 import pathlib
@@ -15,6 +16,8 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Callable
 
 import pytest
+from PIL import Image as PILImage
+from reportlab.graphics import renderPDF
 from reportlab.graphics.shapes import (
     _CLOSEPATH,
     _CURVETO,
@@ -110,6 +113,53 @@ class TestSvg2rlgInput:
                 assert drawing is not None
         finally:
             os.unlink(file_path)
+
+    @pytest.mark.parametrize("suffix", [".svgz", ".SVGZ"])
+    @pytest.mark.parametrize("path_type", [str, pathlib.Path])
+    def test_svgz_preserves_sibling_svg(self, tmp_path, suffix, path_type):
+        source = tmp_path / f"drawing{suffix}"
+        source.write_bytes(gzip.compress(self.test_content.encode()))
+        compressed = source.read_bytes()
+        sibling = source.with_suffix(suffix[:-1])
+        sibling.write_bytes(b"an independent SVG file")
+
+        drawing = svglib.svg2rlg(path_type(source))
+
+        assert drawing is not None
+        assert drawing.contents
+        assert sibling.exists()
+        assert sibling.read_bytes() == b"an independent SVG file"
+        assert source.read_bytes() == compressed
+
+    def test_svgz_invalid_xml_leaves_no_intermediate(self, tmp_path):
+        source = tmp_path / "invalid.svgz"
+        source.write_bytes(gzip.compress(b"not an XML document"))
+
+        assert svglib.svg2rlg(source) is None
+        assert list(tmp_path.iterdir()) == [source]
+
+    def test_svgz_resolves_relative_image(self, tmp_path, monkeypatch):
+        source_dir = tmp_path / "source"
+        source_dir.mkdir()
+        PILImage.new("RGB", (2, 2), (12, 34, 56)).save(source_dir / "pixel.png")
+        source = source_dir / "drawing.svgz"
+        source.write_bytes(
+            gzip.compress(
+                b'<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4">'
+                b'<image href="pixel.png" width="4" height="4"/></svg>'
+            )
+        )
+        monkeypatch.chdir(tmp_path)
+
+        drawing = svglib.svg2rlg(source)
+
+        assert drawing is not None
+        image = TestEmbedded().find_image_in_drawing(drawing)
+        assert image is not None
+        with PILImage.open(image.path) as pixels:
+            assert pixels.getpixel((0, 0)) == (12, 34, 56)
+        assert renderPDF.drawToString(drawing).startswith(b"%PDF-")
+        assert not source.with_suffix(".svg").exists()
 
 
 def test_malformed_viewbox_is_ignored():
