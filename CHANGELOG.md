@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.3.1 (2026-10-22)
+
+### Security
+
+- Rendering an SVG could be made to take exponential time and memory through
+  nested `<use>` elements, where each level references a group containing many
+  `<use>` elements of the previous level (CWE-400, GHSA-555j-qj3j-c8jv).
+  `renderUse()` now stops after `MAX_USE_EXPANSIONS` (10,000) expansions per
+  document, logs one error and skips the remaining `<use>` elements. The budget
+  is shared with the renderers of external SVG files, so referencing many
+  external files does not reset it.
+
 ## 2.3.0 (2026-10-05)
 
 ### Security
