@@ -30,6 +30,7 @@ import shlex
 from collections import defaultdict, namedtuple
 from io import BytesIO
 from typing import (
+    IO,
     Any,
     BinaryIO,
     Optional,
@@ -102,7 +103,7 @@ PX_TO_PT = 0.75
 
 # An SVG source accepted by the public API: a path, a path-like object, or an
 # already-open binary/text file object.
-SVGSource = Union[str, os.PathLike[str], BinaryIO, TextIO]
+SVGSource = Union[str, os.PathLike[str], BinaryIO, TextIO, IO[bytes], gzip.GzipFile]
 
 # A single gradient stop: (offset, ReportLab color). The color is untyped
 # because ReportLab ships no stubs.
@@ -2829,7 +2830,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
 
 def svg2rlg(
-    path: Union[str, os.PathLike[str], BinaryIO, TextIO],
+    path: SVGSource,
     resolve_entities: bool = False,
     **kwargs: Any,
 ) -> Optional[Drawing]:
