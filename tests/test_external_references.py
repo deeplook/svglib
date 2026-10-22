@@ -10,6 +10,8 @@ import logging
 import os
 import sys
 
+from reportlab.graphics.shapes import Rect
+
 import svglib as svglib_pkg
 from svglib import svglib
 
@@ -163,3 +165,49 @@ class TestUseExpansionLimit:
             svglib.svg2rlg(str(doc))
         limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
         assert len(limit_hits) == 1
+
+
+class TestUseCycles:
+    def test_cycle_across_files_is_skipped(self, tmp_path, caplog):
+        (tmp_path / "a.svg").write_text(
+            USE_BOMB.format(levels='<g id="x"><use xlink:href="b.svg#y"/></g>')
+        )
+        (tmp_path / "b.svg").write_text(
+            USE_BOMB.format(levels='<g id="y"><use xlink:href="a.svg#x"/></g>')
+        )
+        doc = tmp_path / "doc.svg"
+        doc.write_text(
+            DOC.replace(
+                '<image xlink:href="{href}" width="64" height="64"/>',
+                '<use xlink:href="a.svg#x"/>',
+            )
+        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            assert svglib.svg2rlg(str(doc)) is not None
+        assert any("Circular reference" in r.message for r in caplog.records)
+
+    def test_external_fragment_reusing_a_local_id_is_rendered(self, tmp_path):
+        """An id inside an external fragment that matches the local <use> target
+        is not a cycle."""
+        (tmp_path / "ext.svg").write_text(
+            USE_BOMB.format(
+                levels='<g id="root"><rect id="a" width="1" height="1"/>'
+                '<use xlink:href="#a"/></g>'
+            )
+        )
+        doc = tmp_path / "doc.svg"
+        doc.write_text(
+            DOC.replace(
+                '<image xlink:href="{href}" width="64" height="64"/>',
+                '<defs><g id="a"><use xlink:href="ext.svg#root"/></g></defs>'
+                '<use xlink:href="#a"/>',
+            )
+        )
+        drawing = svglib.svg2rlg(str(doc))
+
+        def count_rects(obj):
+            return isinstance(obj, Rect) + sum(
+                count_rects(c) for c in getattr(obj, "contents", [])
+            )
+
+        assert count_rects(drawing) == 2

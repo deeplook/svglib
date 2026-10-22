@@ -1374,6 +1374,48 @@ class TestUseNode:
         limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
         assert len(limit_hits) == 1
 
+    def test_use_self_reference(self, caplog):
+        """A <use> referencing itself is skipped instead of recursing."""
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" '
+                'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+                '<use id="a" xlink:href="#a"/></svg>'
+            )
+        assert drawing is not None
+        assert any("Circular <use>" in r.message for r in caplog.records)
+
+    def test_use_cycle(self, caplog):
+        """A cycle of <use> references (a -> b -> a) is skipped."""
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" '
+                'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+                '<defs><g id="a"><rect width="1" height="1"/>'
+                '<use xlink:href="#b"/></g>'
+                '<g id="b"><use xlink:href="#a"/></g></defs>'
+                '<use xlink:href="#a"/></svg>'
+            )
+        assert drawing is not None
+        assert any("Circular <use>" in r.message for r in caplog.records)
+        # Content before the cycle is still rendered.
+        use_group = drawing.contents[0].contents[0]
+        assert isinstance(use_group.contents[0].contents[0], Rect)
+
+    def test_use_cycle_through_nested_group(self, caplog):
+        """
+        Rendering a clone of #c rebinds #a to the cloned element; the cycle
+        must still be detected.
+        """
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+                '<defs><g id="c"><g id="a"><use href="#c"/><use href="#a"/></g></g>'
+                '</defs><use href="#a"/></svg>'
+            )
+        assert drawing is not None
+        assert any("Circular <use>" in r.message for r in caplog.records)
+
     def test_use_node_properties(self):
         """
         Properties on the use node apply to the referenced item.

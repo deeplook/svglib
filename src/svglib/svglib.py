@@ -897,6 +897,7 @@ class _UseExpansionCounter:
 
     def __init__(self) -> None:
         self.count = 0
+        self.origin_ids = itertools.count()
 
 
 class ExternalSVG:
@@ -1182,6 +1183,7 @@ class SvgRenderer:
         )
         self._external_svgs: dict[str, ExternalSVG] = {}
         self._use_expansions = _UseExpansionCounter()
+        self._use_targets_in_progress: set[str] = set()
         self.attrConverter.css_rules = CSSMatcher()
 
     def _set_root_font_size(self, root_node: Any) -> None:
@@ -2039,13 +2041,27 @@ class SvgRenderer:
         else:
             item = item[1]  # [0] is the renderer, not used here.
 
+        # Rendering a clone can rebind an id to the cloned element, so key on
+        # the element the target was originally cloned from.
+        target = item.etree_element.get("__use_origin")
+        if target is None:
+            target = str(next(self._use_expansions.origin_ids))
+            item.etree_element.set("__use_origin", target)
+        if target in self._use_targets_in_progress:
+            logger.error("Circular <use> reference detected, skipping.")
+            return group
+
         if clipping:
             group.add(clipping)
         if len(node.getchildren()) == 0:
             # Append a copy of the referenced node as the <use> child (if not
             # already done)
             node.append(copy.deepcopy(item))
-        self.renderNode(list(node.iter_children())[-1], parent=group)
+        self._use_targets_in_progress.add(target)
+        try:
+            self.renderNode(list(node.iter_children())[-1], parent=group)
+        finally:
+            self._use_targets_in_progress.discard(target)
         self.apply_node_attr_to_group(node, group)
         return group
         return None
