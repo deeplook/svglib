@@ -4,10 +4,13 @@
 
 ### Fixed
 
+- `svg2rlg()` no longer unpacks a `.svgz` file to a sibling `.svg` file, which
+  overwrote an existing file of that name and then deleted it. The compressed
+  data is now read as a stream (#518, thanks to @jdotc1).
 - A `<use>` that refers to itself, or to a cycle of elements that each `<use>`
   the next one, no longer crashes with `RecursionError`. The offending `<use>`
   is skipped and an error is logged, as already done for cyclic references
-  between external files (#519).
+  between external files (#519, thanks to @gistrec for the report).
 
 ## 2.3.1 (2026-10-22)
 
