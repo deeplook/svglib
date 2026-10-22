@@ -897,6 +897,7 @@ class _UseExpansionCounter:
 
     def __init__(self) -> None:
         self.count = 0
+        self.origin_ids = itertools.count()
 
 
 class ExternalSVG:
@@ -1182,7 +1183,7 @@ class SvgRenderer:
         )
         self._external_svgs: dict[str, ExternalSVG] = {}
         self._use_expansions = _UseExpansionCounter()
-        self._use_stack: list[Any] = []  # Targets being expanded, to detect cycles.
+        self._use_stack: list[str] = []  # Targets being expanded, to detect cycles.
         self.attrConverter.css_rules = CSSMatcher()
 
     def _set_root_font_size(self, root_node: Any) -> None:
@@ -2040,8 +2041,13 @@ class SvgRenderer:
         else:
             item = item[1]  # [0] is the renderer, not used here.
 
-        target = item.etree_element
-        if target is node.etree_element or any(target is e for e in self._use_stack):
+        # Rendering a clone can rebind an id to the cloned element, so key on
+        # the element the target was originally cloned from.
+        target = item.etree_element.get("__use_origin")
+        if target is None:
+            target = str(next(self._use_expansions.origin_ids))
+            item.etree_element.set("__use_origin", target)
+        if item.etree_element is node.etree_element or target in self._use_stack:
             logger.error("Circular <use> reference detected, skipping.")
             return group
 
