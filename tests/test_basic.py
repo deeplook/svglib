@@ -1465,6 +1465,20 @@ class TestUseNode:
             assert drawing is not None, name
             assert any("Circular <use>" in r.message for r in caplog.records), name
 
+    def test_use_cycle_through_nested_group_is_skipped(self, caplog):
+        """
+        Rendering a clone of #c rebinds #a to the cloned element; the cycle
+        must still be detected.
+        """
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+                '<defs><g id="c"><g id="a"><use href="#c"/><use href="#a"/></g></g>'
+                '</defs><use href="#a"/></svg>'
+            )
+        assert drawing is not None
+        assert any("Circular <use>" in r.message for r in caplog.records)
+
     def test_use_repeated_reference_is_not_a_cycle(self, caplog):
         """
         Reusing the same definition many times, also nested, is legitimate

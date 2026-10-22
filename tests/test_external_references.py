@@ -199,3 +199,24 @@ class TestUseCycles:
             drawing = svglib.svg2rlg(str(tmp_path / "a.svg"))
         assert drawing is not None
         assert any("Circular" in r.message for r in caplog.records)
+
+    def test_external_fragment_reusing_a_local_id_is_rendered(self, tmp_path, caplog):
+        """An id inside an external fragment that matches the local <use> target
+        is not a cycle."""
+        header = (
+            '<?xml version="1.0"?>\n'
+            '<svg xmlns="http://www.w3.org/2000/svg" '
+            'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">\n'
+        )
+        (tmp_path / "ext.svg").write_text(
+            header + '<defs><g id="root"><rect id="a" width="1" height="1"/>'
+            '<use xlink:href="#a"/></g></defs></svg>'
+        )
+        (tmp_path / "doc.svg").write_text(
+            header + '<defs><g id="a"><use xlink:href="ext.svg#root"/></g></defs>'
+            '<use xlink:href="#a"/></svg>'
+        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = svglib.svg2rlg(str(tmp_path / "doc.svg"))
+        assert drawing is not None
+        assert not caplog.records
