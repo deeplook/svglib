@@ -8,10 +8,10 @@ inside the test directory:
 """
 
 import io
+import logging
 import os
 import pathlib
 import textwrap
-import time
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable
 
@@ -1354,7 +1354,7 @@ class TestUseNode:
         assert isinstance(drawing.contents[0].contents[0], Group)
         assert isinstance(drawing.contents[0].contents[1], Rect)
 
-    def test_use_nested_expansion_is_bounded(self):
+    def test_use_nested_expansion_is_bounded(self, caplog):
         """
         Nested <use> elements referencing groups of <use> elements multiply
         and must not expand without limit.
@@ -1364,14 +1364,15 @@ class TestUseNode:
             levels.append(
                 f'<g id="l{i}">' + f'<use xlink:href="#l{i - 1}"/>' * 10 + "</g>"
             )
-        start = time.time()
-        drawing = drawing_from_svg(
-            '<svg xmlns="http://www.w3.org/2000/svg" '
-            'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
-            f'<defs>{"".join(levels)}</defs><use xlink:href="#l5"/></svg>'
-        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" '
+                'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+                f'<defs>{"".join(levels)}</defs><use xlink:href="#l5"/></svg>'
+            )
         assert drawing is not None
-        assert time.time() - start < 10
+        limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
+        assert len(limit_hits) == 1
 
     def test_use_node_properties(self):
         """
