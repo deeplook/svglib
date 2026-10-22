@@ -1424,6 +1424,63 @@ class TestUseNode:
         limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
         assert len(limit_hits) == 1
 
+    def test_use_self_reference_is_skipped(self, caplog):
+        """
+        A <use> pointing at itself must be skipped, not recurse forever.
+        """
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" '
+                'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+                '<use id="a" xlink:href="#a"/></svg>'
+            )
+        assert drawing is not None
+        assert any("Circular <use>" in r.message for r in caplog.records)
+
+    def test_use_cycle_is_skipped(self, caplog):
+        """
+        Cycles of two and three elements, each pointing at the next through
+        a <use>, must be skipped, not recurse forever.
+        """
+        cycles = {
+            "two": (
+                '<g id="a"><use xlink:href="#b"/></g>'
+                '<g id="b"><use xlink:href="#a"/></g>'
+            ),
+            "three": (
+                '<g id="a"><use xlink:href="#b"/></g>'
+                '<g id="b"><use xlink:href="#c"/></g>'
+                '<g id="c"><use xlink:href="#a"/></g>'
+            ),
+        }
+        for name, defs in cycles.items():
+            caplog.clear()
+            with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+                drawing = drawing_from_svg(
+                    '<svg xmlns="http://www.w3.org/2000/svg" '
+                    'xmlns:xlink="http://www.w3.org/1999/xlink" '
+                    f'width="10" height="10"><defs>{defs}</defs>'
+                    '<use xlink:href="#a"/></svg>'
+                )
+            assert drawing is not None, name
+            assert any("Circular <use>" in r.message for r in caplog.records), name
+
+    def test_use_repeated_reference_is_not_a_cycle(self, caplog):
+        """
+        Reusing the same definition many times, also nested, is legitimate
+        and must not be reported as a cycle.
+        """
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = drawing_from_svg(
+                '<svg xmlns="http://www.w3.org/2000/svg" '
+                'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+                '<defs><rect id="r" width="1" height="1"/>'
+                '<g id="g"><use xlink:href="#r"/><use xlink:href="#r"/></g></defs>'
+                '<use xlink:href="#g"/><use xlink:href="#g"/></svg>'
+            )
+        assert drawing is not None
+        assert not caplog.records
+
     def test_use_node_properties(self):
         """
         Properties on the use node apply to the referenced item.

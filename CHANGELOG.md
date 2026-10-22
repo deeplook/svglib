@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- A `<use>` that refers to itself, or to a cycle of elements that each `<use>`
+  the next one, no longer crashes with `RecursionError`. The offending `<use>`
+  is skipped and an error is logged, as already done for cyclic references
+  between external files (#519).
+
 ## 2.3.1 (2026-10-22)
 
 ### Security

@@ -1182,6 +1182,7 @@ class SvgRenderer:
         )
         self._external_svgs: dict[str, ExternalSVG] = {}
         self._use_expansions = _UseExpansionCounter()
+        self._use_stack: list[Any] = []  # Targets being expanded, to detect cycles.
         self.attrConverter.css_rules = CSSMatcher()
 
     def _set_root_font_size(self, root_node: Any) -> None:
@@ -2039,14 +2040,23 @@ class SvgRenderer:
         else:
             item = item[1]  # [0] is the renderer, not used here.
 
-        if clipping:
-            group.add(clipping)
-        if len(node.getchildren()) == 0:
-            # Append a copy of the referenced node as the <use> child (if not
-            # already done)
-            node.append(copy.deepcopy(item))
-        self.renderNode(list(node.iter_children())[-1], parent=group)
-        self.apply_node_attr_to_group(node, group)
+        target = item.etree_element
+        if target is node.etree_element or any(target is e for e in self._use_stack):
+            logger.error("Circular <use> reference detected, skipping.")
+            return group
+
+        self._use_stack.append(target)
+        try:
+            if clipping:
+                group.add(clipping)
+            if len(node.getchildren()) == 0:
+                # Append a copy of the referenced node as the <use> child (if not
+                # already done)
+                node.append(copy.deepcopy(item))
+            self.renderNode(list(node.iter_children())[-1], parent=group)
+            self.apply_node_attr_to_group(node, group)
+        finally:
+            self._use_stack.pop()
         return group
         return None
 

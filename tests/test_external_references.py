@@ -163,3 +163,39 @@ class TestUseExpansionLimit:
             svglib.svg2rlg(str(doc))
         limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
         assert len(limit_hits) == 1
+
+
+class TestUseCycles:
+    def test_fragment_referencing_itself_through_its_file(self, tmp_path, caplog):
+        (tmp_path / "self.svg").write_text(
+            """<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="10" height="10">
+  <defs><g id="x"><use xlink:href="self.svg#x"/></g></defs>
+  <use xlink:href="#x"/>
+</svg>
+"""
+        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = svglib.svg2rlg(str(tmp_path / "self.svg"))
+        assert drawing is not None
+        assert any("Circular" in r.message for r in caplog.records)
+
+    def test_cycle_across_two_files(self, tmp_path, caplog):
+        header = (
+            '<?xml version="1.0"?>\n'
+            '<svg xmlns="http://www.w3.org/2000/svg" '
+            'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">\n'
+        )
+        (tmp_path / "a.svg").write_text(
+            header
+            + '<defs><g id="y"><use xlink:href="b.svg#x"/></g></defs>'
+            + '<use xlink:href="b.svg#x"/></svg>'
+        )
+        (tmp_path / "b.svg").write_text(
+            header + '<defs><g id="x"><use xlink:href="a.svg#y"/></g></defs></svg>'
+        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            drawing = svglib.svg2rlg(str(tmp_path / "a.svg"))
+        assert drawing is not None
+        assert any("Circular" in r.message for r in caplog.records)
