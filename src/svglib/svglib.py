@@ -208,6 +208,9 @@ INKSCAPE_NS = "http://www.inkscape.org/namespaces/inkscape"
 # A sentinel to identify a situation where a node reference a fragment not yet defined.
 DELAYED = object()
 
+# Max number of <use> expansions per document, external SVGs included.
+MAX_USE_EXPANSIONS = 10_000
+
 logger = logging.getLogger(__name__)
 
 Box = namedtuple("Box", ["x", "y", "width", "height"])
@@ -889,6 +892,13 @@ class CircularRefError(Exception):
     pass
 
 
+class _UseExpansionCounter:
+    """Counts <use> expansions of a document and of the external SVGs it pulls in."""
+
+    def __init__(self) -> None:
+        self.count = 0
+
+
 class ExternalSVG:
     """A class to handle external SVG files referenced via xlink:href."""
 
@@ -904,6 +914,7 @@ class ExternalSVG:
             parent_svgs=renderer._parent_chain + [str(renderer.source_path)],
             external_reference_root=renderer.external_reference_root,
         )
+        self.renderer._use_expansions = renderer._use_expansions
         self.rendered = False
 
     def get_fragment(self, fragment: str) -> Any:
@@ -1170,6 +1181,7 @@ class SvgRenderer:
             defaultdict(list)
         )
         self._external_svgs: dict[str, ExternalSVG] = {}
+        self._use_expansions = _UseExpansionCounter()
         self.attrConverter.css_rules = CSSMatcher()
 
     def _set_root_font_size(self, root_node: Any) -> None:
@@ -2002,6 +2014,15 @@ class SvgRenderer:
         """
         if group is None:
             group = Group()
+
+        self._use_expansions.count += 1
+        if self._use_expansions.count > MAX_USE_EXPANSIONS:
+            if self._use_expansions.count == MAX_USE_EXPANSIONS + 1:
+                logger.error(
+                    "Too many <use> expansions (limit is %d), skipping the rest",
+                    MAX_USE_EXPANSIONS,
+                )
+            return group
 
         try:
             item = self.xlink_href_target(node, group=group)

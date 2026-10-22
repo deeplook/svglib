@@ -11,6 +11,7 @@ import io
 import os
 import pathlib
 import textwrap
+import time
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable
 
@@ -1352,6 +1353,25 @@ class TestUseNode:
         assert len(drawing.contents[0].contents) == 2
         assert isinstance(drawing.contents[0].contents[0], Group)
         assert isinstance(drawing.contents[0].contents[1], Rect)
+
+    def test_use_nested_expansion_is_bounded(self):
+        """
+        Nested <use> elements referencing groups of <use> elements multiply
+        and must not expand without limit.
+        """
+        levels = ['<rect id="l0" width="1" height="1"/>']
+        for i in range(1, 6):
+            levels.append(
+                f'<g id="l{i}">' + f'<use xlink:href="#l{i - 1}"/>' * 10 + "</g>"
+            )
+        start = time.time()
+        drawing = drawing_from_svg(
+            '<svg xmlns="http://www.w3.org/2000/svg" '
+            'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+            f'<defs>{"".join(levels)}</defs><use xlink:href="#l5"/></svg>'
+        )
+        assert drawing is not None
+        assert time.time() - start < 10
 
     def test_use_node_properties(self):
         """

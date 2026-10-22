@@ -130,3 +130,36 @@ class TestCommandLineContainment:
         with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
             run_cli(tmp_path, doc, "--external-root", str(tmp_path))
         assert not refused(caplog)
+
+
+USE_BOMB = """<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="10" height="10">
+  <defs>{levels}</defs>
+</svg>
+"""
+
+
+class TestUseExpansionLimit:
+    def test_budget_is_shared_with_external_svgs(self, tmp_path, caplog):
+        levels = ['<rect id="l0" width="1" height="1"/>']
+        for i in range(1, 6):
+            levels.append(
+                f'<g id="l{i}">' + f'<use xlink:href="#l{i - 1}"/>' * 10 + "</g>"
+            )
+        uses = []
+        for n in range(3):
+            (tmp_path / f"ext{n}.svg").write_text(
+                USE_BOMB.format(levels="".join(levels))
+            )
+            uses.append(f'<use xlink:href="ext{n}.svg#l5"/>')
+        doc = tmp_path / "doc.svg"
+        doc.write_text(
+            DOC.replace(
+                '<image xlink:href="{href}" width="64" height="64"/>', "".join(uses)
+            )
+        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            svglib.svg2rlg(str(doc))
+        limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
+        assert len(limit_hits) == 1
