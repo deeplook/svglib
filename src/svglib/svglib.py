@@ -322,6 +322,61 @@ class ClippingPath(Path):
         return props
 
 
+_FONT_SIZE_RE = re.compile(
+    r"^(?:\d*\.?\d+(?:px|pt|pc|cm|mm|in|em|ex|rem|%)"
+    r"|xx-small|x-small|small|medium|large|x-large|xx-large|larger|smaller)"
+    r"(?:/.*)?$"
+)
+_FONT_WEIGHTS = {"bold", "bolder", "lighter"} | {str(w) for w in range(100, 1000, 100)}
+
+
+def _parse_font_shorthand(value: str) -> dict[str, str]:
+    """Expand a CSS ``font`` shorthand into the font properties svglib reads.
+
+    ``font: italic bold 12px/1.5 "Open Sans", serif`` gives ``font-style``,
+    ``font-weight``, ``font-size`` and ``font-family``. Like CSS, the shorthand
+    resets the style and weight it does not mention to ``normal``. Values
+    without both a size and a family are invalid and give an empty dict.
+    """
+    tokens = value.split()
+    for index, token in enumerate(tokens):
+        if not _FONT_SIZE_RE.match(token):
+            continue
+        rest = tokens[index + 1 :]
+        if "/" not in token and rest and rest[0].startswith("/"):
+            # Line height as separate tokens: "12px / 1.5" or "12px /1.5".
+            rest = rest[2:] if rest[0] == "/" else rest[1:]
+        family = " ".join(rest)
+        if not family:
+            return {}
+        style = weight = "normal"
+        for prefix in tokens[:index]:
+            if prefix in ("italic", "oblique"):
+                style = prefix
+            elif prefix in _FONT_WEIGHTS:
+                weight = prefix
+        return {
+            "font-style": style,
+            "font-weight": weight,
+            "font-size": token.split("/")[0],
+            "font-family": family,
+        }
+    return {}
+
+
+def _expand_font_shorthand(declarations: dict[str, str]) -> dict[str, str]:
+    """Replace a ``font`` declaration with its longhand properties, keeping order."""
+    if "font" not in declarations:
+        return declarations
+    expanded: dict[str, str] = {}
+    for key, val in declarations.items():
+        if key == "font":
+            expanded.update(_parse_font_shorthand(val))
+        else:
+            expanded[key] = val
+    return expanded
+
+
 class CSSMatcher(cssselect2.Matcher):
     """A CSS matcher to handle styles defined in SVG <style> elements."""
 
@@ -340,11 +395,13 @@ class CSSMatcher(cssselect2.Matcher):
                 continue
             selectors = cssselect2.compile_selector_list(rule.prelude)
             selector_string = tinycss2.serialize(rule.prelude)
-            content_dict = {
-                attr.split(":")[0].strip(): attr.split(":")[1].strip()
-                for attr in tinycss2.serialize(rule.content).split(";")
-                if ":" in attr
-            }
+            content_dict = _expand_font_shorthand(
+                {
+                    attr.split(":")[0].strip(): attr.split(":")[1].strip()
+                    for attr in tinycss2.serialize(rule.content).split(";")
+                    if ":" in attr
+                }
+            )
             payload = (selector_string, content_dict)
             for selector in selectors:
                 self.add_selector(selector, payload)
@@ -390,7 +447,7 @@ class AttributeConverter:
             k, v = (s.strip() for s in (k, v))
             new_attrs[k] = v
 
-        return new_attrs
+        return _expand_font_shorthand(new_attrs)
 
     def findAttr(self, svgNode: Any, name: str) -> str:
         """Find an attribute value, searching the node and its ancestors.
