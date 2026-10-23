@@ -5,8 +5,8 @@
 ### Fixed
 
 - Accept explicit plus signs on arc rotation and endpoints, and tab, carriage
-  return and line feed separators in transform arguments, as allowed by SVG.
-
+  return and line feed separators in transform arguments, as allowed by SVG
+  (#524, thanks to @jdotc1).
 - `svg2rlg()` no longer unpacks a `.svgz` file to a sibling `.svg` file, which
   overwrote an existing file of that name and then deleted it. The compressed
   data is now read as a stream (#518, thanks to @jdotc1).
