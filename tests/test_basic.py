@@ -787,10 +787,38 @@ class TestAttrConverter:
 
         mapping = (
             ("fill: black; stroke: yellow", {"fill": "black", "stroke": "yellow"}),
+            # Colons and semicolons inside a value don't split it.
+            (
+                "fill:red;cursor:url(http://example.com/c.cur), auto",
+                {"fill": "red", "cursor": "url(http://example.com/c.cur), auto"},
+            ),
+            (
+                "mask:url(data:image/png;base64,AAAA);fill:blue",
+                {"mask": "url(data:image/png;base64,AAAA)", "fill": "blue"},
+            ),
+            # A malformed declaration is skipped instead of raising.
+            ("fill; stroke: red", {"stroke": "red"}),
         )
         ac = svglib.Svg2RlgAttributeConverter()
         failed = _testit(ac.parseMultiAttributes, mapping)
         assert len(failed) == 0
+
+    def test_colon_in_style_value(self):
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <style>
+                .a { cursor: url(http://example.com/c.cur), auto; fill: blue }
+              </style>
+              <rect class="a" width="10" height="10"/>
+              <rect width="10" height="10"
+                    style="fill: red; cursor: url(http://example.com/c.cur), auto"/>
+            </svg>
+        """
+        )
+        rects = drawing.contents[0].contents
+        assert rects[0].fillColor == colors.blue
+        assert rects[1].fillColor == colors.red
 
     def test_findAttr(self):
         """
