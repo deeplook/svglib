@@ -864,6 +864,49 @@ class TestAttrConverter:
         assert poly.fillOpacity == 1
         assert poly.strokeOpacity == 160 / 255
 
+    def test_opacity_applies_to_fill_and_stroke(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = minimal_svg_node(
+            '<polygon fill="red" stroke="blue" fill-opacity="0.5" opacity="0.4"/>'
+        )
+        poly = Polygon()
+        converter.applyStyleOnShape(poly, node)
+        assert poly.fillOpacity == pytest.approx(0.2)
+        assert poly.fillColor.alpha == pytest.approx(0.2)
+        assert poly.strokeOpacity == pytest.approx(0.4)
+
+    def test_opacity_in_style_attribute(self):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = minimal_svg_node('<polygon fill="red" style="opacity: 50%"/>')
+        poly = Polygon()
+        converter.applyStyleOnShape(poly, node)
+        assert poly.fillOpacity == pytest.approx(0.5)
+
+    def test_opacity_composes_with_ancestors(self):
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <g opacity="0.5">
+                    <g>
+                        <rect width="10" height="10" fill="red" opacity="0.5"/>
+                    </g>
+                    <rect width="10" height="10" fill="blue"/>
+                </g>
+                <rect width="10" height="10" fill="green"/>
+            </svg>
+        """
+        )
+        rects = []
+
+        def collect(shape):
+            if isinstance(shape, Rect):
+                rects.append(shape)
+            for child in getattr(shape, "contents", []):
+                collect(child)
+
+        collect(drawing)
+        assert [r.fillColor.alpha for r in rects] == [0.25, 0.5, 1]
+
     def test_fillrule(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node('<polygon fill-rule="evenodd"/>')
