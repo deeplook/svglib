@@ -322,6 +322,22 @@ class ClippingPath(Path):
         return props
 
 
+def _parse_declarations(content: Any) -> dict[str, str]:
+    """Parse CSS declarations (a style attribute or a rule body) into a dict.
+
+    Uses tinycss2 rather than splitting on ":" and ";", so values that contain
+    those characters, such as ``url(http://...)`` or a data URL, stay intact.
+    Malformed declarations are skipped.
+    """
+    return {
+        decl.name: tinycss2.serialize(decl.value).strip()
+        for decl in tinycss2.parse_declaration_list(
+            content, skip_comments=True, skip_whitespace=True
+        )
+        if decl.type == "declaration"
+    }
+
+
 class CSSMatcher(cssselect2.Matcher):
     """A CSS matcher to handle styles defined in SVG <style> elements."""
 
@@ -340,11 +356,7 @@ class CSSMatcher(cssselect2.Matcher):
                 continue
             selectors = cssselect2.compile_selector_list(rule.prelude)
             selector_string = tinycss2.serialize(rule.prelude)
-            content_dict = {
-                attr.split(":")[0].strip(): attr.split(":")[1].strip()
-                for attr in tinycss2.serialize(rule.content).split(";")
-                if ":" in attr
-            }
+            content_dict = _parse_declarations(rule.content)
             payload = (selector_string, content_dict)
             for selector in selectors:
                 self.add_selector(selector, payload)
@@ -380,17 +392,7 @@ class AttributeConverter:
         Returns:
             A dictionary of attribute key-value pairs.
         """
-        attrs = line.split(";")
-        attrs = [a.strip() for a in attrs]
-        attrs = [a for a in attrs if len(a) > 0]
-
-        new_attrs = {}
-        for a in attrs:
-            k, v = a.split(":")
-            k, v = (s.strip() for s in (k, v))
-            new_attrs[k] = v
-
-        return new_attrs
+        return _parse_declarations(line)
 
     def findAttr(self, svgNode: Any, name: str) -> str:
         """Find an attribute value, searching the node and its ancestors.
