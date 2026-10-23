@@ -791,10 +791,26 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         """Convert an SVG stroke-linecap string to a ReportLab line cap."""
         return {"butt": 0, "round": 1, "square": 2}[svgAttr]
 
-    def convertDashArray(self, svgAttr: str) -> list[Union[float, list[float]]]:
-        """Convert an SVG stroke-dasharray string to a list of lengths."""
-        strokeDashArray = self.convertLengthList(svgAttr)
-        return strokeDashArray
+    def convertDashArray(self, svgAttr: str) -> list[float]:
+        """Convert an SVG stroke-dasharray string to a list of dash lengths.
+
+        Returns an empty list (a solid line) for ``none`` and for the values
+        the SVG spec calls invalid: an empty list, any negative length, or a
+        list that sums to zero. An odd number of values is repeated once to
+        make it even, as the spec requires.
+        """
+        if not svgAttr or svgAttr.strip() in ("none", ""):
+            return []
+        values = self.convertLengthList(svgAttr)
+        # convertLengthList can nest a list when a value itself held a list.
+        flat: list[float] = []
+        for v in values:
+            flat.extend(v if isinstance(v, list) else [v])
+        if any(v < 0 for v in flat) or sum(flat) == 0:
+            return []
+        if len(flat) % 2 == 1:
+            flat = flat * 2
+        return flat
 
     def convertDashOffset(self, svgAttr: str) -> Union[float, list[float]]:
         """Convert an SVG stroke-dashoffset string to a length."""

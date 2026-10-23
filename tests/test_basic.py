@@ -871,6 +871,33 @@ class TestAttrConverter:
         converter.applyStyleOnShape(poly, node)
         assert poly.fillMode == FILL_EVEN_ODD
 
+    def test_dasharray(self):
+        converter = svglib.Svg2RlgAttributeConverter()
+        # normal
+        assert converter.convertDashArray("5,3") == [5, 3]
+        assert converter.convertDashArray("5 3") == [5, 3]
+        # none / empty is a solid line, and must not raise
+        assert converter.convertDashArray("none") == []
+        assert converter.convertDashArray("") == []
+        # per the spec: a negative value makes the whole list invalid,
+        # and a list summing to zero is a solid line
+        assert converter.convertDashArray("5,-3") == []
+        assert converter.convertDashArray("0") == []
+        assert converter.convertDashArray("0,0") == []
+        # an odd number of values is repeated once
+        assert converter.convertDashArray("1,2,3") == [1, 2, 3, 1, 2, 3]
+
+    def test_dasharray_none_applies_cleanly(self):
+        # stroke-dasharray="none" used to raise ValueError (swallowed), leaving
+        # the shape's default; it should simply set no dashing.
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = minimal_svg_node(
+            '<path d="M0,0 L9,0" stroke="black" stroke-dasharray="none"/>'
+        )
+        path = Path()
+        converter.applyStyleOnShape(path, node)
+        assert path.strokeDashArray == []
+
     def test_stroke(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
