@@ -2287,11 +2287,16 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 )
                 dx0 += dx[0] if isinstance(dx, list) else dx
                 dy0 += dy[0] if isinstance(dy, list) else dy
-            baseLineShift_raw = subnode.attrib.get("baseline-shift", "0")
+            # findAttr also reads style attributes and <style> rules, and text in a
+            # nested <tspan> keeps the shift of the <tspan> around it.
+            baseLineShift_raw = attrConv.findAttr(subnode, "baseline-shift") or "0"
             if baseLineShift_raw in ("sub", "super", "baseline"):
                 baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[
                     baseLineShift_raw
                 ]
+            elif baseLineShift_raw.endswith("%"):
+                # A percentage of the line height, which svglib takes as the font size.
+                baseLineShift = float(baseLineShift_raw[:-1]) / 100 * fs
             else:
                 baseLineShift = cast(
                     float, attrConv.convertLength(baseLineShift_raw, em_base=fs)

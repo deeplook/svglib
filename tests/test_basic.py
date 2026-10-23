@@ -1189,6 +1189,31 @@ class TestTextNode:
         assert main_group.contents[0].contents[0].text == "TITLE 1"
         assert main_group.contents[1].contents[0].text == "  with   spaces "
 
+    def test_baseline_shift_sources_and_units(self):
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">
+              <style>.up { baseline-shift: super }</style>
+              <text x="10" y="50" font-size="20">a<tspan
+                    style="baseline-shift: sub">b</tspan><tspan
+                    baseline-shift="50%">c</tspan><tspan
+                    class="up">d<tspan>e</tspan>f</tspan>g</text>
+            </svg>
+        """
+        )
+        strings = drawing.contents[0].contents[0].contents
+        # The text group is flipped, so a String's y is minus its baseline.
+        baselines = {s.text: -s.y for s in strings}
+        assert baselines == {
+            "a": 50,
+            "b": 60,  # sub: half the font size down
+            "c": 40,  # 50% of the font size up
+            "d": 40,  # super from a <style> rule
+            "e": 40,  # nested in the shifted tspan
+            "f": 40,  # tail text inside the shifted tspan
+            "g": 50,
+        }
+
     def test_tspan_position(self):
         """
         The x/y positions of a tspan are either relative to the current text
