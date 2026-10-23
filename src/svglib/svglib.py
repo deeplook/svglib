@@ -490,7 +490,7 @@ class AttributeConverter:
             subline = line[bi + 1 : bj]
             subline = subline.strip()
             subline = subline.replace(",", " ")
-            subline = re.sub("[ ]+", ",", subline)
+            subline = re.sub(r"[ \t\r\n]+", ",", subline)
             try:
                 if "," in subline:
                     indices.append(tuple(float(num) for num in subline.split(",")))

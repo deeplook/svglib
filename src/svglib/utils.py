@@ -88,7 +88,7 @@ def split_arc_values(op: str, value: str) -> list[Union[str, list[float]]]:
         The large-arc-flag and sweep-flag are converted to float but should
         be treated as boolean values (0 or 1).
     """
-    float_re = r"(-?\d*\.?\d*(?:[eE][+-]?\d+)?)"
+    float_re = r"([+-]?\d*\.?\d*(?:[eE][+-]?\d+)?)"
     flag_re = r"([1|0])"
     # 3 numb, 2 flags, 1 coord pair
     a_seq_re = (
