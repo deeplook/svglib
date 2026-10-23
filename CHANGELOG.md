@@ -21,6 +21,17 @@
   `font-size` and `font-family`, in `style` attributes and in `<style>` rules.
   Invalid shorthands are ignored (#343, #526, thanks to @Pharex38).
 
+### Removed
+
+- Dropped support for **Python 3.9** (and PyPy 3.9). pip 26.2.2, the new
+  minimum safe version, requires Python 3.10 or newer. `requires-python` is now
+  `>=3.10`, the 3.9 classifier is gone, and CI no longer tests 3.9 or PyPy 3.9.
+
+### Tooling and housekeeping
+
+- CI now fails if a locked or installed dependency, or the uv binary, is below
+  its minimum safe version (`scripts/check_min_versions.py`).
+
 ### Fixed
 
 - A `style` attribute or `<style>` rule whose value contains a colon or a
