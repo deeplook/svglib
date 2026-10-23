@@ -178,6 +178,17 @@ def test_malformed_viewbox_is_ignored():
 class TestPaths:
     """Testing path-related code."""
 
+    @pytest.mark.parametrize("command", ["A", "a"])
+    @pytest.mark.parametrize(
+        "parameters",
+        ["10 10 +0 0 1 20 0", "10 10 0 0 1 +20 0", "10 10 0 0 1 20 +0"],
+    )
+    def test_arc_explicit_positive_sign(self, command, parameters):
+        path = f"M0 0 {command} {parameters}"
+        assert utils.normalise_svg_path(path) == utils.normalise_svg_path(
+            path.replace("+", "")
+        )
+
     def test_path_normalisation(self):
         "Test path normalisation."
 
@@ -695,6 +706,23 @@ class TestLengthAttrConverter:
 
 class TestTransformAttrConverter:
     "Testing transform attribute conversion."
+
+    @pytest.mark.parametrize("separator", ["\t", "\r", "\n"])
+    def test_svg_whitespace(self, separator):
+        ac = svglib.Svg2RlgAttributeConverter()
+        assert ac.convertTransform(f"translate(10{separator}20)") == (
+            ac.convertTransform("translate(10 20)")
+        )
+
+    @pytest.mark.parametrize("separator", ["&#9;", "&#13;", "&#10;"])
+    def test_whitespace_character_reference(self, separator):
+        template = (
+            '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
+            '<rect width="10" height="10" transform="translate(10{}20)"/></svg>'
+        )
+        actual = drawing_from_svg(template.format(separator))
+        expected = drawing_from_svg(template.format(" "))
+        assert actual.getBounds() == pytest.approx(expected.getBounds())
 
     def test_0(self):
         "Test transform attribute conversion."
