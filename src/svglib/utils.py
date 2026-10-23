@@ -60,6 +60,15 @@ def split_floats(op: str, min_num: int, value: str) -> list[Union[str, list[floa
     return res
 
 
+_ARC_NUMBER = r"[\s,]*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+_ARC_FLAG = r"[\s,]*([01])"
+# rx, ry, x-axis-rotation, large-arc-flag, sweep-flag, x, y
+_ARC_ARGUMENTS = tuple(
+    re.compile(pattern)
+    for pattern in [_ARC_NUMBER] * 3 + [_ARC_FLAG] * 2 + [_ARC_NUMBER] * 2
+)
+
+
 def split_arc_values(op: str, value: str) -> list[Union[str, list[float]]]:
     """Parse SVG elliptical arc parameters into structured format.
 
@@ -88,18 +97,21 @@ def split_arc_values(op: str, value: str) -> list[Union[str, list[float]]]:
         The large-arc-flag and sweep-flag are converted to float but should
         be treated as boolean values (0 or 1).
     """
-    float_re = r"([+-]?\d*\.?\d*(?:[eE][+-]?\d+)?)"
-    flag_re = r"([1|0])"
-    # 3 numb, 2 flags, 1 coord pair
-    a_seq_re = (
-        r"[\s,]*".join(
-            [float_re, float_re, float_re, flag_re, flag_re, float_re, float_re]
-        )
-        + r"[\s,]*"
-    )
+    # Parsed one token at a time instead of with one big regex, so that malformed
+    # input cannot make the matching backtrack (GHSA-249c-7rgc-f52h). Parsing
+    # stops at the first argument that does not fit.
+    text = value.strip()
+    pos = 0
     res: list[Union[str, list[float]]] = []
-    for seq in re.finditer(a_seq_re, value.strip()):
-        res.extend([op, cast(list[float], list(float(num) for num in seq.groups()))])
+    while pos < len(text):
+        values: list[float] = []
+        for argument in _ARC_ARGUMENTS:
+            match = argument.match(text, pos)
+            if match is None:
+                return res
+            values.append(float(match.group(1)))
+            pos = match.end()
+        res.extend([op, values])
     return res
 
 

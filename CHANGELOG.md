@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Security
+
+- A long run of digits in the arguments of a path arc command (`A` or `a`)
+  could make parsing take exponential time, so a tiny SVG could block a
+  process for minutes or longer (CWE-1333, CWE-400, GHSA-249c-7rgc-f52h).
+  Arc arguments are now read one token at a time, without regex backtracking.
+  Parsing of a malformed arc stops at the first argument that does not fit.
+
 ### Fixed
 
 - Accept explicit plus signs on arc rotation and endpoints, and tab, carriage

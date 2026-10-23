@@ -189,6 +189,36 @@ class TestPaths:
             path.replace("+", "")
         )
 
+    def test_arc_flags_without_separators(self):
+        """Flags are single characters and may be directly followed by numbers."""
+        assert utils.split_arc_values("A", "10 10 0 0120 5") == [
+            "A",
+            [10.0, 10.0, 0.0, 0.0, 1.0, 20.0, 5.0],
+        ]
+
+    def test_arc_repeated_sequences(self):
+        assert utils.split_arc_values("a", "1 2 3 0 1 4 5, 6,7 8 1,0 9 10") == [
+            "a",
+            [1.0, 2.0, 3.0, 0.0, 1.0, 4.0, 5.0],
+            "a",
+            [6.0, 7.0, 8.0, 1.0, 0.0, 9.0, 10.0],
+        ]
+
+    @pytest.mark.parametrize("digits", [60, 5000])
+    def test_arc_with_long_digit_run_is_parsed_in_linear_time(self, digits):
+        """A long run of digits must not cause catastrophic backtracking
+        (GHSA-249c-7rgc-f52h). Malformed arcs are dropped, not an error."""
+        assert utils.split_arc_values("A", "9" * digits) == []
+        assert utils.normalise_svg_path("M0 0 A " + "9" * digits) == ["M", [0.0, 0.0]]
+
+    def test_arc_stops_at_first_malformed_argument(self):
+        assert utils.split_arc_values("A", "1 2 3 0 1 4 5 6 7") == [
+            "A",
+            [1.0, 2.0, 3.0, 0.0, 1.0, 4.0, 5.0],
+        ]
+        assert utils.split_arc_values("A", "1 2 3 2 1 4 5") == []
+        assert utils.split_arc_values("A", "1 2 3 | 1 4 5") == []
+
     def test_path_normalisation(self):
         "Test path normalisation."
 
