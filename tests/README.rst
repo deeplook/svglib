@@ -53,11 +53,11 @@ run the following (which installs ``pytest-runner`` during testing)::
     =============== 29 passed, 4 skipped in 38.95 seconds ================
 
 If you have ``tox`` installed (``pip install tox``) you can simply
-run the testsuite on Python 3.9 (assuming you have it installed) or on a
+run the testsuite on Python 3.10 (assuming you have it installed) or on a
 single version (this will not run with ``conda``, yet, though)::
 
     $ tox
-    $ tox -e py39
+    $ tox -e py310
 
 All will run the entire testsuite and produce result files in PDF
 format in the subdirectories ``tests/samples`` (here also in PNG),
