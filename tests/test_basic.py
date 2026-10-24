@@ -1232,6 +1232,42 @@ class TestTextNode:
         assert main_group.contents[0].contents[0].text == "TITLE 1"
         assert main_group.contents[1].contents[0].text == "  with   spaces "
 
+    def test_font_shorthand(self):
+        """The CSS `font` shorthand sets style, weight, size and family (#343)."""
+        drawing = drawing_from_svg(
+            """
+            <svg viewBox="0 0 240 40" xmlns="http://www.w3.org/2000/svg">
+              <style>
+                text  { font: italic 12px serif; }
+                tspan { font: bold 10px/1.2 sans-serif; fill: red; }
+              </style>
+              <text x="10" y="30">You are <tspan>not</tspan> a banana!</text>
+              <text style="font: bold 20px monospace; font-size: 8px">x</text>
+            </svg>
+        """
+        )
+        strings = drawing.contents[0].contents[0].contents
+        assert [(s.text, s.fontName, s.fontSize) for s in strings] == [
+            ("You are ", "Times-Italic", 12),
+            ("not", "Helvetica-Bold", 10),
+            (" a banana!", "Times-Italic", 12),
+        ]
+        assert strings[1].fillColor == colors.red
+        # A longhand after the shorthand still wins.
+        last = drawing.contents[0].contents[1].contents[0]
+        assert (last.fontName, last.fontSize) == ("Courier-Bold", 8)
+
+    def test_invalid_font_shorthand_is_ignored(self):
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <text style="font-size: 20px; font: bold">x</text>
+            </svg>
+        """
+        )
+        string = drawing.contents[0].contents[0].contents[0]
+        assert (string.fontName, string.fontSize) == ("Helvetica", 20)
+
     def test_tspan_position(self):
         """
         The x/y positions of a tspan are either relative to the current text
