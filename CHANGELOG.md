@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- The plain `opacity` property is now supported, as a presentation attribute,
+  in `style` attributes and in `<style>` rules, including percentages. Opacity
+  composes down the tree, so a shape at 0.5 inside a group at 0.5 is drawn at
+  0.25. It is applied per shape, so overlapping shapes inside a translucent
+  group show through each other, and images are not affected (#109, #525,
+  thanks to @Pharex38).
+- The CSS `font` shorthand is now expanded into `font-style`, `font-weight`,
+  `font-size` and `font-family`, in `style` attributes and in `<style>` rules.
+  Invalid shorthands are ignored (#343, #526, thanks to @Pharex38).
+
+### Fixed
+
+- `stroke-dasharray` values that SVG calls invalid (any negative length, or a
+  list that sums to zero) no longer produce an invalid PDF dash pattern and
+  raise `ValueError` while rendering; they give a solid line. `none` no longer
+  relies on a swallowed exception, and an odd number of values is repeated once
+  to make it even, as the specification requires (#529, thanks to @Pharex38).
+
 ## 2.3.2 (2026-10-23)
 
 ### Security
