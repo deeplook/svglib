@@ -16,6 +16,17 @@
 
 ### Fixed
 
+- A `style` attribute or `<style>` rule whose value contains a colon or a
+  semicolon, such as `cursor: url(http://example.com/c.cur), auto` or a data
+  URL, no longer makes `svg2rlg()` fail with `ValueError` or truncates the
+  value. Declarations are now parsed with `tinycss2`, malformed ones are
+  skipped, and `!important` and comments are no longer part of the value
+  (#527, thanks to @Pharex38).
+- `baseline-shift` on text is now also read from `style` attributes and
+  `<style>` rules, and a percentage is taken relative to the font size instead
+  of being used as a length in user units. A value on an enclosing `<g>` does
+  not affect the text, as the property is not inherited (#528, thanks to
+  @Pharex38).
 - `stroke-dasharray` values that SVG calls invalid (any negative length, or a
   list that sums to zero) no longer produce an invalid PDF dash pattern and
   raise `ValueError` while rendering; they give a solid line. `none` no longer
