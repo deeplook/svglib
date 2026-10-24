@@ -392,6 +392,21 @@ class AttributeConverter:
 
         return new_attrs
 
+    def _applyStyleRules(self, svgNode: Any) -> None:
+        """Copy CSS rules and the 'style' attribute onto the node's attributes."""
+        if not svgNode.attrib.get("__rules_applied", False):
+            # Apply global styles...
+            if self.css_rules is not None:
+                svgNode.apply_rules(self.css_rules)
+            # ...and locally defined
+            if svgNode.attrib.get("style"):
+                attrs = self.parseMultiAttributes(svgNode.attrib.get("style"))
+                for key, val in attrs.items():
+                    # lxml nodes cannot accept attributes starting with '-'
+                    if not key.startswith("-"):
+                        svgNode.attrib[key] = val
+                svgNode.attrib["__rules_applied"] = "1"
+
     def findAttr(self, svgNode: Any, name: str) -> str:
         """Find an attribute value, searching the node and its ancestors.
 
@@ -407,18 +422,7 @@ class AttributeConverter:
         Returns:
             The attribute value, or an empty string if not found.
         """
-        if not svgNode.attrib.get("__rules_applied", False):
-            # Apply global styles...
-            if self.css_rules is not None:
-                svgNode.apply_rules(self.css_rules)
-            # ...and locally defined
-            if svgNode.attrib.get("style"):
-                attrs = self.parseMultiAttributes(svgNode.attrib.get("style"))
-                for key, val in attrs.items():
-                    # lxml nodes cannot accept attributes starting with '-'
-                    if not key.startswith("-"):
-                        svgNode.attrib[key] = val
-                svgNode.attrib["__rules_applied"] = "1"
+        self._applyStyleRules(svgNode)
 
         attr_value: str = svgNode.attrib.get(name, "").strip()
 
@@ -726,9 +730,32 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             return [v * PX_TO_PT for v in result]
         return result * PX_TO_PT
 
+    def findOpacity(self, svgNode: Any) -> float:
+        """Return the combined 'opacity' of a node and all its ancestors.
+
+        'opacity' is not inherited like 'fill-opacity': each element's value
+        applies on top of its parent's, so a shape at 0.5 inside a group at 0.5
+        ends up at 0.25.
+        """
+        opacity = 1.0
+        while svgNode is not None:
+            self._applyStyleRules(svgNode)
+            value = svgNode.attrib.get("opacity", "").strip()
+            if value and value != "inherit":
+                try:
+                    opacity *= self.convertOpacity(value)
+                except ValueError:
+                    logger.debug("Ignoring invalid opacity: %s", value)
+            svgNode = svgNode.parent
+        return opacity
+
     def convertOpacity(self, svgAttr: str) -> float:
-        """Convert an opacity string to a float."""
-        return float(svgAttr)
+        """Convert an opacity string (number or percentage) to a float in [0, 1]."""
+        if isinstance(svgAttr, str) and svgAttr.endswith("%"):
+            value = float(svgAttr[:-1]) / 100
+        else:
+            value = float(svgAttr)
+        return min(max(value, 0.0), 1.0)
 
     def convertFillRule(self, svgAttr: str) -> Union[int, str]:
         """Convert an SVG fill-rule string to a ReportLab fill rule."""
@@ -2697,6 +2724,13 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                             exc_type,
                         )
                     )
+        if not only_explicit:
+            opacity = ac.findOpacity(node)
+            if opacity != 1:
+                if getattr(shape, "fillOpacity", None) is not None:
+                    shape.fillOpacity *= opacity
+                if getattr(shape, "strokeOpacity", None) is not None:
+                    shape.strokeOpacity *= opacity
         if getattr(shape, "fillOpacity", None) is not None and shape.fillColor:
             shape.fillColor.alpha = shape.fillOpacity
         if getattr(shape, "strokeWidth", None) == 0:
