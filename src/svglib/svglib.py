@@ -2387,11 +2387,27 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 )
                 dx0 += dx[0] if isinstance(dx, list) else dx
                 dy0 += dy[0] if isinstance(dy, list) else dy
-            baseLineShift_raw = subnode.attrib.get("baseline-shift", "0")
+            # baseline-shift is not inherited, so a value on an enclosing <g> must
+            # not move the text. Look no further than the <text> element: text in a
+            # nested <tspan> still sits on the shifted baseline of the one around it.
+            baseLineShift_raw = ""
+            shift_node = subnode
+            while shift_node is not None and not baseLineShift_raw:
+                attrConv._applyStyleRules(shift_node)
+                baseLineShift_raw = shift_node.attrib.get("baseline-shift", "").strip()
+                if baseLineShift_raw == "inherit":
+                    baseLineShift_raw = ""
+                if node_name(shift_node) == "text":
+                    break
+                shift_node = shift_node.parent
+            baseLineShift_raw = baseLineShift_raw or "0"
             if baseLineShift_raw in ("sub", "super", "baseline"):
                 baseLineShift = {"sub": -fs / 2, "super": fs / 2, "baseline": 0}[
                     baseLineShift_raw
                 ]
+            elif baseLineShift_raw.endswith("%"):
+                # A percentage of the line height, which svglib takes as the font size.
+                baseLineShift = float(baseLineShift_raw[:-1]) / 100 * fs
             else:
                 baseLineShift = cast(
                     float, attrConv.convertLength(baseLineShift_raw, em_base=fs)
