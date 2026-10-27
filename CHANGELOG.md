@@ -4,6 +4,13 @@
 
 ### Added
 
+- `<textPath>` is now supported: text follows the `<path>` named by its `href`
+  or `xlink:href`, with `startOffset` (a length or a percentage) and
+  `text-anchor`, and styled `<tspan>` children. ReportLab can't draw text along
+  a path, so each glyph is placed and rotated individually, at the point of the
+  path under its midpoint; glyphs beyond the end of the path are dropped. Only
+  paths of the same document can be followed, and `side`, `method`, `spacing`
+  and per-glyph `dx`/`dy`/`rotate` are not supported (discussion #298).
 - The plain `opacity` property is now supported, as a presentation attribute,
   in `style` attributes and in `<style>` rules, including percentages. Opacity
   composes down the tree, so a shape at 0.5 inside a group at 0.5 is drawn at
