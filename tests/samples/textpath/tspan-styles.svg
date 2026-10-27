@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="120" viewBox="0 0 200 120">
+  <!-- tspan children with their own style -->
+  <rect width="200" height="120" fill="white"/>
+  <path id="p" d="M10,90 Q100,10 190,90" fill="none" stroke="#bbb"/>
+  <text font-size="14" fill="#0033cc"><textPath xlink:href="#p">Plain <tspan fill="#cc2200" font-size="22">big red</tspan> <tspan fill="#009900">green</tspan></textPath></text>
+</svg>

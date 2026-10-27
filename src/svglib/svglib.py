@@ -93,9 +93,12 @@ from .fonts import (
     register_font as _fonts_register_font,
 )
 from .utils import (
+    PathSampler,
     bezier_arc_from_end_points,
     convert_quadratic_to_cubic_path,
+    flatten_path,
     normalise_svg_path,
+    place_glyphs_on_path,
 )
 
 # SVG user units are px; ReportLab works in points.  1 px = 0.75 pt (96 dpi / 72 dpi).
@@ -1277,6 +1280,8 @@ class SvgRenderer:
         self.shape_converter = Svg2RlgShapeConverter(path, self.attrConverter)
         self.handled_shapes = self.shape_converter.get_handled_shapes()
         self.definitions: dict[str, Any] = {}
+        # Shapes such as <textPath> refer to other nodes by their ID.
+        self.shape_converter.definitions = self.definitions
         self.gradient_defs: dict[str, _GradientDef] = {}
         self.waiting_use_nodes: dict[str, list[tuple[NodeTracker, Optional[Group]]]] = (
             defaultdict(list)
@@ -2183,6 +2188,7 @@ class SvgShapeConverter:
         self.attrConverter = attrConverter or Svg2RlgAttributeConverter()
         self.svg_source_file = path
         self.preserve_space = False
+        self.definitions: dict[str, Any] = {}
 
     @classmethod
     def get_handled_shapes(cls) -> list[str]:
@@ -2366,6 +2372,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         y: list[float]
         x, y = self.convert_length_attrs(node, "x", "y", em_base=fs)  # type: ignore
         for subnode, text, is_tail in iter_text_node(node, preserve_space):
+            if not is_tail and node_name(subnode) == "textPath":
+                gr.add(self.convertTextPath(subnode, node, preserve_space))
+            if _is_inside_text_path(subnode, node):
+                continue
             if not text:
                 continue
             has_x, has_y = False, False
@@ -2464,6 +2474,90 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         gr.scale(1, -1)
 
+        return gr
+
+    def convertTextPath(
+        self, path_node: Any, text_node: Any, preserve_space: bool
+    ) -> Group:
+        """Convert an SVG <textPath> element to a Group of single glyph Strings.
+
+        ReportLab can't draw text along a path, so every glyph becomes its own
+        String, moved to the point of the path under its midpoint and rotated to
+        the direction of the path there. Only <path> elements in the same document
+        can be followed. `side`, `method`, `spacing`, `lengthAdjust` and the
+        `dx`/`dy`/`rotate` attributes are not supported.
+        """
+        attrConv = self.attrConverter
+        gr = Group()
+        href = path_node.attrib.get(
+            "{http://www.w3.org/1999/xlink}href"
+        ) or path_node.attrib.get("href", "")
+        # Only paths of the same document are followed.
+        target = self.definitions.get(href[1:]) if href.startswith("#") else None
+        if target is None or node_name(target) != "path":
+            logger.warning("Ignoring <textPath> with unusable href %r.", href)
+            return gr
+        outline = self.convertPath(target)
+        if outline is None:
+            return gr
+        path = outline.contents[-1]
+        group = Group()
+        if target.attrib.get("transform"):
+            self.applyTransformOnGroup(target.attrib["transform"], group)
+        a, b, c, d, e, f = group.transform
+        coords = path.points
+        moved = [
+            v
+            for x, y in zip(coords[::2], coords[1::2])
+            for v in (a * x + c * y + e, b * x + d * y + f)
+        ]
+        sampler = PathSampler(flatten_path(path.operators, moved))
+
+        glyphs: list[tuple[str, float, Any]] = []
+        for subnode, text, _is_tail in iter_text_node(path_node, preserve_space):
+            if not text:
+                continue
+            ff = attrConv.findAttr(subnode, "font-family") or DEFAULT_FONT_NAME
+            fw = attrConv.findAttr(subnode, "font-weight") or DEFAULT_FONT_WEIGHT
+            fstyle = attrConv.findAttr(subnode, "font-style") or DEFAULT_FONT_STYLE
+            ff = attrConv.convertFontFamily(ff, fw, fstyle)
+            fs_attr = (
+                attrConv.findAttr(subnode, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
+            )
+            fs = cast(float, attrConv.convertLength(fs_attr))
+            for char in text:
+                glyphs.append((char, stringWidth(char, ff, fs), subnode))
+
+        advances = [advance for _, advance, _ in glyphs]
+        offset_attr = path_node.attrib.get("startOffset", "").strip()
+        if offset_attr.endswith("%"):
+            start = float(offset_attr[:-1]) / 100 * sampler.length
+        elif offset_attr:
+            start = cast(float, attrConv.convertLength(offset_attr))
+        else:
+            start = 0.0
+        anchor = attrConv.findAttr(path_node, "text-anchor")
+        if anchor == "middle":
+            start -= sum(advances) / 2
+        elif anchor == "end":
+            start -= sum(advances)
+
+        placements = place_glyphs_on_path(advances, sampler, start)
+        for (char, advance, subnode), placement in zip(glyphs, placements):
+            if placement is None or char.isspace():
+                continue
+            x, y, angle = placement
+            shape = String(-advance / 2, 0, char)
+            self.applyStyleOnShape(shape, text_node)
+            for styled in (path_node, subnode):
+                if styled is not text_node:
+                    self.applyStyleOnShape(shape, styled)
+            shape.textAnchor = "start"
+            glyph = Group(shape)
+            # The enclosing text group flips y, so mirror the SVG placement.
+            glyph.translate(x, -y)
+            glyph.rotate(-angle)
+            gr.add(glyph)
         return gr
 
     def convertPath(self, node: Any) -> Optional[Any]:
@@ -3084,6 +3178,15 @@ def node_name(node: Any) -> Optional[str]:
         return cast(str, node.tag.split("}")[-1])
     except AttributeError:
         return None
+
+
+def _is_inside_text_path(node: Any, text_node: Any) -> bool:
+    """Tell whether a node is a <textPath> or lies within one in a <text> node."""
+    while node is not None and node is not text_node:
+        if node_name(node) == "textPath":
+            return True
+        node = node.parent
+    return False
 
 
 def iter_text_node(node: Any, preserve_space: bool, level: int = 0) -> Any:

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="120" viewBox="0 0 200 120">
+  <!-- Font family set on the text element -->
+  <rect width="200" height="120" fill="white"/>
+  <path id="p" d="M10,100 L190,40" fill="none" stroke="#bbb"/>
+  <text font-size="18" fill="#0033cc" font-family="Times-Roman"><textPath xlink:href="#p">Times Roman</textPath></text>
+</svg>
