@@ -10,7 +10,7 @@
   a path, so each glyph is placed and rotated individually, at the point of the
   path under its midpoint; glyphs beyond the end of the path are dropped. Only
   paths of the same document can be followed, and `side`, `method`, `spacing`
-  and per-glyph `dx`/`dy`/`rotate` are not supported (discussion #298).
+  and per-glyph `dx`/`dy`/`rotate` are not supported (#298, #532).
 - The plain `opacity` property is now supported, as a presentation attribute,
   in `style` attributes and in `<style>` rules, including percentages. Opacity
   composes down the tree, so a shape at 0.5 inside a group at 0.5 is drawn at
