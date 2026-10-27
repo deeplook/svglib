@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="120" viewBox="0 0 200 120">
+  <!-- Path with a transform -->
+  <rect width="200" height="120" fill="white"/>
+  <path id="p" d="M0,0 L120,0" fill="none" stroke="#bbb" transform="translate(30,100) rotate(-35)"/>
+  <text font-size="14" fill="#0033cc"><textPath xlink:href="#p">Transformed path</textPath></text>
+</svg>

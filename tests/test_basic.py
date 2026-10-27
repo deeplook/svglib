@@ -16,6 +16,7 @@ import textwrap
 from math import atan2, degrees
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable
+from xml.etree import ElementTree
 
 import pytest
 from PIL import Image as PILImage
@@ -42,6 +43,7 @@ from reportlab.pdfgen.canvas import FILL_EVEN_ODD, FILL_NON_ZERO
 
 from svglib import svglib, utils
 from svglib.svglib import ClippingPath, LinearGradientShape
+from tests import textpath_sheet
 from tests.test_samples import has_renderpm_backend
 from tests.utils import (
     drawing_from_svg,
@@ -1623,6 +1625,30 @@ class TestTextNode:
         assert [p[0] if p else None for p in placements] == [2, 6, 10]
         placements = utils.place_glyphs_on_path([4, 4, 4], sampler, 1)
         assert [p[0] if p else None for p in placements] == [3, 7, None]
+
+    def test_text_path_samples_are_described(self):
+        paths = textpath_sheet.sample_paths()
+        assert len(paths) >= 10
+        assert all(textpath_sheet.description(p) for p in paths)
+
+    def test_text_path_samples_render_every_glyph_that_fits(self):
+        """Every sample draws all its non-space characters, bar the overflow one."""
+        for path in textpath_sheet.sample_paths():
+            root = ElementTree.parse(path).getroot()
+            text = "".join(root.find(".//{*}textPath").itertext())
+            expected = len("".join(text.split()))
+            drawing = svglib.svg2rlg(str(path))
+            count = len(self._glyphs_on_path(drawing))
+            if path.stem == "overflow":
+                assert 0 < count < expected
+            else:
+                assert count == expected, path.name
+
+    def test_text_path_contact_sheet(self, tmp_path):
+        out = tmp_path / "sheet.pdf"
+        count = textpath_sheet.build_contact_sheet(out)
+        assert count == len(textpath_sheet.sample_paths())
+        assert out.read_bytes().startswith(b"%PDF")
 
     def test_tspan_position(self):
         """
