@@ -10,7 +10,7 @@ $ uv run pytest
 ```
 
 That is also what the CI workflows run, on Linux, macOS and Windows, with
-CPython 3.10, 3.13 and 3.15 (and PyPy 3.10 on Linux). Python 3.10 is the oldest
+CPython 3.10, 3.13 and 3.15 (and PyPy 3.11 on Linux). Python 3.10 is the oldest
 supported version.
 
 ## Quick runs

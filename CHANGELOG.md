@@ -31,7 +31,7 @@
 
 - CI now fails if a locked or installed dependency, or the uv binary, is below
   its minimum safe version (`scripts/check_min_versions.py`).
-- CI runs the lowest supported Python, 3.10, next to 3.13, 3.15 and PyPy 3.10.
+- CI runs the lowest supported Python, 3.10, next to 3.13, 3.15 and PyPy 3.11.
   Python 3.15 is declared supported (classifier and tox).
 - `make install` installs the dev dependency group (it used the `dev` extra,
   which doesn't exist), `make uninstall` no longer passes an option that

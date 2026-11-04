@@ -11,7 +11,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.10", "3.13", "3.15", "pypy-3.10"]
+        python-version: ["3.10", "3.13", "3.15", "pypy-3.11"]
     steps:
       - uses: "actions/checkout@v4"
 
@@ -52,7 +52,8 @@ jobs:
           key: "w3c-svg12-tinytestsuite-ubuntu-${{ steps.week.outputs.week }}"
           restore-keys: "w3c-svg12-tinytestsuite-ubuntu-"
       - name: "Install dependencies"
-        run: uv pip install -e . --group dev
+        # Only the test tools: the dev group has mypy, which needs a Rust build on PyPy.
+        run: uv pip install -e . --group test
 
       - name: "Check minimum safe dependency versions"
         run: uv run --no-sync python scripts/check_min_versions.py
