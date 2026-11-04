@@ -11,13 +11,13 @@ help:  ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: install
-install: ## Install dependencies and pre-commit hooks.
-	uv pip install -e ".[dev]"
+install: ## Install the package with the dev tools and the pre-commit hooks.
+	uv sync --group dev --inexact
 	uv run pre-commit install
 
 .PHONY: uninstall
 uninstall: ## Uninstall the package from the local virtual environment.
-	uv pip uninstall svglib -y
+	uv pip uninstall svglib
 
 .PHONY: test
 test: ## Run the test suite with coverage.
@@ -38,7 +38,7 @@ hooks:  ## Run all pre-commit hooks.
 	uv run pre-commit run --all-files
 
 .PHONY: all
-all: lint typecheck hooks test ## Run all checks (lint, typecheck, hookstest).
+all: lint typecheck hooks test ## Run all checks (lint, typecheck, hooks, tests).
 
 .PHONY: dist
 dist: ## Build the package for distribution.
