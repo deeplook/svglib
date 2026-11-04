@@ -13,7 +13,6 @@ import logging
 import os
 import pathlib
 import textwrap
-import time
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable
 
@@ -1655,28 +1654,38 @@ class TestUseNode:
         limit_hits = [r for r in caplog.records if "Too many <use>" in r.message]
         assert len(limit_hits) == 1
 
-    def test_use_expansion_of_large_groups_is_bounded(self, caplog):
+    @staticmethod
+    def _count_rects(shape: Any) -> int:
+        return sum(
+            1 if isinstance(child, Rect) else TestUseNode._count_rects(child)
+            for child in getattr(shape, "contents", [])
+        )
+
+    def test_use_expansion_of_large_groups_is_bounded(self, caplog, monkeypatch):
         """
         The number of <use> expansions is not the only cost: each one copies and
         renders its whole target, so a big leaf group must not be expanded
         thousands of times either (GHSA-xpfm-fw4h-qxwv).
         """
+        # A small budget keeps this fast. Without a limit on cloned elements the
+        # same document clones about 450,000 rects, which takes minutes and
+        # gigabytes. The cost is in the <defs>, so the drawing can't show it:
+        # the budget running out is the result to check.
+        monkeypatch.setattr(svglib, "MAX_USE_CLONED_ELEMENTS", 2_000, raising=False)
         levels = ['<g id="l0">' + '<rect width="1" height="1"/>' * 50 + "</g>"]
         for i in range(1, 5):
             levels.append(
                 f'<g id="l{i}">' + f'<use xlink:href="#l{i - 1}"/>' * 10 + "</g>"
             )
-        start = time.perf_counter()
         with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
             drawing = drawing_from_svg(
                 '<svg xmlns="http://www.w3.org/2000/svg" '
                 'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
                 f'<defs>{"".join(levels)}</defs><use xlink:href="#l4"/></svg>'
             )
-        # Without the limit on cloned elements this takes more than a minute.
-        assert time.perf_counter() - start < 30
         assert drawing is not None
-        assert [r for r in caplog.records if "cloned elements" in r.message]
+        hits = [r for r in caplog.records if "cloned elements" in r.message]
+        assert len(hits) == 1
 
     def test_use_cloned_elements_budget(self, caplog, monkeypatch):
         """Each expansion is charged the size of its target, then <use> stops."""
@@ -1692,17 +1701,7 @@ class TestUseNode:
                 + '<use xlink:href="#g"/>' * 10
                 + "</svg>"
             )
-        rects = []
-
-        def collect(shape):
-            for child in getattr(shape, "contents", []):
-                if isinstance(child, Rect):
-                    rects.append(child)
-                else:
-                    collect(child)
-
-        collect(drawing)
-        assert len(rects) == 90
+        assert self._count_rects(drawing) == 90
         hits = [r for r in caplog.records if "cloned elements" in r.message]
         assert len(hits) == 1
 
