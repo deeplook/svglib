@@ -14,7 +14,20 @@ The module includes:
 """
 
 import re
-from math import acos, ceil, copysign, cos, degrees, fabs, hypot, radians, sin, sqrt
+from bisect import bisect_left
+from math import (
+    acos,
+    atan2,
+    ceil,
+    copysign,
+    cos,
+    degrees,
+    fabs,
+    hypot,
+    radians,
+    sin,
+    sqrt,
+)
 from typing import Union, cast
 
 from reportlab.graphics.shapes import mmult, rotate, transformPoint, translate
@@ -586,3 +599,124 @@ def bezier_arc_from_end_points(
             x1, y1, x2, y2, fA, fS, rx, ry
         )
         return bezier_arc_from_centre(cx, cy, rx, ry, start_ang, extent)
+
+
+_PathSegment = tuple[float, float, float, float]
+
+
+def flatten_path(
+    operators: list[int], points: list[float], steps_per_curve: int = 0
+) -> list[_PathSegment]:
+    """Flatten a ReportLab path into straight line segments.
+
+    Moves start a new subpath without adding a segment, closing a subpath adds a
+    segment back to its start. Curves are subdivided into `steps_per_curve` lines,
+    or into a number that depends on the length of their control polygon when that
+    is 0.
+
+    Args:
+        operators: The operators of a ReportLab ``Path`` (0=move, 1=line,
+            2=curve, 3=close).
+        points: The flat coordinate list of the same path.
+        steps_per_curve: The number of lines per curve, or 0 to choose it.
+
+    Returns:
+        A list of (x0, y0, x1, y1) segments with a non-zero length.
+    """
+    segments: list[_PathSegment] = []
+    pos = 0
+    start = (0.0, 0.0)
+    current = (0.0, 0.0)
+
+    def add(target: tuple[float, float]) -> None:
+        nonlocal current
+        if target != current:
+            segments.append((current[0], current[1], target[0], target[1]))
+        current = target
+
+    for op in operators:
+        if op == 0:  # moveTo
+            current = start = (points[pos], points[pos + 1])
+            pos += 2
+        elif op == 1:  # lineTo
+            add((points[pos], points[pos + 1]))
+            pos += 2
+        elif op == 2:  # curveTo
+            x0, y0 = current
+            x1, y1, x2, y2, x3, y3 = points[pos : pos + 6]
+            pos += 6
+            steps = steps_per_curve
+            if not steps:
+                polygon = (
+                    hypot(x1 - x0, y1 - y0)
+                    + hypot(x2 - x1, y2 - y1)
+                    + hypot(x3 - x2, y3 - y2)
+                )
+                steps = max(8, min(100, int(polygon / 2) + 1))
+            for i in range(1, steps + 1):
+                t = i / steps
+                u = 1 - t
+                add(
+                    (
+                        u**3 * x0 + 3 * u**2 * t * x1 + 3 * u * t**2 * x2 + t**3 * x3,
+                        u**3 * y0 + 3 * u**2 * t * y1 + 3 * u * t**2 * y2 + t**3 * y3,
+                    )
+                )
+        elif op == 3:  # closePath
+            add(start)
+    return segments
+
+
+class PathSampler:
+    """Find positions and directions at a given distance along a polyline."""
+
+    def __init__(self, segments: list[_PathSegment]) -> None:
+        """Measure the cumulative length of the segments."""
+        self.segments = segments
+        self.ends: list[float] = []
+        total = 0.0
+        for x0, y0, x1, y1 in segments:
+            total += hypot(x1 - x0, y1 - y0)
+            self.ends.append(total)
+        self.length = total
+
+    def at(self, distance: float) -> Union[tuple[float, float, float], None]:
+        """Return (x, y, angle in degrees) at a distance, or None if off the path."""
+        if not self.segments or distance < 0 or distance > self.length:
+            return None
+        index = bisect_left(self.ends, distance)
+        index = min(index, len(self.segments) - 1)
+        x0, y0, x1, y1 = self.segments[index]
+        seg_len = hypot(x1 - x0, y1 - y0)
+        seg_start = self.ends[index] - seg_len
+        t = (distance - seg_start) / seg_len
+        return (
+            x0 + t * (x1 - x0),
+            y0 + t * (y1 - y0),
+            degrees(atan2(y1 - y0, x1 - x0)),
+        )
+
+
+def place_glyphs_on_path(
+    advances: list[float], sampler: PathSampler, start: float
+) -> list[Union[tuple[float, float, float], None]]:
+    """Place glyphs along a path.
+
+    A glyph is placed at the point of the path under its midpoint, rotated to the
+    direction of the path there. Glyphs whose midpoint is not on the path are
+    not rendered, which is reported as None.
+
+    Args:
+        advances: The advance width of each glyph.
+        sampler: The path to follow.
+        start: The distance along the path where the first glyph starts.
+
+    Returns:
+        For each glyph, (x, y, angle in degrees) of its midpoint, or None.
+    """
+    placements: list[Union[tuple[float, float, float], None]] = []
+    cursor = start
+    for advance in advances:
+        placements.append(sampler.at(cursor + advance / 2))
+        cursor += advance
+    return placements

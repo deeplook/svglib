@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="120" viewBox="0 0 200 120">
+  <!-- Text running down a vertical line -->
+  <rect width="200" height="120" fill="white"/>
+  <path id="p" d="M60,10 L60,110" fill="none" stroke="#bbb"/>
+  <text font-size="14" fill="#0033cc"><textPath xlink:href="#p">Going down</textPath></text>
+</svg>

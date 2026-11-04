@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="120" viewBox="0 0 200 120">
+  <!-- Text along a quadratic curve -->
+  <rect width="200" height="120" fill="white"/>
+  <path id="p" d="M10,100 Q100,-20 190,100" fill="none" stroke="#bbb"/>
+  <text font-size="13" fill="#0033cc"><textPath xlink:href="#p">Text along a quadratic curve</textPath></text>
+</svg>

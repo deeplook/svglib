@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="120" viewBox="0 0 200 120">
+  <!-- Text around a closed path -->
+  <rect width="200" height="120" fill="white"/>
+  <path id="p" d="M30,20 L170,20 L170,100 Z" fill="none" stroke="#bbb"/>
+  <text font-size="11" fill="#0033cc"><textPath xlink:href="#p">Around a triangle and back again</textPath></text>
+</svg>
