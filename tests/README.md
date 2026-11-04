@@ -15,18 +15,20 @@ supported version.
 
 ## Quick runs
 
-The tests in `tests/test_samples.py` download SVG files from the internet (see
-below) and are by far the slowest. For a fast run without them:
+The tests that download SVG files from the internet (see below) are by far the
+slowest. They carry the pytest marker `network`, so a fast run without them is:
 
 ```console
-$ uv run pytest --ignore=tests/test_samples.py
+$ uv run pytest -m "not network"
 ```
+
+or `make test-fast`.
 
 Run a single file, a single test, or tests matching a keyword:
 
 ```console
-$ uv run pytest tests/test_basic.py
-$ uv run pytest tests/test_basic.py::TestTextNode::test_text_path_straight_line
+$ uv run pytest tests/test_text_path.py
+$ uv run pytest tests/test_text_path.py::TestTextPath::test_text_path_straight_line
 $ uv run pytest -k "text_path or arc"
 ```
 
@@ -34,12 +36,21 @@ $ uv run pytest -k "text_path or arc"
 
 | File | What it tests |
 |---|---|
-| `test_basic.py` | The converter in detail: paths, shapes, text, styles, transforms, gradients, clipping, `<use>`, `<switch>`, embedded images, view boxes. |
+| `test_input.py` | The kinds of SVG sources `svg2rlg()` accepts: paths, file objects, compressed `.svgz`. |
+| `test_paths.py` | Path data, arcs, curves and clipping paths. |
+| `test_attributes.py` | Attribute converters (colors, lengths, transforms) and style sheets. |
+| `test_shapes.py` | Rectangles, lines, polylines and polygons. |
+| `test_text.py` | Text: whitespace, fonts, `font` shorthand, `baseline-shift`, `<tspan>` positions. |
+| `test_text_path.py` | `<textPath>` and the path helpers behind it, including the `textpath` samples. |
+| `test_structure.py` | Groups, `<switch>`, `<symbol>` and view boxes. |
+| `test_use.py` | `<use>`: references, cycles and expansion limits. |
+| `test_embedded.py` | Embedded and referenced images and SVGs. |
+| `test_gradients.py` | Linear and radial gradients. |
 | `test_external_references.py` | Resolution of `xlink:href` to other files, the `external_reference_root` containment, limits on `<use>` expansion and cyclic references. |
 | `test_fonts.py` | Font registration and the font family mapping. |
 | `test_units.py` | Length and unit conversion. |
-| `test_samples.py` | Conversion of real-world SVG files (see below). |
-| `utils.py` | Helpers shared by the tests, e.g. `drawing_from_svg()` and `svg_raster_difference()`. |
+| `test_samples.py` | Conversion of real-world SVG files (see below); the tests that download files are marked `network`. |
+| `utils.py` | Helpers shared by the tests, e.g. `drawing_from_svg()`, `svg_raster_difference()`, `check_mapping()` and `has_renderpm_backend()`. |
 | `textpath_sheet.py` | Not a test: renders the `<textPath>` samples as a contact sheet. |
 
 ## Sample files and downloads

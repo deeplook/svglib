@@ -29,4 +29,4 @@ esac
 head -c 5 "$tmp/units.pdf" | grep -q '%PDF-'
 
 # ...and so does the test suite, without the tests that download samples.
-"$tmp/venv/bin/python" -m pytest tests --ignore=tests/test_samples.py -q -p no:cacheprovider
+"$tmp/venv/bin/python" -m pytest tests -m "not network" -q -p no:cacheprovider

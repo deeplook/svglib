@@ -67,6 +67,13 @@ test = ["pytest>=8.3.5", "pytest-cov>=7.0.0", "pytest-runner>=6.0.1", "tox>=4.30
 lint = ["mypy>=1.18.1", "ruff>=0.13.0"]
 dev = [{include-group = "test"}, {include-group = "lint"}, "pre-commit>=4.3.0"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = [
+    "network: tests that download sample files from the internet (deselect with -m \"not network\")",
+]
+
 [tool.ruff]
 line-length = 88
 
