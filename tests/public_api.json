@@ -1,0 +1,662 @@
+{
+ "svglib": {
+  "Optional": {
+   "what": "callable(*args, **kwds)"
+  },
+  "PackageNotFoundError": {
+   "what": "class"
+  },
+  "basename": {
+   "what": "callable(p)"
+  },
+  "datetime": {
+   "what": "class"
+  },
+  "dirname": {
+   "what": "callable(p)"
+  },
+  "exists": {
+   "what": "callable(path)"
+  },
+  "main": {
+   "what": "callable() -> None"
+  },
+  "splitext": {
+   "what": "callable(p)"
+  },
+  "svg2pdf": {
+   "what": "callable(path: str, outputPat: Optional[str] = None, external_reference_root: Optional[str] = None) -> None"
+  },
+  "version": {
+   "what": "callable(distribution_name)"
+  }
+ },
+ "svglib.fonts": {
+  "DEFAULT_FONT_NAME": {
+   "what": "constant 'Helvetica'"
+  },
+  "DEFAULT_FONT_SIZE": {
+   "what": "constant 12"
+  },
+  "DEFAULT_FONT_STYLE": {
+   "what": "constant 'normal'"
+  },
+  "DEFAULT_FONT_WEIGHT": {
+   "what": "constant 'normal'"
+  },
+  "FontMap": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "build_internal_name",
+    "find_font",
+    "guess_font_filename",
+    "register_default_fonts",
+    "register_font",
+    "register_font_family",
+    "use_fontconfig"
+   ],
+   "what": "class"
+  },
+  "Optional": {
+   "what": "callable(*args, **kwds)"
+  },
+  "STANDARD_FONT_NAMES": {
+   "what": "constant ('Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique', 'Symbol', 'ZapfDingbats')"
+  },
+  "TTFError": {
+   "what": "class"
+  },
+  "TTFont": {
+   "what": "class"
+  },
+  "Union": {
+   "what": "callable(*args, **kwds)"
+  },
+  "_font_map": {
+   "what": "FontMap"
+  },
+  "find_font": {
+   "what": "callable(font_name: str, weight: str = 'normal', style: str = 'normal') -> tuple[str, bool]"
+  },
+  "get_global_font_map": {
+   "what": "callable() -> svglib.fonts.FontMap"
+  },
+  "registerFont": {
+   "what": "callable(font)"
+  },
+  "register_font": {
+   "what": "callable(font_name: str, font_path: Optional[str] = None, weight: str = 'normal', style: str = 'normal', rlgFontName: Optional[str] = None) -> tuple[typing.Optional[str], bool]"
+  },
+  "register_font_family": {
+   "what": "callable(family: str, normal: str, bold: Optional[str] = None, italic: Optional[str] = None, bolditalic: Optional[str] = None) -> None"
+  }
+ },
+ "svglib.svglib": {
+  "Any": {
+   "what": "class"
+  },
+  "AttributeConverter": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "_applyStyleRules",
+    "convertTransform",
+    "findAttr",
+    "getAllAttributes",
+    "id",
+    "parseMultiAttributes",
+    "set_box"
+   ],
+   "what": "class"
+  },
+  "BinaryIO": {
+   "what": "class"
+  },
+  "Box": {
+   "bases": [
+    "tuple"
+   ],
+   "members": [
+    "_asdict",
+    "_field_defaults",
+    "_fields",
+    "_make",
+    "_replace",
+    "height",
+    "width",
+    "x",
+    "y"
+   ],
+   "what": "class"
+  },
+  "BytesIO": {
+   "what": "class"
+  },
+  "CSSMatcher": {
+   "bases": [
+    "Matcher"
+   ],
+   "members": [
+    "add_styles"
+   ],
+   "what": "class"
+  },
+  "Circle": {
+   "what": "class"
+  },
+  "CircularRefError": {
+   "bases": [
+    "Exception"
+   ],
+   "members": [],
+   "what": "class"
+  },
+  "ClippingPath": {
+   "bases": [
+    "Path"
+   ],
+   "members": [
+    "getProperties"
+   ],
+   "what": "class"
+  },
+  "DEFAULT_FONT_NAME": {
+   "what": "constant 'Helvetica'"
+  },
+  "DEFAULT_FONT_SIZE": {
+   "what": "constant 12"
+  },
+  "DEFAULT_FONT_STYLE": {
+   "what": "constant 'normal'"
+  },
+  "DEFAULT_FONT_WEIGHT": {
+   "what": "constant 'normal'"
+  },
+  "DELAYED": {
+   "what": "object"
+  },
+  "DirectDraw": {
+   "what": "class"
+  },
+  "Drawing": {
+   "what": "class"
+  },
+  "Ellipse": {
+   "what": "class"
+  },
+  "ExternalSVG": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "get_fragment"
+   ],
+   "what": "class"
+  },
+  "FILL_EVEN_ODD": {
+   "what": "constant 0"
+  },
+  "FILL_NON_ZERO": {
+   "what": "constant 1"
+  },
+  "GradientStop": {
+   "what": "callable(*args, **kwargs)"
+  },
+  "Group": {
+   "what": "class"
+  },
+  "INKSCAPE_NS": {
+   "what": "constant 'http://www.inkscape.org/namespaces/inkscape'"
+  },
+  "IO": {
+   "what": "class"
+  },
+  "Image": {
+   "what": "class"
+  },
+  "Line": {
+   "what": "class"
+  },
+  "LinearGradientShape": {
+   "bases": [
+    "DirectDraw"
+   ],
+   "members": [
+    "drawDirectly",
+    "getBounds"
+   ],
+   "what": "class"
+  },
+  "MAX_USE_CLONED_ELEMENTS": {
+   "what": "constant 20000"
+  },
+  "MAX_USE_EXPANSIONS": {
+   "what": "constant 10000"
+  },
+  "NoStrokePath": {
+   "bases": [
+    "Path"
+   ],
+   "members": [
+    "getProperties"
+   ],
+   "what": "class"
+  },
+  "NodeTracker": {
+   "bases": [
+    "ElementWrapper"
+   ],
+   "members": [
+    "apply_rules",
+    "getAttribute"
+   ],
+   "what": "class"
+  },
+  "Optional": {
+   "what": "callable(*args, **kwds)"
+  },
+  "PDFImage": {
+   "what": "class"
+  },
+  "PX_TO_PT": {
+   "what": "constant 0.75"
+  },
+  "Path": {
+   "what": "class"
+  },
+  "PathSampler": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "at"
+   ],
+   "what": "class"
+  },
+  "PolyLine": {
+   "what": "class"
+  },
+  "Polygon": {
+   "what": "class"
+  },
+  "RadialGradientShape": {
+   "bases": [
+    "DirectDraw"
+   ],
+   "members": [
+    "drawDirectly",
+    "getBounds"
+   ],
+   "what": "class"
+  },
+  "Rect": {
+   "what": "class"
+  },
+  "SUPPORTED_SVG_FEATURES": {
+   "what": "constant frozenset(['http://www.w3.org/graphics/svg/feature/1.2/#conditionalprocessing', 'http://www.w3.org/graphics/svg/feature/1.2/#conditionalprocessingattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#coreattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#externalresourcesrequired', 'http://www.w3.org/graphics/svg/feature/1.2/#font', 'http://www.w3.org/graphics/svg/feature/1.2/#gradient', 'http://www.w3.org/graphics/svg/feature/1.2/#graphicsattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#hyperlinking', 'http://www.w3.org/graphics/svg/feature/1.2/#image', 'http://www.w3.org/graphics/svg/feature/1.2/#navigationattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#opacityattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#paintattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#shape', 'http://www.w3.org/graphics/svg/feature/1.2/#structure', 'http://www.w3.org/graphics/svg/feature/1.2/#svg-static', 'http://www.w3.org/graphics/svg/feature/1.2/#text', 'http://www.w3.org/graphics/svg/feature/1.2/#xlinkattribute', 'http://www.w3.org/tr/svg11/feature#basicclip', 'http://www.w3.org/tr/svg11/feature#basicfont', 'http://www.w3.org/tr/svg11/feature#basicgraphicsattribute', 'http://www.w3.org/tr/svg11/feature#basicpaintattribute', 'http://www.w3.org/tr/svg11/feature#basicstructure', 'http://www.w3.org/tr/svg11/feature#basictext', 'http://www.w3.org/tr/svg11/feature#clip', 'http://www.w3.org/tr/svg11/feature#colorprofile', 'http://www.w3.org/tr/svg11/feature#conditionalprocessing', 'http://www.w3.org/tr/svg11/feature#coreattribute', 'http://www.w3.org/tr/svg11/feature#font', 'http://www.w3.org/tr/svg11/feature#gradient', 'http://www.w3.org/tr/svg11/feature#graphicsattribute', 'http://www.w3.org/tr/svg11/feature#image', 'http://www.w3.org/tr/svg11/feature#opacityattribute', 'http://www.w3.org/tr/svg11/feature#paintattribute', 'http://www.w3.org/tr/svg11/feature#pattern', 'http://www.w3.org/tr/svg11/feature#shape', 'http://www.w3.org/tr/svg11/feature#structure', 'http://www.w3.org/tr/svg11/feature#style', 'http://www.w3.org/tr/svg11/feature#svg', 'http://www.w3.org/tr/svg11/feature#svg-static', 'http://www.w3.org/tr/svg11/feature#svgdom', 'http://www.w3.org/tr/svg11/feature#svgdom-static', 'http://www.w3.org/tr/svg11/feature#viewportattribute', 'http://www.w3.org/tr/svg11/feature#xlinkattribute'])"
+  },
+  "SVGCanvas": {
+   "what": "class"
+  },
+  "SVGSource": {
+   "what": "callable(*args, **kwargs)"
+  },
+  "Shape": {
+   "what": "class"
+  },
+  "SolidShape": {
+   "what": "class"
+  },
+  "String": {
+   "what": "class"
+  },
+  "Svg2RlgAttributeConverter": {
+   "bases": [
+    "AttributeConverter"
+   ],
+   "members": [
+    "_split_outside_quotes",
+    "convertColor",
+    "convertDashArray",
+    "convertDashOffset",
+    "convertFillRule",
+    "convertFontFamily",
+    "convertLength",
+    "convertLengthList",
+    "convertLengthToPt",
+    "convertLineCap",
+    "convertLineJoin",
+    "convertOpacity",
+    "findOpacity",
+    "identity_color_converter",
+    "split_attr_list",
+    "split_font_family_list"
+   ],
+   "what": "class"
+  },
+  "Svg2RlgShapeConverter": {
+   "bases": [
+    "SvgShapeConverter"
+   ],
+   "members": [
+    "applyStyleOnShape",
+    "applyTransformOnGroup",
+    "convertCircle",
+    "convertEllipse",
+    "convertImage",
+    "convertLine",
+    "convertPath",
+    "convertPolygon",
+    "convertPolyline",
+    "convertRect",
+    "convertShape",
+    "convertText",
+    "convertTextPath",
+    "convert_length_attrs",
+    "shapeToPath"
+   ],
+   "what": "class"
+  },
+  "SvgRenderer": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "_apply_gradient_fill",
+    "_resolve_gradient",
+    "_set_root_font_size",
+    "_warn_old_inkscape",
+    "apply_node_attr_to_group",
+    "get_box",
+    "get_clippath",
+    "get_display",
+    "print_unused_attributes",
+    "render",
+    "renderA",
+    "renderDesc_",
+    "renderG",
+    "renderGradient",
+    "renderNode",
+    "renderStyle",
+    "renderSvg",
+    "renderSwitch",
+    "renderSymbol",
+    "renderTitle_",
+    "renderUse",
+    "xlink_href_target"
+   ],
+   "what": "class"
+  },
+  "SvgShapeConverter": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "get_handled_shapes"
+   ],
+   "what": "class"
+  },
+  "TextIO": {
+   "what": "class"
+  },
+  "TypedDict": {
+   "what": "callable(typename, fields=None, /, *, total=True, **kwargs)"
+  },
+  "Union": {
+   "what": "callable(*args, **kwds)"
+  },
+  "XML_NS": {
+   "what": "constant 'http://www.w3.org/XML/1998/namespace'"
+  },
+  "_BEZIER_KAPPA": {
+   "what": "constant 0.5523"
+  },
+  "_CLOSEPATH": {
+   "what": "constant 3"
+  },
+  "_FONT_SIZE_RE": {
+   "what": "Pattern"
+  },
+  "_FONT_WEIGHTS": {
+   "what": "set"
+  },
+  "_GRADIENT_URL_RE": {
+   "what": "Pattern"
+  },
+  "_GradientDef": {
+   "bases": [
+    "dict"
+   ],
+   "members": [],
+   "what": "class"
+  },
+  "_GradientDefBase": {
+   "bases": [
+    "dict"
+   ],
+   "members": [],
+   "what": "class"
+  },
+  "_UseExpansionCounter": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "allow_clone"
+   ],
+   "what": "class"
+  },
+  "_convert_palette_to_rgba": {
+   "what": "callable(image: PIL.Image.Image) -> PIL.Image.Image"
+  },
+  "_default_language": {
+   "what": "callable() -> str"
+  },
+  "_expand_font_shorthand": {
+   "what": "callable(declarations: dict[str, str]) -> dict[str, str]"
+  },
+  "_find_clip_shape": {
+   "what": "callable(item: Any) -> Optional[Any]"
+  },
+  "_fonts_find_font": {
+   "what": "callable(font_name: str, weight: str = 'normal', style: str = 'normal') -> tuple[str, bool]"
+  },
+  "_fonts_register_font": {
+   "what": "callable(font_name: str, font_path: Optional[str] = None, weight: str = 'normal', style: str = 'normal', rlgFontName: Optional[str] = None) -> tuple[typing.Optional[str], bool]"
+  },
+  "_is_inside_text_path": {
+   "what": "callable(node: Any, text_node: Any) -> bool"
+  },
+  "_parse_declarations": {
+   "what": "callable(content: Any) -> dict[str, str]"
+  },
+  "_parse_font_shorthand": {
+   "what": "callable(value: str) -> dict[str, str]"
+  },
+  "_renderPath": {
+   "what": "callable(path, drawFuncs, countOnly=False, forceClose=False)"
+  },
+  "_shape_to_pdf_path": {
+   "what": "callable(canvas: Any, shape: Any) -> Any"
+  },
+  "bezier_arc_from_end_points": {
+   "what": "callable(x1: float, y1: float, rx: float, ry: float, phi: float, fA: int, fS: int, x2: float, y2: float) -> list[tuple[float, float, float, float, float, float, float, float]]"
+  },
+  "cast": {
+   "what": "callable(typ, val)"
+  },
+  "clean_text": {
+   "what": "callable(text: Optional[str], preserve_space: bool, strip_start: bool = False, strip_end: bool = False) -> Optional[str]"
+  },
+  "convert_quadratic_to_cubic_path": {
+   "what": "callable(q0: tuple[float, float], q1: tuple[float, float], q2: tuple[float, float]) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]"
+  },
+  "copy_shape_properties": {
+   "what": "callable(source_shape: Any, dest_shape: Any) -> None"
+  },
+  "defaultdict": {
+   "what": "class"
+  },
+  "find_font": {
+   "what": "callable(font_name: str, weight: str = 'normal', style: str = 'normal') -> tuple[str, bool]"
+  },
+  "flatten_path": {
+   "what": "callable(operators: list[int], points: list[float], steps_per_curve: int = 0) -> list[tuple[float, float, float, float]]"
+  },
+  "get_global_font_map": {
+   "what": "callable() -> svglib.fonts.FontMap"
+  },
+  "iter_text_node": {
+   "what": "callable(node: Any, preserve_space: bool, level: int = 0) -> Any"
+  },
+  "load_svg_file": {
+   "what": "callable(path: Union[str, os.PathLike[str], BinaryIO, TextIO, IO[bytes], gzip.GzipFile], resolve_entities: bool = False) -> Optional[Any]"
+  },
+  "logger": {
+   "what": "Logger"
+  },
+  "mmult": {
+   "what": "callable(A, B)"
+  },
+  "namedtuple": {
+   "what": "callable(typename, field_names, *, rename=False, defaults=None, module=None)"
+  },
+  "node_name": {
+   "what": "callable(node: Any) -> Optional[str]"
+  },
+  "normalise_svg_path": {
+   "what": "callable(attr: str) -> list[typing.Union[str, list[float]]]"
+  },
+  "nudge_points": {
+   "what": "callable(points: list[float]) -> None"
+  },
+  "place_glyphs_on_path": {
+   "what": "callable(advances: list[float], sampler: svglib.utils.PathSampler, start: float) -> list[typing.Optional[tuple[float, float, float]]]"
+  },
+  "register_font": {
+   "what": "callable(font_name: str, font_path: Optional[str] = None, weight: str = 'normal', style: str = 'normal', rlgFontName: Optional[str] = None) -> tuple[typing.Optional[str], bool]"
+  },
+  "split_whitespace": {
+   "what": "callable(string, pos=0, endpos=9223372036854775807)"
+  },
+  "stringWidth": {
+   "what": "callable(text, fontName, fontSize, encoding='utf8')"
+  },
+  "svg2rlg": {
+   "what": "callable(path: Union[str, os.PathLike[str], BinaryIO, TextIO, IO[bytes], gzip.GzipFile], resolve_entities: bool = False, **kwargs: Any) -> Optional[reportlab.graphics.shapes.Drawing]"
+  },
+  "toLength": {
+   "what": "callable(s)"
+  }
+ },
+ "svglib.utils": {
+  "PathSampler": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "at"
+   ],
+   "what": "class"
+  },
+  "Union": {
+   "what": "callable(*args, **kwds)"
+  },
+  "_ARC_ARGUMENTS": {
+   "what": "constant (re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([01])'), re.compile('[\\\\s,]*([01])'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'))"
+  },
+  "_ARC_FLAG": {
+   "what": "constant '[\\\\s,]*([01])'"
+  },
+  "_ARC_NUMBER": {
+   "what": "constant '[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'"
+  },
+  "_PathSegment": {
+   "what": "callable(*args, **kwargs)"
+  },
+  "acos": {
+   "what": "callable(x, /)"
+  },
+  "atan2": {
+   "what": "callable(y, x, /)"
+  },
+  "bezier_arc_from_centre": {
+   "what": "callable(cx: float, cy: float, rx: float, ry: float, start_ang: float = 0, extent: float = 90) -> list[tuple[float, float, float, float, float, float, float, float]]"
+  },
+  "bezier_arc_from_end_points": {
+   "what": "callable(x1: float, y1: float, rx: float, ry: float, phi: float, fA: int, fS: int, x2: float, y2: float) -> list[tuple[float, float, float, float, float, float, float, float]]"
+  },
+  "bisect_left": {
+   "what": "callable(a, x, lo=0, hi=None, *, key=None)"
+  },
+  "cast": {
+   "what": "callable(typ, val)"
+  },
+  "ceil": {
+   "what": "callable(x, /)"
+  },
+  "convert_quadratic_to_cubic_path": {
+   "what": "callable(q0: tuple[float, float], q1: tuple[float, float], q2: tuple[float, float]) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]"
+  },
+  "copysign": {
+   "what": "callable(x, y, /)"
+  },
+  "cos": {
+   "what": "callable(x, /)"
+  },
+  "degrees": {
+   "what": "callable(x, /)"
+  },
+  "end_point_to_center_parameters": {
+   "what": "callable(x1: float, y1: float, x2: float, y2: float, fA: int, fS: int, rx: float, ry: float, phi: float = 0) -> tuple[float, float, float, float, float, float]"
+  },
+  "fabs": {
+   "what": "callable(x, /)"
+  },
+  "flatten_path": {
+   "what": "callable(operators: list[int], points: list[float], steps_per_curve: int = 0) -> list[tuple[float, float, float, float]]"
+  },
+  "hypot": {
+   "what": "callable"
+  },
+  "mmult": {
+   "what": "callable(A, B)"
+  },
+  "normalise_svg_path": {
+   "what": "callable(attr: str) -> list[typing.Union[str, list[float]]]"
+  },
+  "place_glyphs_on_path": {
+   "what": "callable(advances: list[float], sampler: svglib.utils.PathSampler, start: float) -> list[typing.Optional[tuple[float, float, float]]]"
+  },
+  "radians": {
+   "what": "callable(x, /)"
+  },
+  "rotate": {
+   "what": "callable(angle, cx=0, cy=0)"
+  },
+  "sin": {
+   "what": "callable(x, /)"
+  },
+  "split_arc_values": {
+   "what": "callable(op: str, value: str) -> list[typing.Union[str, list[float]]]"
+  },
+  "split_floats": {
+   "what": "callable(op: str, min_num: int, value: str) -> list[typing.Union[str, list[float]]]"
+  },
+  "sqrt": {
+   "what": "callable(x, /)"
+  },
+  "transformPoint": {
+   "what": "callable(A, v)"
+  },
+  "translate": {
+   "what": "callable(dx, dy=0)"
+  },
+  "vector_angle": {
+   "what": "callable(u: tuple[float, float], v: tuple[float, float]) -> float"
+  }
+ }
+}

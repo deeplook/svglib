@@ -50,6 +50,7 @@ $ uv run pytest -k "text_path or arc"
 | `test_fonts.py` | Font registration and the font family mapping. |
 | `test_units.py` | Length and unit conversion. |
 | `test_samples.py` | Conversion of real-world SVG files (see below); the tests that download files are marked `network`. |
+| `test_public_api.py` | The importable surface of the package, compared with the snapshot in `public_api.json` (`python -m tests.test_public_api --update` rewrites it). |
 | `utils.py` | Helpers shared by the tests, e.g. `drawing_from_svg()`, `svg_raster_difference()`, `check_mapping()` and `has_renderpm_backend()`. |
 | `textpath_sheet.py` | Not a test: renders the `<textPath>` samples as a contact sheet. |
 
