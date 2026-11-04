@@ -50,7 +50,7 @@ and some selected [symbols from Wikipedia](https://en.wikipedia.org/wiki/List_of
 - test entire [W3C SVG test suite](http://www.w3.org/Graphics/SVG/WG/wiki/Test_Suite_Overview) after pulling from the internet
 - test all SVG [flags from Wikipedia](https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags) after pulling from the internet
 - test selected SVG [symbols from Wikipedia](https://en.wikipedia.org/wiki/List_of_symbols) after pulling from the net
-- support Python 3.9+ and PyPy3
+- support Python 3.10+ and PyPy3
 
 
 ## Known limitations
@@ -292,7 +292,7 @@ install the requirements and development dependencies. To run the test suite wit
 ## Distribution Testing
 
 The `svglib` tarball distribution contains a [PyTest](http://pytest.org) test suite
-in the `tests` directory. There, in `tests/README.rst`, you can
+in the `tests` directory. There, in `tests/README.md`, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line:
 

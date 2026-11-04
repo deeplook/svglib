@@ -21,6 +21,26 @@
   `font-size` and `font-family`, in `style` attributes and in `<style>` rules.
   Invalid shorthands are ignored (#343, #526, thanks to @Pharex38).
 
+### Removed
+
+- Dropped support for **Python 3.9** (and PyPy 3.9). pip 26.2.2, the new
+  minimum safe version, requires Python 3.10 or newer. `requires-python` is now
+  `>=3.10`, the 3.9 classifier is gone, and CI no longer tests 3.9 or PyPy 3.9.
+
+### Tooling and housekeeping
+
+- CI now fails if a locked or installed dependency, or the uv binary, is below
+  its minimum safe version (`scripts/check_min_versions.py`).
+- CI runs the lowest supported Python, 3.10, next to 3.13, 3.15 and PyPy 3.11.
+  Python 3.15 is declared supported (classifier and tox).
+- `make install` installs the dev dependency group (it used the `dev` extra,
+  which doesn't exist), `make uninstall` no longer passes an option that
+  `uv pip` doesn't know, and `make test-dist` works: `scripts/test-dist.sh`
+  builds the wheel and tests it in a clean virtual environment. New:
+  `make check-versions`.
+- The READMEs and notes in `demos/` and `tests/` are Markdown now, and the
+  testing instructions describe the current uv and Makefile based workflow.
+
 ### Fixed
 
 - A `style` attribute or `<style>` rule whose value contains a colon or a
