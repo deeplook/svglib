@@ -27,18 +27,9 @@ from reportlab.graphics import renderPDF, renderPM, renderSVG
 from reportlab.graphics.shapes import Group, Rect
 
 from svglib import svglib
+from tests.utils import has_renderpm_backend
 
 TEST_ROOT = dirname(__file__)
-
-
-def has_renderpm_backend() -> bool:
-    """Return whether ReportLab can load a renderPM bitmap backend."""
-
-    try:
-        renderPM._getPMBackend()
-    except renderPM.RenderPMError:
-        return False
-    return True
 
 
 def fetch_file(
@@ -159,6 +150,7 @@ class TestSVGCanvas:
             assert "<desc>...</desc>" in content
 
 
+@pytest.mark.network
 class TestWikipediaSymbols:
     "Tests on sample symbol SVG files from wikipedia.org."
 
@@ -233,6 +225,7 @@ class TestWikipediaSymbols:
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
 
+@pytest.mark.network
 class TestWikipediaFlags:
     "Tests using SVG flags from Wikipedia.org."
 
@@ -354,6 +347,7 @@ class TestWikipediaFlags:
             renderPDF.drawToFile(drawing, base, showBoundary=0)
 
 
+@pytest.mark.network
 class TestW3CSVG:
     "Tests using the official W3C SVG testsuite."
 
