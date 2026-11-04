@@ -292,7 +292,7 @@ install the requirements and development dependencies. To run the test suite wit
 ## Distribution Testing
 
 The `svglib` tarball distribution contains a [PyTest](http://pytest.org) test suite
-in the `tests` directory. There, in `tests/README.rst`, you can
+in the `tests` directory. There, in `tests/README.md`, you can
 also read more about testing. You can run the testsuite e.g. like
 shown in the following lines on the command-line:
 
