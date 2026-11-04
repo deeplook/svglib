@@ -1,34 +1,34 @@
 {
  "svglib": {
   "Optional": {
-   "what": "callable(*args, **kwds)"
+   "what": "external"
   },
   "PackageNotFoundError": {
-   "what": "class"
+   "what": "external"
   },
   "basename": {
-   "what": "callable(p)"
+   "what": "external"
   },
   "datetime": {
-   "what": "class"
+   "what": "external"
   },
   "dirname": {
-   "what": "callable(p)"
+   "what": "external"
   },
   "exists": {
-   "what": "callable(path)"
+   "what": "external"
   },
   "main": {
-   "what": "callable() -> None"
+   "what": "callable()"
   },
   "splitext": {
-   "what": "callable(p)"
+   "what": "external"
   },
   "svg2pdf": {
-   "what": "callable(path: str, outputPat: Optional[str] = None, external_reference_root: Optional[str] = None) -> None"
+   "what": "callable(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:outputPat, POSITIONAL_OR_KEYWORD:external_reference_root)"
   },
   "version": {
-   "what": "callable(distribution_name)"
+   "what": "external"
   }
  },
  "svglib.fonts": {
@@ -57,45 +57,45 @@
     "register_font_family",
     "use_fontconfig"
    ],
-   "what": "class"
+   "what": "class()"
   },
   "Optional": {
-   "what": "callable(*args, **kwds)"
+   "what": "external"
   },
   "STANDARD_FONT_NAMES": {
    "what": "constant ('Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique', 'Symbol', 'ZapfDingbats')"
   },
   "TTFError": {
-   "what": "class"
+   "what": "external"
   },
   "TTFont": {
-   "what": "class"
+   "what": "external"
   },
   "Union": {
-   "what": "callable(*args, **kwds)"
+   "what": "external"
   },
   "_font_map": {
-   "what": "FontMap"
+   "what": "external"
   },
   "find_font": {
-   "what": "callable(font_name: str, weight: str = 'normal', style: str = 'normal') -> tuple[str, bool]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
   },
   "get_global_font_map": {
-   "what": "callable() -> svglib.fonts.FontMap"
+   "what": "callable()"
   },
   "registerFont": {
-   "what": "callable(font)"
+   "what": "external"
   },
   "register_font": {
-   "what": "callable(font_name: str, font_path: Optional[str] = None, weight: str = 'normal', style: str = 'normal', rlgFontName: Optional[str] = None) -> tuple[typing.Optional[str], bool]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
   },
   "register_font_family": {
-   "what": "callable(family: str, normal: str, bold: Optional[str] = None, italic: Optional[str] = None, bolditalic: Optional[str] = None) -> None"
+   "what": "callable(POSITIONAL_OR_KEYWORD:family, POSITIONAL_OR_KEYWORD:normal, POSITIONAL_OR_KEYWORD:bold, POSITIONAL_OR_KEYWORD:italic, POSITIONAL_OR_KEYWORD:bolditalic)"
   }
  },
  "svglib.svglib": {
   "Any": {
-   "what": "class"
+   "what": "external"
   },
   "AttributeConverter": {
    "bases": [
@@ -110,10 +110,10 @@
     "parseMultiAttributes",
     "set_box"
    ],
-   "what": "class"
+   "what": "class()"
   },
   "BinaryIO": {
-   "what": "class"
+   "what": "external"
   },
   "Box": {
    "bases": [
@@ -130,10 +130,10 @@
     "x",
     "y"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:x, POSITIONAL_OR_KEYWORD:y, POSITIONAL_OR_KEYWORD:width, POSITIONAL_OR_KEYWORD:height)"
   },
   "BytesIO": {
-   "what": "class"
+   "what": "external"
   },
   "CSSMatcher": {
    "bases": [
@@ -142,17 +142,17 @@
    "members": [
     "add_styles"
    ],
-   "what": "class"
+   "what": "class()"
   },
   "Circle": {
-   "what": "class"
+   "what": "external"
   },
   "CircularRefError": {
    "bases": [
     "Exception"
    ],
    "members": [],
-   "what": "class"
+   "what": "class(?)"
   },
   "ClippingPath": {
    "bases": [
@@ -161,7 +161,7 @@
    "members": [
     "getProperties"
    ],
-   "what": "class"
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
   },
   "DEFAULT_FONT_NAME": {
    "what": "constant 'Helvetica'"
@@ -176,16 +176,16 @@
    "what": "constant 'normal'"
   },
   "DELAYED": {
-   "what": "object"
+   "what": "external"
   },
   "DirectDraw": {
-   "what": "class"
+   "what": "external"
   },
   "Drawing": {
-   "what": "class"
+   "what": "external"
   },
   "Ellipse": {
-   "what": "class"
+   "what": "external"
   },
   "ExternalSVG": {
    "bases": [
@@ -194,7 +194,7 @@
    "members": [
     "get_fragment"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:renderer)"
   },
   "FILL_EVEN_ODD": {
    "what": "constant 0"
@@ -203,22 +203,22 @@
    "what": "constant 1"
   },
   "GradientStop": {
-   "what": "callable(*args, **kwargs)"
+   "what": "external"
   },
   "Group": {
-   "what": "class"
+   "what": "external"
   },
   "INKSCAPE_NS": {
    "what": "constant 'http://www.inkscape.org/namespaces/inkscape'"
   },
   "IO": {
-   "what": "class"
+   "what": "external"
   },
   "Image": {
-   "what": "class"
+   "what": "external"
   },
   "Line": {
-   "what": "class"
+   "what": "external"
   },
   "LinearGradientShape": {
    "bases": [
@@ -228,7 +228,7 @@
     "drawDirectly",
     "getBounds"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:clip_shape, POSITIONAL_OR_KEYWORD:x0, POSITIONAL_OR_KEYWORD:y0, POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rl_colors, POSITIONAL_OR_KEYWORD:positions, POSITIONAL_OR_KEYWORD:extend)"
   },
   "MAX_USE_CLONED_ELEMENTS": {
    "what": "constant 20000"
@@ -243,7 +243,7 @@
    "members": [
     "getProperties"
    ],
-   "what": "class"
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
   },
   "NodeTracker": {
    "bases": [
@@ -253,19 +253,19 @@
     "apply_rules",
     "getAttribute"
    ],
-   "what": "class"
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
   },
   "Optional": {
-   "what": "callable(*args, **kwds)"
+   "what": "external"
   },
   "PDFImage": {
-   "what": "class"
+   "what": "external"
   },
   "PX_TO_PT": {
    "what": "constant 0.75"
   },
   "Path": {
-   "what": "class"
+   "what": "external"
   },
   "PathSampler": {
    "bases": [
@@ -274,13 +274,13 @@
    "members": [
     "at"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:segments)"
   },
   "PolyLine": {
-   "what": "class"
+   "what": "external"
   },
   "Polygon": {
-   "what": "class"
+   "what": "external"
   },
   "RadialGradientShape": {
    "bases": [
@@ -290,28 +290,28 @@
     "drawDirectly",
     "getBounds"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:clip_shape, POSITIONAL_OR_KEYWORD:cx, POSITIONAL_OR_KEYWORD:cy, POSITIONAL_OR_KEYWORD:r, POSITIONAL_OR_KEYWORD:rl_colors, POSITIONAL_OR_KEYWORD:positions, POSITIONAL_OR_KEYWORD:extend)"
   },
   "Rect": {
-   "what": "class"
+   "what": "external"
   },
   "SUPPORTED_SVG_FEATURES": {
    "what": "constant frozenset(['http://www.w3.org/graphics/svg/feature/1.2/#conditionalprocessing', 'http://www.w3.org/graphics/svg/feature/1.2/#conditionalprocessingattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#coreattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#externalresourcesrequired', 'http://www.w3.org/graphics/svg/feature/1.2/#font', 'http://www.w3.org/graphics/svg/feature/1.2/#gradient', 'http://www.w3.org/graphics/svg/feature/1.2/#graphicsattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#hyperlinking', 'http://www.w3.org/graphics/svg/feature/1.2/#image', 'http://www.w3.org/graphics/svg/feature/1.2/#navigationattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#opacityattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#paintattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#shape', 'http://www.w3.org/graphics/svg/feature/1.2/#structure', 'http://www.w3.org/graphics/svg/feature/1.2/#svg-static', 'http://www.w3.org/graphics/svg/feature/1.2/#text', 'http://www.w3.org/graphics/svg/feature/1.2/#xlinkattribute', 'http://www.w3.org/tr/svg11/feature#basicclip', 'http://www.w3.org/tr/svg11/feature#basicfont', 'http://www.w3.org/tr/svg11/feature#basicgraphicsattribute', 'http://www.w3.org/tr/svg11/feature#basicpaintattribute', 'http://www.w3.org/tr/svg11/feature#basicstructure', 'http://www.w3.org/tr/svg11/feature#basictext', 'http://www.w3.org/tr/svg11/feature#clip', 'http://www.w3.org/tr/svg11/feature#colorprofile', 'http://www.w3.org/tr/svg11/feature#conditionalprocessing', 'http://www.w3.org/tr/svg11/feature#coreattribute', 'http://www.w3.org/tr/svg11/feature#font', 'http://www.w3.org/tr/svg11/feature#gradient', 'http://www.w3.org/tr/svg11/feature#graphicsattribute', 'http://www.w3.org/tr/svg11/feature#image', 'http://www.w3.org/tr/svg11/feature#opacityattribute', 'http://www.w3.org/tr/svg11/feature#paintattribute', 'http://www.w3.org/tr/svg11/feature#pattern', 'http://www.w3.org/tr/svg11/feature#shape', 'http://www.w3.org/tr/svg11/feature#structure', 'http://www.w3.org/tr/svg11/feature#style', 'http://www.w3.org/tr/svg11/feature#svg', 'http://www.w3.org/tr/svg11/feature#svg-static', 'http://www.w3.org/tr/svg11/feature#svgdom', 'http://www.w3.org/tr/svg11/feature#svgdom-static', 'http://www.w3.org/tr/svg11/feature#viewportattribute', 'http://www.w3.org/tr/svg11/feature#xlinkattribute'])"
   },
   "SVGCanvas": {
-   "what": "class"
+   "what": "external"
   },
   "SVGSource": {
-   "what": "callable(*args, **kwargs)"
+   "what": "external"
   },
   "Shape": {
-   "what": "class"
+   "what": "external"
   },
   "SolidShape": {
-   "what": "class"
+   "what": "external"
   },
   "String": {
-   "what": "class"
+   "what": "external"
   },
   "Svg2RlgAttributeConverter": {
    "bases": [
@@ -335,7 +335,7 @@
     "split_attr_list",
     "split_font_family_list"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:color_converter, POSITIONAL_OR_KEYWORD:font_map)"
   },
   "Svg2RlgShapeConverter": {
    "bases": [
@@ -358,7 +358,7 @@
     "convert_length_attrs",
     "shapeToPath"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:attrConverter)"
   },
   "SvgRenderer": {
    "bases": [
@@ -388,7 +388,7 @@
     "renderUse",
     "xlink_href_target"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:color_converter, POSITIONAL_OR_KEYWORD:parent_svgs, POSITIONAL_OR_KEYWORD:font_map, POSITIONAL_OR_KEYWORD:external_reference_root)"
   },
   "SvgShapeConverter": {
    "bases": [
@@ -397,16 +397,16 @@
    "members": [
     "get_handled_shapes"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:attrConverter)"
   },
   "TextIO": {
-   "what": "class"
+   "what": "external"
   },
   "TypedDict": {
-   "what": "callable(typename, fields=None, /, *, total=True, **kwargs)"
+   "what": "external"
   },
   "Union": {
-   "what": "callable(*args, **kwds)"
+   "what": "external"
   },
   "XML_NS": {
    "what": "constant 'http://www.w3.org/XML/1998/namespace'"
@@ -418,27 +418,27 @@
    "what": "constant 3"
   },
   "_FONT_SIZE_RE": {
-   "what": "Pattern"
+   "what": "external"
   },
   "_FONT_WEIGHTS": {
-   "what": "set"
+   "what": "external"
   },
   "_GRADIENT_URL_RE": {
-   "what": "Pattern"
+   "what": "external"
   },
   "_GradientDef": {
    "bases": [
     "dict"
    ],
    "members": [],
-   "what": "class"
+   "what": "class(?)"
   },
   "_GradientDefBase": {
    "bases": [
     "dict"
    ],
    "members": [],
-   "what": "class"
+   "what": "class(?)"
   },
   "_UseExpansionCounter": {
    "bases": [
@@ -447,109 +447,109 @@
    "members": [
     "allow_clone"
    ],
-   "what": "class"
+   "what": "class()"
   },
   "_convert_palette_to_rgba": {
-   "what": "callable(image: PIL.Image.Image) -> PIL.Image.Image"
+   "what": "callable(POSITIONAL_OR_KEYWORD:image)"
   },
   "_default_language": {
-   "what": "callable() -> str"
+   "what": "callable()"
   },
   "_expand_font_shorthand": {
-   "what": "callable(declarations: dict[str, str]) -> dict[str, str]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:declarations)"
   },
   "_find_clip_shape": {
-   "what": "callable(item: Any) -> Optional[Any]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:item)"
   },
   "_fonts_find_font": {
-   "what": "callable(font_name: str, weight: str = 'normal', style: str = 'normal') -> tuple[str, bool]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
   },
   "_fonts_register_font": {
-   "what": "callable(font_name: str, font_path: Optional[str] = None, weight: str = 'normal', style: str = 'normal', rlgFontName: Optional[str] = None) -> tuple[typing.Optional[str], bool]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
   },
   "_is_inside_text_path": {
-   "what": "callable(node: Any, text_node: Any) -> bool"
+   "what": "callable(POSITIONAL_OR_KEYWORD:node, POSITIONAL_OR_KEYWORD:text_node)"
   },
   "_parse_declarations": {
-   "what": "callable(content: Any) -> dict[str, str]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:content)"
   },
   "_parse_font_shorthand": {
-   "what": "callable(value: str) -> dict[str, str]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:value)"
   },
   "_renderPath": {
-   "what": "callable(path, drawFuncs, countOnly=False, forceClose=False)"
+   "what": "external"
   },
   "_shape_to_pdf_path": {
-   "what": "callable(canvas: Any, shape: Any) -> Any"
+   "what": "callable(POSITIONAL_OR_KEYWORD:canvas, POSITIONAL_OR_KEYWORD:shape)"
   },
   "bezier_arc_from_end_points": {
-   "what": "callable(x1: float, y1: float, rx: float, ry: float, phi: float, fA: int, fS: int, x2: float, y2: float) -> list[tuple[float, float, float, float, float, float, float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2)"
   },
   "cast": {
-   "what": "callable(typ, val)"
+   "what": "external"
   },
   "clean_text": {
-   "what": "callable(text: Optional[str], preserve_space: bool, strip_start: bool = False, strip_end: bool = False) -> Optional[str]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:text, POSITIONAL_OR_KEYWORD:preserve_space, POSITIONAL_OR_KEYWORD:strip_start, POSITIONAL_OR_KEYWORD:strip_end)"
   },
   "convert_quadratic_to_cubic_path": {
-   "what": "callable(q0: tuple[float, float], q1: tuple[float, float], q2: tuple[float, float]) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:q0, POSITIONAL_OR_KEYWORD:q1, POSITIONAL_OR_KEYWORD:q2)"
   },
   "copy_shape_properties": {
-   "what": "callable(source_shape: Any, dest_shape: Any) -> None"
+   "what": "callable(POSITIONAL_OR_KEYWORD:source_shape, POSITIONAL_OR_KEYWORD:dest_shape)"
   },
   "defaultdict": {
-   "what": "class"
+   "what": "external"
   },
   "find_font": {
-   "what": "callable(font_name: str, weight: str = 'normal', style: str = 'normal') -> tuple[str, bool]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
   },
   "flatten_path": {
-   "what": "callable(operators: list[int], points: list[float], steps_per_curve: int = 0) -> list[tuple[float, float, float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:operators, POSITIONAL_OR_KEYWORD:points, POSITIONAL_OR_KEYWORD:steps_per_curve)"
   },
   "get_global_font_map": {
-   "what": "callable() -> svglib.fonts.FontMap"
+   "what": "callable()"
   },
   "iter_text_node": {
-   "what": "callable(node: Any, preserve_space: bool, level: int = 0) -> Any"
+   "what": "callable(POSITIONAL_OR_KEYWORD:node, POSITIONAL_OR_KEYWORD:preserve_space, POSITIONAL_OR_KEYWORD:level)"
   },
   "load_svg_file": {
-   "what": "callable(path: Union[str, os.PathLike[str], BinaryIO, TextIO, IO[bytes], gzip.GzipFile], resolve_entities: bool = False) -> Optional[Any]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:resolve_entities)"
   },
   "logger": {
-   "what": "Logger"
+   "what": "external"
   },
   "mmult": {
-   "what": "callable(A, B)"
+   "what": "external"
   },
   "namedtuple": {
-   "what": "callable(typename, field_names, *, rename=False, defaults=None, module=None)"
+   "what": "external"
   },
   "node_name": {
-   "what": "callable(node: Any) -> Optional[str]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:node)"
   },
   "normalise_svg_path": {
-   "what": "callable(attr: str) -> list[typing.Union[str, list[float]]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:attr)"
   },
   "nudge_points": {
-   "what": "callable(points: list[float]) -> None"
+   "what": "callable(POSITIONAL_OR_KEYWORD:points)"
   },
   "place_glyphs_on_path": {
-   "what": "callable(advances: list[float], sampler: svglib.utils.PathSampler, start: float) -> list[typing.Optional[tuple[float, float, float]]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:advances, POSITIONAL_OR_KEYWORD:sampler, POSITIONAL_OR_KEYWORD:start)"
   },
   "register_font": {
-   "what": "callable(font_name: str, font_path: Optional[str] = None, weight: str = 'normal', style: str = 'normal', rlgFontName: Optional[str] = None) -> tuple[typing.Optional[str], bool]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
   },
   "split_whitespace": {
-   "what": "callable(string, pos=0, endpos=9223372036854775807)"
+   "what": "external"
   },
   "stringWidth": {
-   "what": "callable(text, fontName, fontSize, encoding='utf8')"
+   "what": "external"
   },
   "svg2rlg": {
-   "what": "callable(path: Union[str, os.PathLike[str], BinaryIO, TextIO, IO[bytes], gzip.GzipFile], resolve_entities: bool = False, **kwargs: Any) -> Optional[reportlab.graphics.shapes.Drawing]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:resolve_entities, VAR_KEYWORD:kwargs)"
   },
   "toLength": {
-   "what": "callable(s)"
+   "what": "external"
   }
  },
  "svglib.utils": {
@@ -560,10 +560,10 @@
    "members": [
     "at"
    ],
-   "what": "class"
+   "what": "class(POSITIONAL_OR_KEYWORD:segments)"
   },
   "Union": {
-   "what": "callable(*args, **kwds)"
+   "what": "external"
   },
   "_ARC_ARGUMENTS": {
    "what": "constant (re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([01])'), re.compile('[\\\\s,]*([01])'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'))"
@@ -575,88 +575,88 @@
    "what": "constant '[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'"
   },
   "_PathSegment": {
-   "what": "callable(*args, **kwargs)"
+   "what": "external"
   },
   "acos": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "atan2": {
-   "what": "callable(y, x, /)"
+   "what": "external"
   },
   "bezier_arc_from_centre": {
-   "what": "callable(cx: float, cy: float, rx: float, ry: float, start_ang: float = 0, extent: float = 90) -> list[tuple[float, float, float, float, float, float, float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:cx, POSITIONAL_OR_KEYWORD:cy, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:start_ang, POSITIONAL_OR_KEYWORD:extent)"
   },
   "bezier_arc_from_end_points": {
-   "what": "callable(x1: float, y1: float, rx: float, ry: float, phi: float, fA: int, fS: int, x2: float, y2: float) -> list[tuple[float, float, float, float, float, float, float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2)"
   },
   "bisect_left": {
-   "what": "callable(a, x, lo=0, hi=None, *, key=None)"
+   "what": "external"
   },
   "cast": {
-   "what": "callable(typ, val)"
+   "what": "external"
   },
   "ceil": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "convert_quadratic_to_cubic_path": {
-   "what": "callable(q0: tuple[float, float], q1: tuple[float, float], q2: tuple[float, float]) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float], tuple[float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:q0, POSITIONAL_OR_KEYWORD:q1, POSITIONAL_OR_KEYWORD:q2)"
   },
   "copysign": {
-   "what": "callable(x, y, /)"
+   "what": "external"
   },
   "cos": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "degrees": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "end_point_to_center_parameters": {
-   "what": "callable(x1: float, y1: float, x2: float, y2: float, fA: int, fS: int, rx: float, ry: float, phi: float = 0) -> tuple[float, float, float, float, float, float]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi)"
   },
   "fabs": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "flatten_path": {
-   "what": "callable(operators: list[int], points: list[float], steps_per_curve: int = 0) -> list[tuple[float, float, float, float]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:operators, POSITIONAL_OR_KEYWORD:points, POSITIONAL_OR_KEYWORD:steps_per_curve)"
   },
   "hypot": {
-   "what": "callable"
+   "what": "external"
   },
   "mmult": {
-   "what": "callable(A, B)"
+   "what": "external"
   },
   "normalise_svg_path": {
-   "what": "callable(attr: str) -> list[typing.Union[str, list[float]]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:attr)"
   },
   "place_glyphs_on_path": {
-   "what": "callable(advances: list[float], sampler: svglib.utils.PathSampler, start: float) -> list[typing.Optional[tuple[float, float, float]]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:advances, POSITIONAL_OR_KEYWORD:sampler, POSITIONAL_OR_KEYWORD:start)"
   },
   "radians": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "rotate": {
-   "what": "callable(angle, cx=0, cy=0)"
+   "what": "external"
   },
   "sin": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "split_arc_values": {
-   "what": "callable(op: str, value: str) -> list[typing.Union[str, list[float]]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:op, POSITIONAL_OR_KEYWORD:value)"
   },
   "split_floats": {
-   "what": "callable(op: str, min_num: int, value: str) -> list[typing.Union[str, list[float]]]"
+   "what": "callable(POSITIONAL_OR_KEYWORD:op, POSITIONAL_OR_KEYWORD:min_num, POSITIONAL_OR_KEYWORD:value)"
   },
   "sqrt": {
-   "what": "callable(x, /)"
+   "what": "external"
   },
   "transformPoint": {
-   "what": "callable(A, v)"
+   "what": "external"
   },
   "translate": {
-   "what": "callable(dx, dy=0)"
+   "what": "external"
   },
   "vector_angle": {
-   "what": "callable(u: tuple[float, float], v: tuple[float, float]) -> float"
+   "what": "callable(POSITIONAL_OR_KEYWORD:u, POSITIONAL_OR_KEYWORD:v)"
   }
  }
 }

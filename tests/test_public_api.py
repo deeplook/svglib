@@ -23,20 +23,32 @@ MODULES = ["svglib", "svglib.svglib", "svglib.utils", "svglib.fonts"]
 CONSTANT_TYPES = (bool, int, float, str, bytes, tuple, frozenset, type(None))
 
 
+def parameters(obj: Any) -> str:
+    """Parameter names and kinds; annotations vary between Python versions."""
+    try:
+        params = inspect.signature(obj).parameters.values()
+    except (TypeError, ValueError):
+        return "(?)"
+    return "(" + ", ".join(f"{p.kind.name}:{p.name}" for p in params) + ")"
+
+
 def describe(obj: Any) -> str:
-    """Return a stable description of an object, independent of memory addresses."""
-    if inspect.isclass(obj):
-        return "class"
-    if callable(obj):
-        try:
-            return f"callable{inspect.signature(obj)}"
-        except (TypeError, ValueError):
-            return "callable"
+    """Return a stable description of an object, independent of the Python version.
+
+    Only objects defined by svglib itself are described in detail; imported
+    names (from the standard library, typing, ReportLab) and type aliases look
+    different on different Python versions and are just recorded as present.
+    """
+    own = (getattr(obj, "__module__", "") or "").startswith("svglib")
+    if own and inspect.isclass(obj):
+        return f"class{parameters(obj)}"
+    if own and callable(obj):
+        return f"callable{parameters(obj)}"
     if isinstance(obj, frozenset):
         return f"constant frozenset({sorted(obj)!r})"
     if isinstance(obj, CONSTANT_TYPES):
         return f"constant {obj!r}"
-    return type(obj).__name__
+    return "external"
 
 
 def class_members(cls: type) -> list[str]:
