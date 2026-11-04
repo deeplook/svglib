@@ -38,6 +38,10 @@
   `uv pip` doesn't know, and `make test-dist` works: `scripts/test-dist.sh`
   builds the wheel and tests it in a clean virtual environment. New:
   `make check-versions`.
+- `tests/test_basic.py` is split into modules by topic (`test_paths.py`,
+  `test_text.py`, `test_text_path.py`, `test_use.py`, `test_gradients.py`, ...).
+  The tests that download files carry the pytest marker `network`, so
+  `pytest -m "not network"` (or `make test-fast`) skips them.
 - The READMEs and notes in `demos/` and `tests/` are Markdown now, and the
   testing instructions describe the current uv and Makefile based workflow.
 

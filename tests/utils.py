@@ -3,12 +3,25 @@ from io import StringIO
 from os.path import dirname
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
-from typing import Any
+from typing import Any, Callable
 
 from lxml.etree import XML
 from PIL import Image
+from reportlab.graphics import renderPM
+from reportlab.graphics.shapes import Group
+from reportlab.graphics.shapes import Image as ShapeImage
 
 from svglib.svglib import NodeTracker, svg2rlg
+
+
+def has_renderpm_backend() -> bool:
+    """Return whether ReportLab can load a renderPM bitmap backend."""
+
+    try:
+        renderPM._getPMBackend()
+    except renderPM.RenderPMError:
+        return False
+    return True
 
 
 def drawing_from_svg(content: str) -> Any:
@@ -93,3 +106,39 @@ def svg_raster_difference(
     os.unlink(svg_raster_path)
 
     return (incorrect_pixels / max_pixels) * 100
+
+
+def check_mapping(
+    func: Callable[..., Any], mapping: list[tuple[Any, Any]]
+) -> list[tuple[Any, Any, Any]]:
+    "Call `func` on input in mapping and return list of failed tests."
+
+    failed: list[tuple[Any, Any, Any]] = []
+    for input, expected in mapping:
+        if isinstance(input, dict):
+            result = func(**input)
+        else:
+            result = func(input)
+        if not result == expected:
+            failed.append((input, result, expected))
+
+    if failed:
+        print("failed tests (input, result, expected):")
+        for input, result, expected in failed:
+            print(f"  {input!r} : {result} != {expected}")
+
+    return failed
+
+
+def find_image_in_drawing(item: Any) -> Any:
+    """Return the first reportlab Image found in a drawing or group, or None."""
+    if isinstance(item, ShapeImage):
+        return item
+
+    if isinstance(item, Group):
+        for child in item.contents:
+            result = find_image_in_drawing(child)
+            if result:
+                return result
+
+    return None

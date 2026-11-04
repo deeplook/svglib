@@ -24,6 +24,10 @@ test: ## Run the test suite with coverage.
 	uv run pytest -s -v -rs --cov=src/svglib --cov-report=term-missing --cov-report=html tests
 	uv run coverage html
 
+.PHONY: test-fast
+test-fast: ## Run the test suite without the tests that download files.
+	uv run pytest -m "not network"
+
 .PHONY: lint
 lint: ## Run the formatter and linter.
 	uv run ruff format .
