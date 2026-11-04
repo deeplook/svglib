@@ -210,6 +210,10 @@ DELAYED = object()
 
 # Max number of <use> expansions per document, external SVGs included.
 MAX_USE_EXPANSIONS = 10_000
+# Max number of elements cloned by all <use> expansions of a document, external
+# SVGs included. Every expansion copies and renders its whole target, so the
+# number of expansions alone doesn't bound the work.
+MAX_USE_CLONED_ELEMENTS = 20_000
 
 logger = logging.getLogger(__name__)
 
@@ -997,7 +1001,29 @@ class _UseExpansionCounter:
 
     def __init__(self) -> None:
         self.count = 0
+        self.cloned_elements = 0
+        self.exhausted = False
         self.origin_ids = itertools.count()
+
+    def allow_clone(self, element: Any) -> bool:
+        """Charge the elements of a <use> target about to be cloned to the budget.
+
+        Returns False, and refuses all later <use> elements too, once the
+        budget is spent.
+        """
+        if self.exhausted:
+            # Expansions already under way when the budget ran out.
+            return False
+        self.cloned_elements += sum(1 for _ in element.iter())
+        if self.cloned_elements > MAX_USE_CLONED_ELEMENTS:
+            self.exhausted = True
+            logger.error(
+                "Too many <use> expansions (more than %d cloned elements), "
+                "skipping the rest",
+                MAX_USE_CLONED_ELEMENTS,
+            )
+            return False
+        return True
 
 
 class ExternalSVG:
@@ -2117,6 +2143,8 @@ class SvgRenderer:
         if group is None:
             group = Group()
 
+        if self._use_expansions.exhausted:
+            return group
         self._use_expansions.count += 1
         if self._use_expansions.count > MAX_USE_EXPANSIONS:
             if self._use_expansions.count == MAX_USE_EXPANSIONS + 1:
@@ -2151,11 +2179,15 @@ class SvgRenderer:
             logger.error("Circular <use> reference detected, skipping.")
             return group
 
+        needs_clone = len(node.getchildren()) == 0
+        if needs_clone and not self._use_expansions.allow_clone(item.etree_element):
+            return group
+
         self._use_stack.append(target)
         try:
             if clipping:
                 group.add(clipping)
-            if len(node.getchildren()) == 0:
+            if needs_clone:
                 # Append a copy of the referenced node as the <use> child (if not
                 # already done)
                 node.append(copy.deepcopy(item))

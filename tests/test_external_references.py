@@ -165,6 +165,27 @@ class TestUseExpansionLimit:
         assert len(limit_hits) == 1
 
 
+class TestUseClonedElementsBudget:
+    def test_budget_is_shared_with_external_svgs(self, tmp_path, caplog, monkeypatch):
+        monkeypatch.setattr(svglib, "MAX_USE_CLONED_ELEMENTS", 100)
+        group = '<g id="g">' + '<rect width="1" height="1"/>' * 30 + "</g>"
+        uses = []
+        for n in range(3):
+            (tmp_path / f"ext{n}.svg").write_text(USE_BOMB.format(levels=group))
+            # Two clones of 31 elements per file: the third file is over budget.
+            uses.append(f'<use xlink:href="ext{n}.svg#g"/>' * 2)
+        doc = tmp_path / "doc.svg"
+        doc.write_text(
+            DOC.replace(
+                '<image xlink:href="{href}" width="64" height="64"/>', "".join(uses)
+            )
+        )
+        with caplog.at_level(logging.ERROR, logger="svglib.svglib"):
+            svglib.svg2rlg(str(doc))
+        hits = [r for r in caplog.records if "cloned elements" in r.message]
+        assert len(hits) == 1
+
+
 class TestUseCycles:
     def test_fragment_referencing_itself_through_its_file(self, tmp_path, caplog):
         (tmp_path / "self.svg").write_text(
