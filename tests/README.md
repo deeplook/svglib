@@ -10,7 +10,8 @@ $ uv run pytest
 ```
 
 That is also what the CI workflows run, on Linux, macOS and Windows, with
-CPython 3.9, 3.13 and 3.14 (and PyPy 3.9 on Linux).
+CPython 3.10, 3.13 and 3.14 (and PyPy 3.10 on Linux). Python 3.10 is the oldest
+supported version.
 
 ## Quick runs
 
@@ -97,11 +98,16 @@ the virtual environment.
 ## Other checks
 
 ```console
-$ make lint        # ruff format and ruff check --fix
-$ make typecheck   # mypy src tests
-$ make hooks       # all pre-commit hooks
-$ make all         # lint, typecheck, hooks and tests
+$ make lint            # ruff format and ruff check --fix
+$ make typecheck       # mypy src tests
+$ make hooks           # all pre-commit hooks
+$ make check-versions  # locked and installed tools above their minimum safe versions
+$ make test-dist       # build the wheel, install it in a clean venv, test it there
+$ make all             # lint, typecheck, hooks, check-versions and tests
 ```
+
+`make test-dist` resolves the dependencies afresh, as a user would get them, and
+uses Python 3.13 unless `TEST_DIST_PYTHON` says otherwise.
 
 To run the suite on several Python versions, use [tox](https://tox.wiki/)
 (the interpreters must be installed):

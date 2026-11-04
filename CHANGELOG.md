@@ -31,6 +31,14 @@
 
 - CI now fails if a locked or installed dependency, or the uv binary, is below
   its minimum safe version (`scripts/check_min_versions.py`).
+- CI runs the lowest supported Python, 3.10, next to 3.13, 3.14 and PyPy 3.10.
+- `make install` installs the dev dependency group (it used the `dev` extra,
+  which doesn't exist), `make uninstall` no longer passes an option that
+  `uv pip` doesn't know, and `make test-dist` works: `scripts/test-dist.sh`
+  builds the wheel and tests it in a clean virtual environment. New:
+  `make check-versions`.
+- The READMEs and notes in `demos/` and `tests/` are Markdown now, and the
+  testing instructions describe the current uv and Makefile based workflow.
 
 ### Fixed
 

@@ -37,8 +37,12 @@ typecheck: ## Run the type checker.
 hooks:  ## Run all pre-commit hooks.
 	uv run pre-commit run --all-files
 
+.PHONY: check-versions
+check-versions: ## Check that locked and installed tools are above their minimum safe versions.
+	uv run python scripts/check_min_versions.py
+
 .PHONY: all
-all: lint typecheck hooks test ## Run all checks (lint, typecheck, hooks, tests).
+all: lint typecheck hooks check-versions test ## Run all checks (lint, typecheck, hooks, versions, tests).
 
 .PHONY: dist
 dist: ## Build the package for distribution.
