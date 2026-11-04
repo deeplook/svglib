@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.4.0 (2026-11-04)
 
 ### Added
 
@@ -42,6 +42,10 @@
   `test_text.py`, `test_text_path.py`, `test_use.py`, `test_gradients.py`, ...).
   The tests that download files carry the pytest marker `network`, so
   `pytest -m "not network"` (or `make test-fast`) skips them.
+- `tests/test_public_api.py` records the names, signatures and class members
+  of `svglib`, `svglib.svglib`, `svglib.utils` and `svglib.fonts` in
+  `tests/public_api.json`, so that restructuring the modules can't silently
+  change what user code can import.
 - The READMEs and notes in `demos/` and `tests/` are Markdown now, and the
   testing instructions describe the current uv and Makefile based workflow.
 

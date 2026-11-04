@@ -1,0 +1,662 @@
+{
+ "svglib": {
+  "Optional": {
+   "what": "external"
+  },
+  "PackageNotFoundError": {
+   "what": "external"
+  },
+  "basename": {
+   "what": "external"
+  },
+  "datetime": {
+   "what": "external"
+  },
+  "dirname": {
+   "what": "external"
+  },
+  "exists": {
+   "what": "external"
+  },
+  "main": {
+   "what": "callable()"
+  },
+  "splitext": {
+   "what": "external"
+  },
+  "svg2pdf": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:outputPat, POSITIONAL_OR_KEYWORD:external_reference_root)"
+  },
+  "version": {
+   "what": "external"
+  }
+ },
+ "svglib.fonts": {
+  "DEFAULT_FONT_NAME": {
+   "what": "constant 'Helvetica'"
+  },
+  "DEFAULT_FONT_SIZE": {
+   "what": "constant 12"
+  },
+  "DEFAULT_FONT_STYLE": {
+   "what": "constant 'normal'"
+  },
+  "DEFAULT_FONT_WEIGHT": {
+   "what": "constant 'normal'"
+  },
+  "FontMap": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "build_internal_name",
+    "find_font",
+    "guess_font_filename",
+    "register_default_fonts",
+    "register_font",
+    "register_font_family",
+    "use_fontconfig"
+   ],
+   "what": "class()"
+  },
+  "Optional": {
+   "what": "external"
+  },
+  "STANDARD_FONT_NAMES": {
+   "what": "constant ('Times-Roman', 'Times-Italic', 'Times-Bold', 'Times-BoldItalic', 'Helvetica', 'Helvetica-Oblique', 'Helvetica-Bold', 'Helvetica-BoldOblique', 'Courier', 'Courier-Oblique', 'Courier-Bold', 'Courier-BoldOblique', 'Symbol', 'ZapfDingbats')"
+  },
+  "TTFError": {
+   "what": "external"
+  },
+  "TTFont": {
+   "what": "external"
+  },
+  "Union": {
+   "what": "external"
+  },
+  "_font_map": {
+   "what": "external"
+  },
+  "find_font": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
+  },
+  "get_global_font_map": {
+   "what": "callable()"
+  },
+  "registerFont": {
+   "what": "external"
+  },
+  "register_font": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
+  },
+  "register_font_family": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:family, POSITIONAL_OR_KEYWORD:normal, POSITIONAL_OR_KEYWORD:bold, POSITIONAL_OR_KEYWORD:italic, POSITIONAL_OR_KEYWORD:bolditalic)"
+  }
+ },
+ "svglib.svglib": {
+  "Any": {
+   "what": "external"
+  },
+  "AttributeConverter": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "_applyStyleRules",
+    "convertTransform",
+    "findAttr",
+    "getAllAttributes",
+    "id",
+    "parseMultiAttributes",
+    "set_box"
+   ],
+   "what": "class()"
+  },
+  "BinaryIO": {
+   "what": "external"
+  },
+  "Box": {
+   "bases": [
+    "tuple"
+   ],
+   "members": [
+    "_asdict",
+    "_field_defaults",
+    "_fields",
+    "_make",
+    "_replace",
+    "height",
+    "width",
+    "x",
+    "y"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:x, POSITIONAL_OR_KEYWORD:y, POSITIONAL_OR_KEYWORD:width, POSITIONAL_OR_KEYWORD:height)"
+  },
+  "BytesIO": {
+   "what": "external"
+  },
+  "CSSMatcher": {
+   "bases": [
+    "Matcher"
+   ],
+   "members": [
+    "add_styles"
+   ],
+   "what": "class()"
+  },
+  "Circle": {
+   "what": "external"
+  },
+  "CircularRefError": {
+   "bases": [
+    "Exception"
+   ],
+   "members": [],
+   "what": "class(?)"
+  },
+  "ClippingPath": {
+   "bases": [
+    "Path"
+   ],
+   "members": [
+    "getProperties"
+   ],
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
+  },
+  "DEFAULT_FONT_NAME": {
+   "what": "constant 'Helvetica'"
+  },
+  "DEFAULT_FONT_SIZE": {
+   "what": "constant 12"
+  },
+  "DEFAULT_FONT_STYLE": {
+   "what": "constant 'normal'"
+  },
+  "DEFAULT_FONT_WEIGHT": {
+   "what": "constant 'normal'"
+  },
+  "DELAYED": {
+   "what": "external"
+  },
+  "DirectDraw": {
+   "what": "external"
+  },
+  "Drawing": {
+   "what": "external"
+  },
+  "Ellipse": {
+   "what": "external"
+  },
+  "ExternalSVG": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "get_fragment"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:renderer)"
+  },
+  "FILL_EVEN_ODD": {
+   "what": "constant 0"
+  },
+  "FILL_NON_ZERO": {
+   "what": "constant 1"
+  },
+  "GradientStop": {
+   "what": "external"
+  },
+  "Group": {
+   "what": "external"
+  },
+  "INKSCAPE_NS": {
+   "what": "constant 'http://www.inkscape.org/namespaces/inkscape'"
+  },
+  "IO": {
+   "what": "external"
+  },
+  "Image": {
+   "what": "external"
+  },
+  "Line": {
+   "what": "external"
+  },
+  "LinearGradientShape": {
+   "bases": [
+    "DirectDraw"
+   ],
+   "members": [
+    "drawDirectly",
+    "getBounds"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:clip_shape, POSITIONAL_OR_KEYWORD:x0, POSITIONAL_OR_KEYWORD:y0, POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rl_colors, POSITIONAL_OR_KEYWORD:positions, POSITIONAL_OR_KEYWORD:extend)"
+  },
+  "MAX_USE_CLONED_ELEMENTS": {
+   "what": "constant 20000"
+  },
+  "MAX_USE_EXPANSIONS": {
+   "what": "constant 10000"
+  },
+  "NoStrokePath": {
+   "bases": [
+    "Path"
+   ],
+   "members": [
+    "getProperties"
+   ],
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
+  },
+  "NodeTracker": {
+   "bases": [
+    "ElementWrapper"
+   ],
+   "members": [
+    "apply_rules",
+    "getAttribute"
+   ],
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
+  },
+  "Optional": {
+   "what": "external"
+  },
+  "PDFImage": {
+   "what": "external"
+  },
+  "PX_TO_PT": {
+   "what": "constant 0.75"
+  },
+  "Path": {
+   "what": "external"
+  },
+  "PathSampler": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "at"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:segments)"
+  },
+  "PolyLine": {
+   "what": "external"
+  },
+  "Polygon": {
+   "what": "external"
+  },
+  "RadialGradientShape": {
+   "bases": [
+    "DirectDraw"
+   ],
+   "members": [
+    "drawDirectly",
+    "getBounds"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:clip_shape, POSITIONAL_OR_KEYWORD:cx, POSITIONAL_OR_KEYWORD:cy, POSITIONAL_OR_KEYWORD:r, POSITIONAL_OR_KEYWORD:rl_colors, POSITIONAL_OR_KEYWORD:positions, POSITIONAL_OR_KEYWORD:extend)"
+  },
+  "Rect": {
+   "what": "external"
+  },
+  "SUPPORTED_SVG_FEATURES": {
+   "what": "constant frozenset(['http://www.w3.org/graphics/svg/feature/1.2/#conditionalprocessing', 'http://www.w3.org/graphics/svg/feature/1.2/#conditionalprocessingattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#coreattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#externalresourcesrequired', 'http://www.w3.org/graphics/svg/feature/1.2/#font', 'http://www.w3.org/graphics/svg/feature/1.2/#gradient', 'http://www.w3.org/graphics/svg/feature/1.2/#graphicsattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#hyperlinking', 'http://www.w3.org/graphics/svg/feature/1.2/#image', 'http://www.w3.org/graphics/svg/feature/1.2/#navigationattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#opacityattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#paintattribute', 'http://www.w3.org/graphics/svg/feature/1.2/#shape', 'http://www.w3.org/graphics/svg/feature/1.2/#structure', 'http://www.w3.org/graphics/svg/feature/1.2/#svg-static', 'http://www.w3.org/graphics/svg/feature/1.2/#text', 'http://www.w3.org/graphics/svg/feature/1.2/#xlinkattribute', 'http://www.w3.org/tr/svg11/feature#basicclip', 'http://www.w3.org/tr/svg11/feature#basicfont', 'http://www.w3.org/tr/svg11/feature#basicgraphicsattribute', 'http://www.w3.org/tr/svg11/feature#basicpaintattribute', 'http://www.w3.org/tr/svg11/feature#basicstructure', 'http://www.w3.org/tr/svg11/feature#basictext', 'http://www.w3.org/tr/svg11/feature#clip', 'http://www.w3.org/tr/svg11/feature#colorprofile', 'http://www.w3.org/tr/svg11/feature#conditionalprocessing', 'http://www.w3.org/tr/svg11/feature#coreattribute', 'http://www.w3.org/tr/svg11/feature#font', 'http://www.w3.org/tr/svg11/feature#gradient', 'http://www.w3.org/tr/svg11/feature#graphicsattribute', 'http://www.w3.org/tr/svg11/feature#image', 'http://www.w3.org/tr/svg11/feature#opacityattribute', 'http://www.w3.org/tr/svg11/feature#paintattribute', 'http://www.w3.org/tr/svg11/feature#pattern', 'http://www.w3.org/tr/svg11/feature#shape', 'http://www.w3.org/tr/svg11/feature#structure', 'http://www.w3.org/tr/svg11/feature#style', 'http://www.w3.org/tr/svg11/feature#svg', 'http://www.w3.org/tr/svg11/feature#svg-static', 'http://www.w3.org/tr/svg11/feature#svgdom', 'http://www.w3.org/tr/svg11/feature#svgdom-static', 'http://www.w3.org/tr/svg11/feature#viewportattribute', 'http://www.w3.org/tr/svg11/feature#xlinkattribute'])"
+  },
+  "SVGCanvas": {
+   "what": "external"
+  },
+  "SVGSource": {
+   "what": "external"
+  },
+  "Shape": {
+   "what": "external"
+  },
+  "SolidShape": {
+   "what": "external"
+  },
+  "String": {
+   "what": "external"
+  },
+  "Svg2RlgAttributeConverter": {
+   "bases": [
+    "AttributeConverter"
+   ],
+   "members": [
+    "_split_outside_quotes",
+    "convertColor",
+    "convertDashArray",
+    "convertDashOffset",
+    "convertFillRule",
+    "convertFontFamily",
+    "convertLength",
+    "convertLengthList",
+    "convertLengthToPt",
+    "convertLineCap",
+    "convertLineJoin",
+    "convertOpacity",
+    "findOpacity",
+    "identity_color_converter",
+    "split_attr_list",
+    "split_font_family_list"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:color_converter, POSITIONAL_OR_KEYWORD:font_map)"
+  },
+  "Svg2RlgShapeConverter": {
+   "bases": [
+    "SvgShapeConverter"
+   ],
+   "members": [
+    "applyStyleOnShape",
+    "applyTransformOnGroup",
+    "convertCircle",
+    "convertEllipse",
+    "convertImage",
+    "convertLine",
+    "convertPath",
+    "convertPolygon",
+    "convertPolyline",
+    "convertRect",
+    "convertShape",
+    "convertText",
+    "convertTextPath",
+    "convert_length_attrs",
+    "shapeToPath"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:attrConverter)"
+  },
+  "SvgRenderer": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "_apply_gradient_fill",
+    "_resolve_gradient",
+    "_set_root_font_size",
+    "_warn_old_inkscape",
+    "apply_node_attr_to_group",
+    "get_box",
+    "get_clippath",
+    "get_display",
+    "print_unused_attributes",
+    "render",
+    "renderA",
+    "renderDesc_",
+    "renderG",
+    "renderGradient",
+    "renderNode",
+    "renderStyle",
+    "renderSvg",
+    "renderSwitch",
+    "renderSymbol",
+    "renderTitle_",
+    "renderUse",
+    "xlink_href_target"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:color_converter, POSITIONAL_OR_KEYWORD:parent_svgs, POSITIONAL_OR_KEYWORD:font_map, POSITIONAL_OR_KEYWORD:external_reference_root)"
+  },
+  "SvgShapeConverter": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "get_handled_shapes"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:attrConverter)"
+  },
+  "TextIO": {
+   "what": "external"
+  },
+  "TypedDict": {
+   "what": "external"
+  },
+  "Union": {
+   "what": "external"
+  },
+  "XML_NS": {
+   "what": "constant 'http://www.w3.org/XML/1998/namespace'"
+  },
+  "_BEZIER_KAPPA": {
+   "what": "constant 0.5523"
+  },
+  "_CLOSEPATH": {
+   "what": "constant 3"
+  },
+  "_FONT_SIZE_RE": {
+   "what": "external"
+  },
+  "_FONT_WEIGHTS": {
+   "what": "external"
+  },
+  "_GRADIENT_URL_RE": {
+   "what": "external"
+  },
+  "_GradientDef": {
+   "bases": [
+    "dict"
+   ],
+   "members": [],
+   "what": "class(?)"
+  },
+  "_GradientDefBase": {
+   "bases": [
+    "dict"
+   ],
+   "members": [],
+   "what": "class(?)"
+  },
+  "_UseExpansionCounter": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "allow_clone"
+   ],
+   "what": "class()"
+  },
+  "_convert_palette_to_rgba": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:image)"
+  },
+  "_default_language": {
+   "what": "callable()"
+  },
+  "_expand_font_shorthand": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:declarations)"
+  },
+  "_find_clip_shape": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:item)"
+  },
+  "_fonts_find_font": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
+  },
+  "_fonts_register_font": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
+  },
+  "_is_inside_text_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:node, POSITIONAL_OR_KEYWORD:text_node)"
+  },
+  "_parse_declarations": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:content)"
+  },
+  "_parse_font_shorthand": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:value)"
+  },
+  "_renderPath": {
+   "what": "external"
+  },
+  "_shape_to_pdf_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:canvas, POSITIONAL_OR_KEYWORD:shape)"
+  },
+  "bezier_arc_from_end_points": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2)"
+  },
+  "cast": {
+   "what": "external"
+  },
+  "clean_text": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:text, POSITIONAL_OR_KEYWORD:preserve_space, POSITIONAL_OR_KEYWORD:strip_start, POSITIONAL_OR_KEYWORD:strip_end)"
+  },
+  "convert_quadratic_to_cubic_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:q0, POSITIONAL_OR_KEYWORD:q1, POSITIONAL_OR_KEYWORD:q2)"
+  },
+  "copy_shape_properties": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:source_shape, POSITIONAL_OR_KEYWORD:dest_shape)"
+  },
+  "defaultdict": {
+   "what": "external"
+  },
+  "find_font": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
+  },
+  "flatten_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:operators, POSITIONAL_OR_KEYWORD:points, POSITIONAL_OR_KEYWORD:steps_per_curve)"
+  },
+  "get_global_font_map": {
+   "what": "callable()"
+  },
+  "iter_text_node": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:node, POSITIONAL_OR_KEYWORD:preserve_space, POSITIONAL_OR_KEYWORD:level)"
+  },
+  "load_svg_file": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:resolve_entities)"
+  },
+  "logger": {
+   "what": "external"
+  },
+  "mmult": {
+   "what": "external"
+  },
+  "namedtuple": {
+   "what": "external"
+  },
+  "node_name": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:node)"
+  },
+  "normalise_svg_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:attr)"
+  },
+  "nudge_points": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:points)"
+  },
+  "place_glyphs_on_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:advances, POSITIONAL_OR_KEYWORD:sampler, POSITIONAL_OR_KEYWORD:start)"
+  },
+  "register_font": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
+  },
+  "split_whitespace": {
+   "what": "external"
+  },
+  "stringWidth": {
+   "what": "external"
+  },
+  "svg2rlg": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:path, POSITIONAL_OR_KEYWORD:resolve_entities, VAR_KEYWORD:kwargs)"
+  },
+  "toLength": {
+   "what": "external"
+  }
+ },
+ "svglib.utils": {
+  "PathSampler": {
+   "bases": [
+    "object"
+   ],
+   "members": [
+    "at"
+   ],
+   "what": "class(POSITIONAL_OR_KEYWORD:segments)"
+  },
+  "Union": {
+   "what": "external"
+  },
+  "_ARC_ARGUMENTS": {
+   "what": "constant (re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([01])'), re.compile('[\\\\s,]*([01])'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'), re.compile('[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'))"
+  },
+  "_ARC_FLAG": {
+   "what": "constant '[\\\\s,]*([01])'"
+  },
+  "_ARC_NUMBER": {
+   "what": "constant '[\\\\s,]*([+-]?(?:\\\\d+(?:\\\\.\\\\d*)?|\\\\.\\\\d+)(?:[eE][+-]?\\\\d+)?)'"
+  },
+  "_PathSegment": {
+   "what": "external"
+  },
+  "acos": {
+   "what": "external"
+  },
+  "atan2": {
+   "what": "external"
+  },
+  "bezier_arc_from_centre": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:cx, POSITIONAL_OR_KEYWORD:cy, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:start_ang, POSITIONAL_OR_KEYWORD:extent)"
+  },
+  "bezier_arc_from_end_points": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2)"
+  },
+  "bisect_left": {
+   "what": "external"
+  },
+  "cast": {
+   "what": "external"
+  },
+  "ceil": {
+   "what": "external"
+  },
+  "convert_quadratic_to_cubic_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:q0, POSITIONAL_OR_KEYWORD:q1, POSITIONAL_OR_KEYWORD:q2)"
+  },
+  "copysign": {
+   "what": "external"
+  },
+  "cos": {
+   "what": "external"
+  },
+  "degrees": {
+   "what": "external"
+  },
+  "end_point_to_center_parameters": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi)"
+  },
+  "fabs": {
+   "what": "external"
+  },
+  "flatten_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:operators, POSITIONAL_OR_KEYWORD:points, POSITIONAL_OR_KEYWORD:steps_per_curve)"
+  },
+  "hypot": {
+   "what": "external"
+  },
+  "mmult": {
+   "what": "external"
+  },
+  "normalise_svg_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:attr)"
+  },
+  "place_glyphs_on_path": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:advances, POSITIONAL_OR_KEYWORD:sampler, POSITIONAL_OR_KEYWORD:start)"
+  },
+  "radians": {
+   "what": "external"
+  },
+  "rotate": {
+   "what": "external"
+  },
+  "sin": {
+   "what": "external"
+  },
+  "split_arc_values": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:op, POSITIONAL_OR_KEYWORD:value)"
+  },
+  "split_floats": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:op, POSITIONAL_OR_KEYWORD:min_num, POSITIONAL_OR_KEYWORD:value)"
+  },
+  "sqrt": {
+   "what": "external"
+  },
+  "transformPoint": {
+   "what": "external"
+  },
+  "translate": {
+   "what": "external"
+  },
+  "vector_angle": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:u, POSITIONAL_OR_KEYWORD:v)"
+  }
+ }
+}
