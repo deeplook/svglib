@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.3.3 (2026-11-04)
+
+### Security
+
+- The limit on `<use>` expansions added in 2.3.1 counted expansions, not their
+  size. Each expansion copies and renders the whole element it refers to, so
+  a few kilobytes of nested `<use>` groups with a large group at the bottom
+  could still take minutes and gigabytes to render (CWE-400,
+  GHSA-xpfm-fw4h-qxwv, an incomplete fix of GHSA-555j-qj3j-c8jv). The elements
+  copied by all expansions of a document, external SVGs included, are now
+  limited too (`MAX_USE_CLONED_ELEMENTS`, 20,000); once it is spent the
+  remaining `<use>` elements are skipped and an error is logged. Thanks to
+  Adrian Korwel (@adriank31) for the report.
+
 ## 2.3.2 (2026-10-23)
 
 ### Security
