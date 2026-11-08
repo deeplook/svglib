@@ -9,6 +9,14 @@
   it, so the PyPy job failed at import time. The other jobs follow
   `ubuntu-latest`.
 
+### Fixed
+
+- CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
+  in the `font-size` attribute, in `style` attributes and in the `font`
+  shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
+  keywords use the CSS Fonts values for a 16px `medium`, and `larger` and
+  `smaller` scale by 1.2 (#537).
+
 ## 2.4.0 (2026-11-04)
 
 ### Added
