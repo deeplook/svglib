@@ -83,6 +83,22 @@ class TestTextNode:
         last = drawing.contents[0].contents[1].contents[0]
         assert (last.fontName, last.fontSize) == ("Courier-Bold", 8)
 
+    def test_font_size_keywords(self):
+        """CSS font-size keywords are sizes, in the attribute and the shorthand."""
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <text font-size="medium">x</text>
+              <text font-size="large">x</text>
+              <text style="font-size: xx-small">x</text>
+              <text style="font: bold x-large serif">x</text>
+              <text font-size="larger">x</text>
+            </svg>
+        """
+        )
+        sizes = [text.contents[0].fontSize for text in drawing.contents[0].contents]
+        assert sizes == [16, 18, 9, 24, 16 * 1.2]
+
     def test_invalid_font_shorthand_is_ignored(self):
         drawing = drawing_from_svg(
             """

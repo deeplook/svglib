@@ -334,6 +334,17 @@ _FONT_SIZE_RE = re.compile(
     r"|xx-small|x-small|small|medium|large|x-large|xx-large|larger|smaller)"
     r"(?:/.*)?$"
 )
+# CSS absolute-size keywords in px, with medium the 16px default (CSS Fonts 4 §2.5).
+_FONT_SIZE_KEYWORDS = {
+    "xx-small": 9.0,
+    "x-small": 10.0,
+    "small": 13.0,
+    "medium": 16.0,
+    "large": 18.0,
+    "x-large": 24.0,
+    "xx-large": 32.0,
+    "xxx-large": 48.0,
+}
 _FONT_WEIGHTS = {"bold", "bolder", "lighter"} | {str(w) for w in range(100, 1000, 100)}
 
 
@@ -695,6 +706,13 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                 else:
                     result.append(item)
             return result
+
+        if text in _FONT_SIZE_KEYWORDS:
+            return _FONT_SIZE_KEYWORDS[text]
+        if text == "larger":
+            return em_base * 1.2
+        if text == "smaller":
+            return em_base / 1.2
 
         if text.endswith("%"):
             if self.main_box is None:
