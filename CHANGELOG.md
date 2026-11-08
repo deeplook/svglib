@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Tooling and housekeeping
+
+- CI runs PyPy 3.11 on Ubuntu 24.04 instead of `ubuntu-latest`, which is Ubuntu
+  26.04 now: the PyPy wheel of lxml needs `libxml2.so.2`, and 26.04 doesn't have
+  it, so the PyPy job failed at import time. The other jobs follow
+  `ubuntu-latest`.
+
 ## 2.4.0 (2026-11-04)
 
 ### Added
