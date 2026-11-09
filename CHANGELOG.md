@@ -33,7 +33,7 @@
 - A `clip-path` given in a `style` attribute or a CSS rule, or as a quoted or
   spaced `url()` such as `url("#clip")`, now clips the element; only the
   `clip-path="url(#clip)"` attribute did before. Illustrator's CSS exports and
-  svgo-optimized matplotlib charts set it in CSS (#545).
+  svgo-optimized matplotlib charts set it in CSS (#544).
 
 ## 2.4.0 (2026-11-04)
 
