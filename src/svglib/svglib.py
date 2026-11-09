@@ -23,6 +23,7 @@ import copy
 import gzip
 import itertools
 import logging
+import math
 import os
 import pathlib
 import re
@@ -335,6 +336,12 @@ _CSS_NAMED_COLORS = {
     "lightgray": "#d3d3d3",  # ReportLab has only "lightgrey"
     "rebeccapurple": "#663399",
 }
+
+# An hsl() hue may have an angle unit (CSS Color 4 §7); ReportLab only reads numbers.
+_HSL_HUE_ANGLE_RE = re.compile(
+    r"(hsla?\(\s*)([-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(deg|grad|rad|turn)"
+)
+_DEGREES_PER_ANGLE_UNIT = {"deg": 1.0, "grad": 0.9, "rad": 180 / math.pi, "turn": 360.0}
 
 _FONT_SIZE_RE = re.compile(
     r"^(?:\d*\.?\d+(?:px|pt|pc|cm|mm|in|em|ex|rem|%)"
@@ -907,7 +914,12 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             )
         else:
             # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
-            color = colors.cssParse(keyword)
+            color = colors.cssParse(
+                _HSL_HUE_ANGLE_RE.sub(
+                    lambda m: m[1] + f"{float(m[2]) * _DEGREES_PER_ANGLE_UNIT[m[3]]:g}",
+                    keyword,
+                )
+            )
             if color is None and keyword in _CSS_NAMED_COLORS:
                 color = colors.HexColor(_CSS_NAMED_COLORS[keyword])
             if color is None:

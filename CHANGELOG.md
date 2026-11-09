@@ -34,6 +34,9 @@
   spaced `url()` such as `url("#clip")`, now clips the element; only the
   `clip-path="url(#clip)"` attribute did before. Illustrator's CSS exports and
   svgo-optimized matplotlib charts set it in CSS (#544).
+- The hue of `hsl()` and `hsla()` may now have a CSS angle unit: `deg`, `grad`,
+  `rad` or `turn`. `fill="hsl(120deg, 100%, 50%)"` was drawn black instead of
+  green (#543).
 
 ## 2.4.0 (2026-11-04)
 
