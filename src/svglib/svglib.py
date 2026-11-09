@@ -1782,13 +1782,16 @@ class SvgRenderer:
                 else:
                     find_shapes_from_node(child, shapes)
 
+        # clip-path is not inherited, so only look at the node itself, with its
+        # style attribute and the CSS rules that apply to it.
+        self.attrConverter._applyStyleRules(node)
         clip_path = node.getAttribute("clip-path")
         if not clip_path:
             return None
-        m = re.match(r"url\(#([^)]*)\)", clip_path)
+        m = _GRADIENT_URL_RE.fullmatch(clip_path.strip())
         if not m:
             return None
-        ref = m.groups()[0]
+        ref = m.group(2)
         if ref not in self.definitions:
             logger.warning("Unable to find a clipping path with id %s", ref)
             return None
