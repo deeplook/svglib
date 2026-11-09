@@ -1482,7 +1482,10 @@ class SvgRenderer:
                     # This is SVG content needed to be rendered
                     gr = Group()
                     renderer, img_node = target
-                    renderer.renderNode(img_node, parent=gr)
+                    if node_name(img_node) == "svg":
+                        self._render_svg_in_image(node, renderer, img_node, gr)
+                    else:
+                        renderer.renderNode(img_node, parent=gr)
                     self.apply_node_attr_to_group(node, gr)
                     parent.add(gr)
                     return
@@ -1827,6 +1830,36 @@ class SvgRenderer:
         unused_attrs = [attr for attr in all_attrs if attr not in node.usedAttrs]
         if unused_attrs:
             logger.debug("Unused attrs: %s %s", node_name(node), unused_attrs)
+
+    def _render_svg_in_image(
+        self, image: NodeTracker, renderer: Any, svg: NodeTracker, group: Any
+    ) -> None:
+        """Render the <svg> document referenced by an <image> into its viewport.
+
+        The width and height of the <image> replace those of the referenced
+        document, and its preserveAspectRatio replaces the document's one
+        (SVG 1.1 §5.7). They are restored afterwards, as the same document can
+        be referenced again with another size.
+        """
+        attrib = svg.etree_element.attrib
+        viewport = {
+            "width": image.getAttribute("width"),
+            "height": image.getAttribute("height"),
+            "preserveAspectRatio": image.getAttribute("preserveAspectRatio")
+            or "xMidYMid meet",
+        }
+        saved = {name: attrib.get(name) for name in viewport}
+        for name, value in viewport.items():
+            if value:
+                attrib[name] = value
+        try:
+            renderer.renderNode(svg, parent=group)
+        finally:
+            for name, value in saved.items():
+                if value is None:
+                    attrib.pop(name, None)
+                else:
+                    attrib[name] = value
 
     def apply_node_attr_to_group(self, node: NodeTracker, group: Any) -> None:
         """Apply common attributes (transform, x, y) from a node to a group.

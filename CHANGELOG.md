@@ -34,6 +34,10 @@
   spaced `url()` such as `url("#clip")`, now clips the element; only the
   `clip-path="url(#clip)"` attribute did before. Illustrator's CSS exports and
   svgo-optimized matplotlib charts set it in CSS (#544).
+- An `<image>` that references an SVG document now draws it in the viewport
+  given by its `width` and `height`, with its own `preserveAspectRatio`, as
+  browsers and Inkscape do; the document was drawn at its own size, ignoring
+  the size of the `<image>` (#237, #546).
 
 ## 2.4.0 (2026-11-04)
 
