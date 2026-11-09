@@ -26,6 +26,10 @@
 - The CSS named colors `rebeccapurple` and `lightgray`, which ReportLab lacks,
   are now read, and `darkseagreen` is `#8fbc8f` as in CSS, not ReportLab's
   `#8fbc8b` (#542).
+- The content of a nested `<svg>` with a `viewBox` is now drawn at the size
+  given by its `width` and `height`; it was drawn at 75% of that before,
+  because the px-to-pt factor of the drawing was applied a second time to the
+  nested viewport (#540).
 
 ## 2.4.0 (2026-11-04)
 

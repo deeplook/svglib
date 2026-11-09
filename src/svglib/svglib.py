@@ -2061,9 +2061,12 @@ class SvgRenderer:
                 width = view_box.width
             if height is None:
                 height = view_box.height
-            # canvas is in pts; view_box is in user units — scale converts user→pt
-            x_scale = (width * PX_TO_PT) / view_box.width if view_box.width else 1
-            y_scale = (height * PX_TO_PT) / view_box.height if view_box.height else 1
+            # view_box is in user units. The outermost viewport is in pt, so its
+            # scale converts user units to pt; a nested viewport is in the user
+            # units of its parent, which are already scaled to pt.
+            unit = PX_TO_PT if outermost else 1
+            x_scale = (width * unit) / view_box.width if view_box.width else 1
+            y_scale = (height * unit) / view_box.height if view_box.height else 1
 
             # Apply preserveAspectRatio (default: xMidYMid meet)
             par = (node.getAttribute("preserveAspectRatio") or "xMidYMid meet").strip()
@@ -2078,8 +2081,8 @@ class SvgRenderer:
                     uniform_scale = min(x_scale, y_scale)
 
                 # Compute translation to align content within canvas (in pts)
-                width_pt = width * PX_TO_PT
-                height_pt = height * PX_TO_PT
+                width_pt = width * unit
+                height_pt = height * unit
                 scaled_vb_w = view_box.width * uniform_scale
                 scaled_vb_h = view_box.height * uniform_scale
                 # Horizontal alignment

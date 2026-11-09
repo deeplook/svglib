@@ -1,6 +1,7 @@
 """Embedded and referenced images and SVGs."""
 
 import pytest
+from reportlab.graphics.shapes import Group
 
 from tests.utils import (
     drawing_from_svg,
@@ -39,14 +40,17 @@ class TestEmbedded:
         )
         embedded_svg_group = drawing.contents[0].contents[1].contents[0]
         # x / y translation
-        assert embedded_svg_group.getProperties()["transform"][-2:] == (0, 100)
-        # viewBox scaling
+        assert embedded_svg_group.getProperties()["transform"][-2:] == pytest.approx(
+            (0, 100)
+        )
+        # viewBox scaling: 105mm is 396.85 user units of the parent, for 210
+        # user units of the nested viewBox
         assert (
-            pytest.approx(1.417, 0.001)
+            pytest.approx(1.89, 0.001)
             == embedded_svg_group.getProperties()["transform"][0]
         )
         assert (
-            pytest.approx(1.417, 0.001)
+            pytest.approx(1.89, 0.001)
             == embedded_svg_group.getProperties()["transform"][3]
         )
 
@@ -83,14 +87,43 @@ class TestEmbedded:
             </svg>
         """
         )
-        nested_group = drawing.contents[0].contents[0]
-        xmin, ymin, xmax, ymax = nested_group.getBounds()
+        # Measured in the drawing, after the parent's scaling
+        xmin, ymin, xmax, ymax = drawing.contents[0].getBounds()
         # Parent viewport is 200x200px = 150x150pt (px→pt at 0.75). The inner
         # SVG inherits the parent slot, so the rect fills 150×150pt — not
         # 50×50 (viewBox units without scaling), which is what happens without
         # the fallback.
         assert xmax - xmin == pytest.approx(150)
         assert ymax - ymin == pytest.approx(150)
+
+    @pytest.mark.parametrize(
+        "outer",
+        [
+            'width="400" height="400"',
+            'width="400" height="400" viewBox="0 0 400 400"',
+            'width="210mm" height="297mm" viewBox="0 0 210 297"',
+        ],
+    )
+    def test_nested_svg_fills_its_viewport(self, outer):
+        """The content of a nested <svg> fills the rectangle given by its x, y,
+        width and height, in the user units of the parent."""
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" {outer}>
+              <rect x="50" y="50" width="70" height="70"/>
+              <svg x="50" y="50" width="70" height="70" viewBox="0 0 200 200">
+                <rect x="0" y="0" width="200" height="200"/>
+              </svg>
+            </svg>
+        """
+        )
+        main_group = drawing.contents[0]
+
+        def bounds_in_drawing(shape):
+            return Group(shape, transform=main_group.transform).getBounds()
+
+        reference, nested = main_group.contents
+        assert bounds_in_drawing(nested) == pytest.approx(bounds_in_drawing(reference))
 
     def test_old_inkscape_warning(self, caplog):
         """SVGs from Inkscape <0.92 (90 dpi) should log a warning; newer should not."""
