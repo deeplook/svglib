@@ -68,6 +68,19 @@ class TestColorAttrConverter:
         failed = check_mapping(ac.convertColor, mapping)
         assert len(failed) == 0
 
+    def test_css_named_colors_missing_in_reportlab(self):
+        "CSS named colors that ReportLab lacks or defines differently."
+
+        mapping = (
+            ("rebeccapurple", colors.HexColor(0x663399)),
+            ("lightgray", colors.HexColor(0xD3D3D3)),
+            ("LightGray", colors.HexColor(0xD3D3D3)),
+            ("darkseagreen", colors.HexColor(0x8FBC8F)),
+        )
+        ac = svglib.Svg2RlgAttributeConverter()
+        failed = check_mapping(ac.convertColor, mapping)
+        assert len(failed) == 0
+
     def test_1(self):
         "Test color attribute conversion to CMYK"
 

@@ -23,6 +23,9 @@
 - Color keywords and function names are now read regardless of case, as in
   CSS: `fill="White"`, `stroke="RED"`, `RGB(255, 0, 0)` and `currentcolor` no
   longer leave the shape without a fill or stroke (#541).
+- The CSS named colors `rebeccapurple` and `lightgray`, which ReportLab lacks,
+  are now read, and `darkseagreen` is `#8fbc8f` as in CSS, not ReportLab's
+  `#8fbc8b` (#542).
 
 ## 2.4.0 (2026-11-04)
 

@@ -329,6 +329,13 @@ class ClippingPath(Path):
         return props
 
 
+# CSS named colors that ReportLab lacks or defines differently (CSS Color 4).
+_CSS_NAMED_COLORS = {
+    "darkseagreen": "#8fbc8f",  # ReportLab: #8fbc8b
+    "lightgray": "#d3d3d3",  # ReportLab has only "lightgrey"
+    "rebeccapurple": "#663399",
+}
+
 _FONT_SIZE_RE = re.compile(
     r"^(?:\d*\.?\d+(?:px|pt|pc|cm|mm|in|em|ex|rem|%)"
     r"|xx-small|x-small|small|medium|large|x-large|xx-large|larger|smaller)"
@@ -901,6 +908,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         else:
             # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
             color = colors.cssParse(keyword)
+            if color is None and keyword in _CSS_NAMED_COLORS:
+                color = colors.HexColor(_CSS_NAMED_COLORS[keyword])
             if color is None:
                 # Test if text is a predefined color constant
                 try:
