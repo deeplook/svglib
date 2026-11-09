@@ -16,6 +16,10 @@
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
   keywords use the CSS Fonts values for a 16px `medium`, and `larger` and
   `smaller` scale by 1.2 (#537).
+- Relative font sizes such as `70%`, `2em` and `larger` are now resolved
+  against the font size of the parent element, as in CSS, instead of the
+  default size, so `<tspan font-size="70%">` inside `<g font-size="20">` gets
+  14 and not 11.2 (#327, #538).
 - Color keywords and function names are now read regardless of case, as in
   CSS: `fill="White"`, `stroke="RED"`, `RGB(255, 0, 0)` and `currentcolor` no
   longer leave the shape without a fill or stroke (#541).
