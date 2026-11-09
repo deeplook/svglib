@@ -16,10 +16,17 @@
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
   keywords use the CSS Fonts values for a 16px `medium`, and `larger` and
   `smaller` scale by 1.2 (#537).
-- The content of a nested `<svg>` with a `viewBox` now fills its viewport.
-  The px-to-pt factor of the drawing was applied a second time to the nested
-  viewport, so its content was drawn at 75% of the size given by its `width`
-  and `height` (#540).
+- Relative font sizes such as `70%`, `2em` and `larger` are now resolved
+  against the font size of the parent element, as in CSS, instead of the
+  default size, so `<tspan font-size="70%">` inside `<g font-size="20">` gets
+  14 and not 70 (#327, #538).
+- Color keywords and function names are now read regardless of case, as in
+  CSS: `fill="White"`, `stroke="RED"`, `RGB(255, 0, 0)` and `currentcolor` no
+  longer leave the shape without a fill or stroke (#541).
+- The content of a nested `<svg>` with a `viewBox` is now drawn at the size
+  given by its `width` and `height`; it was drawn at 75% of that before,
+  because the px-to-pt factor of the drawing was applied a second time to the
+  nested viewport (#540).
 
 ## 2.4.0 (2026-11-04)
 

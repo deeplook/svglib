@@ -330,6 +330,7 @@
     "convertLineCap",
     "convertLineJoin",
     "convertOpacity",
+    "findFontSize",
     "findOpacity",
     "identity_color_converter",
     "split_attr_list",

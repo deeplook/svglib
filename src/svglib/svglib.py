@@ -793,6 +793,25 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         # toLength handles mm, cm, in, etc. and returns points; convert to user units.
         return cast(float, toLength(text) / PX_TO_PT)
 
+    def findFontSize(self, svgNode: Any) -> float:
+        """Return the computed font size of a node, in user units.
+
+        Like ``findAttr``, the size is inherited from the ancestors, but
+        relative sizes (``%``, ``em``, ``ex``) are resolved against the font
+        size of the parent, as CSS specifies, rather than the default size.
+        """
+        self._applyStyleRules(svgNode)
+        value = svgNode.attrib.get("font-size", "").replace("!important", "").strip()
+        if svgNode.parent is not None:
+            parent_size = self.findFontSize(svgNode.parent)
+        else:
+            parent_size = DEFAULT_FONT_SIZE / PX_TO_PT  # 16 px default
+        if not value or value == "inherit":
+            return parent_size
+        if value.endswith("%"):
+            return float(value[:-1]) / 100 * parent_size
+        return cast(float, self.convertLength(value, em_base=parent_size))
+
     def convertLengthList(self, svgAttr: str) -> list[Union[float, list[float]]]:
         """Convert a space-separated list of lengths into a list of floats."""
         return [self.convertLength(a) for a in self.split_attr_list(svgAttr)]
@@ -859,14 +878,16 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             A ReportLab color object, or None if the color is invalid.
         """
         text = svgAttr
-        if not text or text == "none":
+        if not text or text.lower() == "none":
             return None
 
         # Gradient/pattern references are handled at the renderer level.
         if text.startswith("url("):
             return None
 
-        if text == "currentColor":
+        # CSS keywords and function names are case-insensitive: "White", "RGB(...)".
+        keyword = text.lower()
+        if keyword == "currentcolor":
             return "currentColor"
         if len(text) in (7, 9) and text[0] == "#":
             color = colors.HexColor(text, hasAlpha=len(text) == 9)
@@ -879,11 +900,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             )
         else:
             # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
-            color = colors.cssParse(text)
+            color = colors.cssParse(keyword)
             if color is None:
                 # Test if text is a predefined color constant
                 try:
-                    color = getattr(colors, text).clone()
+                    color = getattr(colors, keyword).clone()
                 except AttributeError:
                     pass
         if color is None:
@@ -2418,9 +2439,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         fw = attrConv.findAttr(node, "font-weight") or DEFAULT_FONT_WEIGHT
         fstyle = attrConv.findAttr(node, "font-style") or DEFAULT_FONT_STYLE
         ff = attrConv.convertFontFamily(ff, fw, fstyle)
-        fs_attr = attrConv.findAttr(node, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
-        # font-size is always a single value, so convertLength returns a float.
-        fs = cast(float, attrConv.convertLength(fs_attr))  # user units, em_base
+        fs = attrConv.findFontSize(node)  # user units, em_base
         x: list[float]
         y: list[float]
         x, y = self.convert_length_attrs(node, "x", "y", em_base=fs)  # type: ignore
@@ -2574,10 +2593,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
             fw = attrConv.findAttr(subnode, "font-weight") or DEFAULT_FONT_WEIGHT
             fstyle = attrConv.findAttr(subnode, "font-style") or DEFAULT_FONT_STYLE
             ff = attrConv.convertFontFamily(ff, fw, fstyle)
-            fs_attr = (
-                attrConv.findAttr(subnode, "font-size") or f"{DEFAULT_FONT_SIZE}pt"
-            )
-            fs = cast(float, attrConv.convertLength(fs_attr))
+            fs = attrConv.findFontSize(subnode)
             for char in text:
                 glyphs.append((char, stringWidth(char, ff, fs), subnode))
 
@@ -2897,13 +2913,6 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 "convertFontFamily",
                 [DEFAULT_FONT_NAME, DEFAULT_FONT_WEIGHT, DEFAULT_FONT_STYLE],
             ),
-            # User units: the viewport group already applies PX_TO_PT.
-            (
-                ["font-size"],
-                "fontSize",
-                "convertLength",
-                [f"{DEFAULT_FONT_SIZE}pt"],
-            ),
             (["text-anchor"], "textAnchor", "id", ["start"]),
         )
 
@@ -2960,6 +2969,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                             exc_type,
                         )
                     )
+        if shape.__class__ == String and not (
+            only_explicit and ac.findAttr(node, "font-size") == ""
+        ):
+            # User units: the viewport group already applies PX_TO_PT.
+            try:
+                shape.fontSize = ac.findFontSize(node)
+            except ValueError:
+                logger.debug("Ignoring invalid font-size on %s", node_name(node))
         if not only_explicit:
             opacity = ac.findOpacity(node)
             if opacity != 1:
