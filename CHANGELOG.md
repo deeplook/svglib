@@ -16,6 +16,10 @@
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
   keywords use the CSS Fonts values for a 16px `medium`, and `larger` and
   `smaller` scale by 1.2 (#537).
+- The content of a nested `<svg>` with a `viewBox` now fills its viewport.
+  The px-to-pt factor of the drawing was applied a second time to the nested
+  viewport, so its content was drawn at 75% of the size given by its `width`
+  and `height` (#540).
 
 ## 2.4.0 (2026-11-04)
 
