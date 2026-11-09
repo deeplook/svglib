@@ -859,14 +859,16 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             A ReportLab color object, or None if the color is invalid.
         """
         text = svgAttr
-        if not text or text == "none":
+        if not text or text.lower() == "none":
             return None
 
         # Gradient/pattern references are handled at the renderer level.
         if text.startswith("url("):
             return None
 
-        if text == "currentColor":
+        # CSS keywords and function names are case-insensitive: "White", "RGB(...)".
+        keyword = text.lower()
+        if keyword == "currentcolor":
             return "currentColor"
         if len(text) in (7, 9) and text[0] == "#":
             color = colors.HexColor(text, hasAlpha=len(text) == 9)
@@ -879,11 +881,11 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             )
         else:
             # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
-            color = colors.cssParse(text)
+            color = colors.cssParse(keyword)
             if color is None:
                 # Test if text is a predefined color constant
                 try:
-                    color = getattr(colors, text).clone()
+                    color = getattr(colors, keyword).clone()
                 except AttributeError:
                     pass
         if color is None:

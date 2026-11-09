@@ -16,6 +16,9 @@
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
   keywords use the CSS Fonts values for a 16px `medium`, and `larger` and
   `smaller` scale by 1.2 (#537).
+- Color keywords and function names are now read regardless of case, as in
+  CSS: `fill="White"`, `stroke="RED"`, `RGB(255, 0, 0)` and `currentcolor` no
+  longer leave the shape without a fill or stroke (#541).
 
 ## 2.4.0 (2026-11-04)
 

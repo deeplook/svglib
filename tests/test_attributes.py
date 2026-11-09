@@ -50,6 +50,24 @@ class TestColorAttrConverter:
         failed = check_mapping(ac.convertColor, mapping)
         assert len(failed) == 0
 
+    def test_color_keywords_ignore_case(self):
+        "Color keywords and function names are ASCII case-insensitive, as in CSS."
+
+        mapping = (
+            ("Red", colors.red),
+            ("WHITE", colors.white),
+            ("SlateGrey", colors.HexColor(0x708090)),
+            ("Transparent", colors.Color(0, 0, 0, 0)),
+            ("RGB(255, 0, 0)", colors.red),
+            ("Rgba(255, 255, 128, .5)", colors.Color(1, 1, 128 / 255, 0.5)),
+            ("currentcolor", "currentColor"),
+            ("CURRENTCOLOR", "currentColor"),
+            ("None", None),
+        )
+        ac = svglib.Svg2RlgAttributeConverter()
+        failed = check_mapping(ac.convertColor, mapping)
+        assert len(failed) == 0
+
     def test_1(self):
         "Test color attribute conversion to CMYK"
 
