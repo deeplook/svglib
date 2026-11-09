@@ -417,6 +417,9 @@
   "_CLOSEPATH": {
    "what": "constant 3"
   },
+  "_CSS_NAMED_COLORS": {
+   "what": "external"
+  },
   "_FONT_SIZE_KEYWORDS": {
    "what": "external"
   },
