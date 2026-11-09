@@ -285,6 +285,51 @@ class TestPaths:
         assert rect_clip.getProperties()["fillColor"] is None
         assert rect_clip.getProperties()["strokeColor"] is None
 
+    @pytest.mark.parametrize(
+        "clip_path",
+        [
+            'clip-path="url(#clip)"',
+            "clip-path=\"url('#clip')\"",
+            "clip-path='url(\"#clip\")'",
+            'clip-path="url( #clip )"',
+            'style="clip-path: url(#clip)"',
+            # as in the CSS of Illustrator exports and svgo-optimized files
+            'class="clipped"',
+        ],
+    )
+    def test_clipping_path_reference(self, clip_path):
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                <style>.clipped {{ clip-path: url(#clip); }}</style>
+                <clipPath id="clip"><rect width="10" height="10"/></clipPath>
+                <path {clip_path} d="M0,0 L 50 0 50 50Z"/>
+            </svg>
+        """
+        )
+        assert isinstance(self.find_clipping(drawing), ClippingPath)
+
+    @pytest.mark.parametrize(
+        "clip_path", ['clip-path="none"', 'style="clip-path: none"']
+    )
+    def test_clipping_path_none(self, clip_path):
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                <clipPath id="clip"><rect width="10" height="10"/></clipPath>
+                <g clip-path="url(#clip)"><path {clip_path} d="M0,0 L 50 0 50 50Z"/></g>
+            </svg>
+        """
+        )
+        group = drawing.contents[0].contents[0]
+        # The clip of the group applies, the child does not get one of its own
+        assert isinstance(group.contents[0], ClippingPath)
+        assert self.find_clipping(group.contents[1]) is None
+
     def find_clipping(self, item):
         if isinstance(item, ClippingPath):
             return item
