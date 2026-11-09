@@ -110,6 +110,41 @@ class TestTextNode:
         string = drawing.contents[0].contents[0].contents[0]
         assert (string.fontName, string.fontSize) == ("Helvetica", 20)
 
+    def test_relative_font_size_uses_parent_font_size(self):
+        """Percent and em font sizes are relative to the parent's font size."""
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">
+              <g font-size="20">
+                <text x="10" y="50">a<tspan style="font-size:70%">b</tspan><tspan
+                      font-size="2em">c<tspan font-size="50%">d</tspan></tspan></text>
+                <text x="10" y="80" font-size="150%">e</text>
+              </g>
+            </svg>
+        """
+        )
+        texts = drawing.contents[0].contents[0].contents
+        sizes = {s.text: s.fontSize for text in texts for s in text.contents}
+        assert sizes == {"a": 20, "b": 14, "c": 40, "d": 20, "e": 30}
+
+    def test_relative_font_size_keywords_use_parent_font_size(self):
+        """``larger`` and ``smaller`` scale the parent's font size."""
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">
+              <g font-size="20">
+                <text x="10" y="50">a<tspan font-size="larger">b</tspan><tspan
+                      font-size="smaller">c</tspan></text>
+              </g>
+            </svg>
+        """
+        )
+        texts = drawing.contents[0].contents[0].contents
+        sizes = {s.text: s.fontSize for text in texts for s in text.contents}
+        assert sizes["a"] == 20
+        assert abs(sizes["b"] - 24) < 1e-9
+        assert abs(sizes["c"] - 20 / 1.2) < 1e-9
+
     def test_baseline_shift_sources_and_units(self):
         drawing = drawing_from_svg(
             """
