@@ -36,7 +36,7 @@
   svgo-optimized matplotlib charts set it in CSS (#544).
 - A `light-dark()` color, which draw.io writes in its SVG exports, is now read
   as its first, light color, the one CSS uses when no `color-scheme` is set;
-  the shape lost its fill or stroke before (#547).
+  the shape lost its fill or stroke before (#546).
 
 ## 2.4.0 (2026-11-04)
 
