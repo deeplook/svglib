@@ -468,6 +468,9 @@
   "_find_clip_shape": {
    "what": "callable(POSITIONAL_OR_KEYWORD:item)"
   },
+  "_first_css_argument": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:arguments)"
+  },
   "_fonts_find_font": {
    "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style)"
   },
