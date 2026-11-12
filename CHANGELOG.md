@@ -44,6 +44,9 @@
   given by its `width` and `height`, with its own `preserveAspectRatio`, as
   browsers and Inkscape do; the document was drawn at its own size, ignoring
   the size of the `<image>` (#237, #547).
+- `em` and `ex` lengths in the geometry of shapes, such as `width="2em"` or
+  `r="1em"`, and in the `width` and `height` of the root `<svg>`, now use the
+  font size of the element, as in CSS; they always used 16px before (#549).
 
 ## 2.4.0 (2026-11-04)
 
