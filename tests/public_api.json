@@ -422,6 +422,9 @@
   "_CSS_NAMED_COLORS": {
    "what": "external"
   },
+  "_DEGREES_PER_ANGLE_UNIT": {
+   "what": "external"
+  },
   "_FONT_SIZE_KEYWORDS": {
    "what": "external"
   },
@@ -447,6 +450,9 @@
    ],
    "members": [],
    "what": "class(?)"
+  },
+  "_HSL_HUE_ANGLE_RE": {
+   "what": "external"
   },
   "_UseExpansionCounter": {
    "bases": [
