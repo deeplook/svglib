@@ -903,6 +903,10 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         keyword = text.lower()
         if keyword == "currentcolor":
             return "currentColor"
+        if keyword.startswith("light-dark(") and keyword.endswith(")"):
+            # CSS Color 5: without a color-scheme, which SVG documents rarely set,
+            # light-dark() is its first, light color.
+            return self.convertColor(_first_css_argument(text[len("light-dark(") : -1]))
         if len(text) in (7, 9) and text[0] == "#":
             color = colors.HexColor(text, hasAlpha=len(text) == 9)
         elif len(text) == 4 and text[0] == "#":
@@ -3257,6 +3261,19 @@ def load_svg_file(path: SVGSource, resolve_entities: bool = False) -> Optional[A
         return None
     else:
         return svg_root
+
+
+def _first_css_argument(arguments: str) -> str:
+    """Return the first of comma-separated CSS arguments, as in "rgb(1, 2, 3), red"."""
+    depth = 0
+    for index, character in enumerate(arguments):
+        if character == "(":
+            depth += 1
+        elif character == ")":
+            depth -= 1
+        elif character == "," and depth == 0:
+            return arguments[:index].strip()
+    return arguments.strip()
 
 
 def node_name(node: Any) -> Optional[str]:

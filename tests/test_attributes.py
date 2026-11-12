@@ -95,6 +95,23 @@ class TestColorAttrConverter:
         failed = check_mapping(ac.convertColor, mapping)
         assert len(failed) == 0
 
+    def test_light_dark_color(self):
+        "light-dark() is its light color, as in draw.io exports."
+
+        mapping = (
+            (
+                "light-dark(rgb(99, 222, 23), rgb(237, 237, 237))",
+                colors.HexColor(0x63DE17),
+            ),
+            ("Light-Dark(#00f, white)", colors.HexColor(0x0000FF)),
+            ("light-dark(hsl(120, 100%, 50%), red)", colors.HexColor(0x00FF00)),
+            ("light-dark(red)", colors.HexColor(0xFF0000)),
+        )
+        ac = svglib.Svg2RlgAttributeConverter()
+        failed = check_mapping(ac.convertColor, mapping)
+        assert len(failed) == 0
+        assert ac.convertColor("light-dark(currentColor, red)") == "currentColor"
+
     def test_1(self):
         "Test color attribute conversion to CMYK"
 
