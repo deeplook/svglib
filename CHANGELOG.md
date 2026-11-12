@@ -37,6 +37,9 @@
 - The hue of `hsl()` and `hsla()` may now have a CSS angle unit: `deg`, `grad`,
   `rad` or `turn`. `fill="hsl(120deg, 100%, 50%)"` was drawn black instead of
   green (#543).
+- A `light-dark()` color, which draw.io writes in its SVG exports, is now read
+  as its first, light color, the one CSS uses when no `color-scheme` is set;
+  the shape lost its fill or stroke before (#546).
 - An `<image>` that references an SVG document now draws it in the viewport
   given by its `width` and `height`, with its own `preserveAspectRatio`, as
   browsers and Inkscape do; the document was drawn at its own size, ignoring
