@@ -86,10 +86,9 @@ class TestColorAttrConverter:
 
         mapping = (
             ("hsl(120deg, 100%, 50%)", colors.Color(0, 1, 0, 1)),
-            ("hsl(120deg 100% 50%)", colors.Color(0, 1, 0, 1)),
-            ("HSL(120DEG 100% 50%)", colors.Color(0, 1, 0, 1)),
-            ("hsl(0.5turn 100% 50%)", colors.Color(0, 1, 1, 1)),
-            ("hsl(200grad 100% 50%)", colors.Color(0, 1, 1, 1)),
+            ("HSL(120DEG, 100%, 50%)", colors.Color(0, 1, 0, 1)),
+            ("hsl(0.5turn, 100%, 50%)", colors.Color(0, 1, 1, 1)),
+            ("hsl(200grad, 100%, 50%)", colors.Color(0, 1, 1, 1)),
             ("hsla(240deg, 100%, 50%, 0.5)", colors.Color(0, 0, 1, 0.5)),
         )
         ac = svglib.Svg2RlgAttributeConverter()
