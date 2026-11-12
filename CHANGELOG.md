@@ -44,6 +44,9 @@
   given by its `width` and `height`, with its own `preserveAspectRatio`, as
   browsers and Inkscape do; the document was drawn at its own size, ignoring
   the size of the `<image>` (#237, #547).
+- `fill` and `stroke` set to `currentColor` in another case, such as
+  `currentcolor`, or with `!important`, now use the `color` property; they were
+  drawn black (#548).
 
 ## 2.4.0 (2026-11-04)
 

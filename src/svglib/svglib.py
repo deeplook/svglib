@@ -3008,12 +3008,16 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                             svgAttrValue = shape.strokeColor.alpha
                         else:
                             svgAttrValue = defaults[index]  # type: ignore
-                    if svgAttrValue == "currentColor":
+                    if isinstance(svgAttrValue, str):
+                        svgAttrValue = svgAttrValue.replace("!important", "").strip()
+                    # CSS keywords are case-insensitive: "currentcolor", "CurrentColor".
+                    if (
+                        isinstance(svgAttrValue, str)
+                        and svgAttrValue.lower() == "currentcolor"
+                    ):
                         svgAttrValue = (
                             ac.findAttr(node.parent, "color") or defaults[index]  # type: ignore
                         )
-                    if isinstance(svgAttrValue, str):
-                        svgAttrValue = svgAttrValue.replace("!important", "").strip()
                     svgAttrValues.append(svgAttrValue)
                 try:
                     meth = getattr(ac, func)
