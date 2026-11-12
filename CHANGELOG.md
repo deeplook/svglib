@@ -44,6 +44,10 @@
   given by its `width` and `height`, with its own `preserveAspectRatio`, as
   browsers and Inkscape do; the document was drawn at its own size, ignoring
   the size of the `<image>` (#237, #547).
+- `width="auto"` and `height="auto"` on an `<svg>`, as Figma writes them, for
+  instance in the country flags of the ProtonVPN apps, are now read like a
+  missing `width` and `height`; `svg2rlg()` failed with
+  `ValueError: Can't convert 'auto' to length` (#550).
 
 ## 2.4.0 (2026-11-04)
 

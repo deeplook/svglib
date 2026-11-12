@@ -705,6 +705,9 @@ class Svg2RlgAttributeConverter(AttributeConverter):
         text = svgAttr.replace(",", " ").strip()
         if not text:
             return default
+        # width="auto", as Figma writes it on <svg>, is the same as no width
+        if text.lower() == "auto" and attr_name in ("width", "height"):
+            return default
         if " " in text:
             # Multiple length values, returning a list
             items = [

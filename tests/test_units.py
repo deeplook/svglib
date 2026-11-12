@@ -131,6 +131,13 @@ class TestDrawingDimensionsUserUnits:
                 f"height mismatch for {val}"
             )
 
+    def test_auto_is_like_no_width_and_height(self):
+        """width="auto" height="auto", as Figma writes them, use the viewBox."""
+        for width, height in (("auto", "auto"), ("AUTO", "16"), ("24", " auto ")):
+            d = _drawing(width, height, 'viewBox="0 0 24 16"')
+            assert math.isclose(d.width, 24 * PX_TO_PT)
+            assert math.isclose(d.height, 16 * PX_TO_PT)
+
 
 # ---------------------------------------------------------------------------
 # Drawing dimensions — point units
