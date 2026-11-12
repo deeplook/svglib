@@ -367,6 +367,7 @@
    ],
    "members": [
     "_apply_gradient_fill",
+    "_render_svg_in_image",
     "_resolve_gradient",
     "_set_root_font_size",
     "_warn_old_inkscape",

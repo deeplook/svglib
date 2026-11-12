@@ -3,6 +3,7 @@
 import pytest
 from reportlab.graphics.shapes import Group
 
+from svglib.svglib import svg2rlg
 from tests.utils import (
     drawing_from_svg,
     find_image_in_drawing,
@@ -53,6 +54,47 @@ class TestEmbedded:
             pytest.approx(1.89, 0.001)
             == embedded_svg_group.getProperties()["transform"][3]
         )
+
+    @pytest.mark.parametrize(
+        "image_attributes",
+        [
+            'width="40" height="20" preserveAspectRatio="none"',
+            'width="40" height="20"',
+            'width="40" height="20" preserveAspectRatio="xMinYMax slice"',
+        ],
+    )
+    def test_svg_in_image_fills_the_image_viewport(self, tmp_path, image_attributes):
+        """An <image> of an SVG document draws it in the image's viewport, with
+        the image's preserveAspectRatio, like a nested <svg> (issue #237)."""
+        (tmp_path / "square.svg").write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="200mm" height="200mm"'
+            ' viewBox="0 0 10 10" preserveAspectRatio="xMaxYMin meet">'
+            '<rect width="10" height="10"/></svg>'
+        )
+        header = (
+            '<svg xmlns="http://www.w3.org/2000/svg"'
+            ' xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100">'
+        )
+        image = tmp_path / "image.svg"
+        image.write_text(
+            header + f'<image xlink:href="square.svg" x="5" y="5" {image_attributes}/>'
+            # The same document again, at another size
+            '<image xlink:href="square.svg" x="60" y="60" width="10" height="10"/>'
+            "</svg>"
+        )
+        inline = tmp_path / "inline.svg"
+        nested = '<rect width="10" height="10"/></svg>'
+        inline.write_text(
+            header
+            + f'<svg x="5" y="5" viewBox="0 0 10 10" {image_attributes}>{nested}'
+            + f'<svg x="60" y="60" width="10" height="10" viewBox="0 0 10 10">{nested}'
+            + "</svg>"
+        )
+        image_groups = svg2rlg(str(image)).contents[0].contents
+        inline_groups = svg2rlg(str(inline)).contents[0].contents
+        assert len(image_groups) == len(inline_groups) == 2
+        for image_group, inline_group in zip(image_groups, inline_groups):
+            assert image_group.getBounds() == pytest.approx(inline_group.getBounds())
 
     def test_embedded_svg_with_percentages(self):
         drawing = drawing_from_svg(

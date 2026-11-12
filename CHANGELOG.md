@@ -40,6 +40,10 @@
 - A `light-dark()` color, which draw.io writes in its SVG exports, is now read
   as its first, light color, the one CSS uses when no `color-scheme` is set;
   the shape lost its fill or stroke before (#546).
+- An `<image>` that references an SVG document now draws it in the viewport
+  given by its `width` and `height`, with its own `preserveAspectRatio`, as
+  browsers and Inkscape do; the document was drawn at its own size, ignoring
+  the size of the `<image>` (#237, #547).
 
 ## 2.4.0 (2026-11-04)
 
