@@ -499,6 +499,9 @@
   "_shape_to_pdf_path": {
    "what": "callable(POSITIONAL_OR_KEYWORD:canvas, POSITIONAL_OR_KEYWORD:shape)"
   },
+  "_without_important": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:value)"
+  },
   "bezier_arc_from_end_points": {
    "what": "callable(POSITIONAL_OR_KEYWORD:x1, POSITIONAL_OR_KEYWORD:y1, POSITIONAL_OR_KEYWORD:rx, POSITIONAL_OR_KEYWORD:ry, POSITIONAL_OR_KEYWORD:phi, POSITIONAL_OR_KEYWORD:fA, POSITIONAL_OR_KEYWORD:fS, POSITIONAL_OR_KEYWORD:x2, POSITIONAL_OR_KEYWORD:y2)"
   },

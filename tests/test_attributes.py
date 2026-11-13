@@ -86,6 +86,27 @@ class TestColorAttrConverter:
         assert [r.fillColor for r in rects] == [colors.red] * 3
         assert rects[1].strokeColor == colors.red
 
+    @pytest.mark.parametrize(
+        "color", ['style="color: red !important"', 'color="red !important"']
+    )
+    def test_current_color_with_important_color(self, color, caplog):
+        "A color property marked !important is still read for currentColor."
+
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g {color}>
+                <rect width="10" height="10" fill="currentColor"/>
+                <rect width="10" height="10" fill="none" stroke="CurrentColor"/>
+              </g>
+            </svg>
+        """
+        )
+        rects = drawing.contents[0].contents[0].contents
+        assert rects[0].fillColor == colors.red
+        assert rects[1].strokeColor == colors.red
+        assert "Can't handle color" not in caplog.text
+
     def test_css_named_colors_missing_in_reportlab(self):
         "CSS named colors that ReportLab lacks or defines differently."
 

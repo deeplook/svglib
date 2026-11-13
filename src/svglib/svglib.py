@@ -2331,6 +2331,13 @@ class SvgShapeConverter:
         return [key[7:].lower() for key in dir(cls) if key.startswith("convert")]
 
 
+def _without_important(value: Any) -> Any:
+    """A style value without its !important flag."""
+    if isinstance(value, str):
+        return value.replace("!important", "").strip()
+    return value
+
+
 class Svg2RlgShapeConverter(SvgShapeConverter):
     """A class for converting SVG shapes to ReportLab Graphics shapes."""
 
@@ -3019,15 +3026,15 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                             svgAttrValue = shape.strokeColor.alpha
                         else:
                             svgAttrValue = defaults[index]  # type: ignore
-                    if isinstance(svgAttrValue, str):
-                        svgAttrValue = svgAttrValue.replace("!important", "").strip()
+                    svgAttrValue = _without_important(svgAttrValue)
                     # CSS keywords are case-insensitive: "currentcolor", "CurrentColor".
                     if (
                         isinstance(svgAttrValue, str)
                         and svgAttrValue.lower() == "currentcolor"
                     ):
-                        svgAttrValue = (
-                            ac.findAttr(node.parent, "color") or defaults[index]  # type: ignore
+                        # the color property may be !important too
+                        svgAttrValue = _without_important(
+                            ac.findAttr(node.parent, "color") or defaults[index]
                         )
                     svgAttrValues.append(svgAttrValue)
                 try:
