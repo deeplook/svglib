@@ -47,6 +47,10 @@
 - `em` and `ex` lengths in the geometry of shapes, such as `width="2em"` or
   `r="1em"`, and in the `width` and `height` of the root `<svg>`, now use the
   font size of the element, as in CSS; they always used 16px before (#549).
+- The `x` and `y` of a `<use>`, and of an `<image>` that references SVG
+  content, are now read as lengths: with a unit, such as `x="20px"` or
+  `y="1in"`, or as a percentage, the content was drawn at the origin before
+  (#551).
 
 ## 2.4.0 (2026-11-04)
 
