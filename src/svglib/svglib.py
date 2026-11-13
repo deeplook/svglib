@@ -1884,10 +1884,10 @@ class SvgRenderer:
             node: The NodeTracker object for the SVG node.
             group: The ReportLab Group to apply the attributes to.
         """
-        getAttr = node.getAttribute
-        transform, x, y = map(getAttr, ("transform", "x", "y"))
+        transform = node.getAttribute("transform")
+        x, y = self.shape_converter.convert_length_attrs(node, "x", "y")
         if x or y:
-            transform += f" translate({x or 0}, {y or 0})"
+            transform += f" translate({x}, {y})"
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, group)
 
