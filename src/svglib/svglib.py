@@ -2385,7 +2385,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         self,
         node: Any,
         *attrs: str,
-        em_base: float = DEFAULT_FONT_SIZE / PX_TO_PT,
+        em_base: Optional[float] = None,
         **kwargs: Any,
     ) -> list[float]:
         """Convert a list of length attributes from a node.
@@ -2393,7 +2393,8 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         Args:
             node: The lxml node.
             *attrs: The names of the attributes to convert.
-            em_base: The base font size for 'em' units.
+            em_base: The base font size for 'em' units; by default the font
+                size of the node, as in CSS.
             **kwargs: Can include 'defaults' for fallback values.
 
         Returns:
@@ -2406,6 +2407,16 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         )
         convLength = self.attrConverter.convertLength
         defaults = kwargs.get("defaults", (0.0,) * len(attrs))
+        if em_base is None:
+            relative = any(
+                getAttr(attr).strip().endswith(("em", "ex")) for attr in attrs
+            )
+            if not relative:
+                em_base = DEFAULT_FONT_SIZE / PX_TO_PT
+            elif hasattr(node, "parent"):
+                em_base = self.attrConverter.findFontSize(node)
+            else:  # the root <svg>, an lxml element
+                em_base = self.attrConverter.root_font_size
         return [
             convLength(getAttr(attr), attr_name=attr, em_base=em_base, default=default)  # type: ignore
             for attr, default in zip(attrs, defaults)
