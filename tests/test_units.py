@@ -138,6 +138,16 @@ class TestDrawingDimensionsUserUnits:
             assert math.isclose(d.width, 24 * PX_TO_PT)
             assert math.isclose(d.height, 16 * PX_TO_PT)
 
+    def test_auto_without_viewbox_is_like_no_width_and_height(self):
+        """Without a viewBox, width="auto" and height="auto" are like no size."""
+        without_size = drawing_from_svg(
+            '<svg xmlns="http://www.w3.org/2000/svg">'
+            '<rect x="0" y="0" width="10" height="10" fill="red"/></svg>'
+        )
+        d = _drawing("auto", "auto")
+        assert (d.width, d.height) == (without_size.width, without_size.height)
+        assert len(d.contents) == len(without_size.contents)
+
 
 # ---------------------------------------------------------------------------
 # Drawing dimensions — point units

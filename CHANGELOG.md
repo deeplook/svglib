@@ -46,8 +46,8 @@
   the size of the `<image>` (#237, #547).
 - `width="auto"` and `height="auto"` on an `<svg>`, as Figma writes them, for
   instance in the country flags of the ProtonVPN apps, are now read like a
-  missing `width` and `height`; `svg2rlg()` failed with
-  `ValueError: Can't convert 'auto' to length` (#550).
+  missing `width` and `height`, also on a root `<svg>` without a `viewBox`;
+  `svg2rlg()` failed with `ValueError: Can't convert 'auto' to length` (#550).
 
 ## 2.4.0 (2026-11-04)
 

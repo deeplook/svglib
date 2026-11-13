@@ -2047,8 +2047,12 @@ class SvgRenderer:
             # A viewBox that is not four numbers is invalid and ignored per the
             # SVG spec; fall through to the width/height fallback below.
         if default_box:
-            width, height = map(svg_node.getAttribute, ("width", "height"))
-            width, height = map(self.attrConverter.convertLength, (width, height))  # type: ignore
+            width, height = (
+                self.attrConverter.convertLength(
+                    svg_node.getAttribute(name), attr_name=name
+                )
+                for name in ("width", "height")
+            )
             return Box(0, 0, width, height)
         return Box(0, 0, 0, 0)  # fallback
 
