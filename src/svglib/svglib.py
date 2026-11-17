@@ -337,6 +337,12 @@ _CSS_NAMED_COLORS = {
     "rebeccapurple": "#663399",
 }
 
+# CSS custom properties, such as --color, are kept on the nodes with this prefix
+_CUSTOM_PROPERTY_PREFIX = "__var"
+_CUSTOM_PROPERTY_NAME_RE = re.compile(r"--[\w-]+")
+# var() inside the custom properties and fallbacks of a value, at most
+_MAX_VAR_DEPTH = 16
+
 # An hsl() hue may have an angle unit (CSS Color 4 §7); ReportLab only reads numbers.
 _HSL_HUE_ANGLE_RE = re.compile(
     r"(hsla?\(\s*)([-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(deg|grad|rad|turn)"
@@ -492,7 +498,9 @@ class AttributeConverter:
                 attrs = self.parseMultiAttributes(svgNode.attrib.get("style"))
                 for key, val in attrs.items():
                     # lxml nodes cannot accept attributes starting with '-'
-                    if not key.startswith("-"):
+                    if key.startswith("--"):
+                        svgNode.attrib[_CUSTOM_PROPERTY_PREFIX + key] = val
+                    elif not key.startswith("-"):
                         svgNode.attrib[key] = val
                 svgNode.attrib["__rules_applied"] = "1"
 
@@ -514,12 +522,72 @@ class AttributeConverter:
         self._applyStyleRules(svgNode)
 
         attr_value: str = svgNode.attrib.get(name, "").strip()
+        if "var(" in attr_value.lower():
+            # An invalid value is as if it was not set, so the parent's is used
+            attr_value = self._substitute_var(svgNode, attr_value) or ""
 
         if attr_value and attr_value != "inherit":
             return attr_value
         if svgNode.parent is not None:
             return self.findAttr(svgNode.parent, name)
         return ""
+
+    def _custom_property(self, svgNode: Any, name: str, depth: int) -> Optional[str]:
+        """Return a CSS custom property, such as --color, of a node or its ancestors."""
+        node = svgNode
+        while node is not None:
+            self._applyStyleRules(node)
+            value = node.attrib.get(_CUSTOM_PROPERTY_PREFIX + name)
+            if value is not None:
+                # Its own var() are those of the node that declares it
+                return self._substitute_var(node, value.strip(), depth + 1)
+            node = node.parent
+        return None
+
+    def _substitute_var(
+        self, svgNode: Any, value: str, depth: int = 0
+    ) -> Optional[str]:
+        """Replace the var() of a value, as in fill="var(--fill-0, #171D25)".
+
+        Each var() is replaced by the custom property it names, or else by its
+        fallback; the fallback of one whose property is set is not read. Return None
+        if the value is invalid: a var() without either, or nested too deeply.
+        """
+        if depth > _MAX_VAR_DEPTH:
+            return None
+        lowered = value.lower()
+        parts: list[str] = []
+        position = 0
+        while (start := lowered.find("var(", position)) >= 0:
+            parts.append(value[position:start])
+            # the closing parenthesis of this var(), and its first comma
+            index, level, comma = start + 4, 1, -1
+            while index < len(value) and level:
+                character = value[index]
+                if character == "(":
+                    level += 1
+                elif character == ")":
+                    level -= 1
+                elif character == "," and level == 1 and comma < 0:
+                    comma = index
+                index += 1
+            if level:
+                return None
+            end = index - 1
+            name = value[start + 4 : comma if comma >= 0 else end].strip()
+            if not _CUSTOM_PROPERTY_NAME_RE.fullmatch(name):
+                return None
+            replacement = self._custom_property(svgNode, name, depth)
+            if replacement is None and comma >= 0:
+                replacement = self._substitute_var(
+                    svgNode, value[comma + 1 : end], depth + 1
+                )
+            if replacement is None:
+                return None
+            parts.append(replacement)
+            position = index
+        parts.append(value[position:])
+        return "".join(parts).strip()
 
     def getAllAttributes(self, svgNode: Any) -> dict[str, str]:
         """Return a dictionary of all attributes of a node and its ancestors.
@@ -1052,6 +1120,9 @@ class NodeTracker(cssselect2.ElementWrapper):
         for match in matches:
             attr_dict = match[3][1]
             for attr, val in attr_dict.items():
+                if attr.startswith("--"):
+                    # lxml nodes cannot accept attributes starting with '-'
+                    attr = _CUSTOM_PROPERTY_PREFIX + attr
                 try:
                     self.etree_element.attrib[attr] = val
                 except ValueError:
