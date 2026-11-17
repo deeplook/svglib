@@ -47,6 +47,10 @@
 - `fill` and `stroke` set to `currentColor` in another case, such as
   `currentcolor`, or with `!important`, now use the `color` property; they were
   drawn black (#548).
+- `width="auto"` and `height="auto"` on an `<svg>`, as Figma writes them, for
+  instance in the country flags of the ProtonVPN apps, are now read like a
+  missing `width` and `height`, also on a root `<svg>` without a `viewBox`;
+  `svg2rlg()` failed with `ValueError: Can't convert 'auto' to length` (#550).
 - `em` and `ex` lengths in the geometry of shapes, such as `width="2em"` or
   `r="1em"`, and in the `width` and `height` of the root `<svg>`, now use the
   font size of the element, as in CSS; they always used 16px before (#549).
