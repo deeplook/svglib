@@ -1821,6 +1821,13 @@ class SvgRenderer:
         found_shapes: list[Path] = []
         find_shapes_from_node(self.definitions[ref], found_shapes)
         if not found_shapes:
+            if not any(True for _ in self.definitions[ref].iter_children()):
+                # A <clipPath> without any shape clips everything away. ReportLab
+                # ignores a clipping path without points, so use one without area.
+                nothing = ClippingPath()
+                nothing.moveTo(0, 0)
+                nothing.closePath()
+                return nothing
             return None
 
         combined_shape = found_shapes[0]
