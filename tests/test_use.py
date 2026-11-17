@@ -61,6 +61,25 @@ class TestUseNode:
         )
         assert isinstance(drawing.contents[0].contents[0].contents[0], Rect)
 
+    def test_use_position_lengths(self):
+        """The x and y of a <use> are lengths, so they can have a unit."""
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">
+              <defs>
+                <rect id="MyRect" width="10" height="10"/>
+              </defs>
+              <use href="#MyRect" x="20px" y="1in"/>
+              <use href="#MyRect" x="50%" y="10%"/>
+              <g font-size="10"><use href="#MyRect" x="2em"/></g>
+            </svg>
+        """
+        )
+        main_group = drawing.contents[0]
+        assert main_group.contents[0].transform == (1, 0, 0, 1, 20, 96)
+        assert main_group.contents[1].transform == (1, 0, 0, 1, 100, 10)
+        assert main_group.contents[2].contents[0].transform == (1, 0, 0, 1, 20, 0)
+
     def test_use_with_defs_at_end(self):
         self.test_use(
             drawing_source="""
