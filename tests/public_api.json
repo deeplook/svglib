@@ -465,6 +465,12 @@
   "_MAX_VAR_DEPTH": {
    "what": "constant 16"
   },
+  "_MAX_VAR_LENGTH": {
+   "what": "constant 100000"
+  },
+  "_MAX_VAR_REPLACEMENTS": {
+   "what": "constant 1000"
+  },
   "_UseExpansionCounter": {
    "bases": [
     "object"

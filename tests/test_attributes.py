@@ -157,6 +157,49 @@ class TestColorAttrConverter:
             rect = rect.contents[0]
         assert rect.fillColor == expected
 
+    @pytest.mark.parametrize(
+        "fill, expected",
+        [
+            # the value is invalid: the fallback, or else the inherited fill
+            ("var(--a0, red)", colors.red),
+            ("var(--a0)", colors.blue),
+        ],
+    )
+    def test_var_function_with_fan_out_is_limited(self, fill, expected):
+        "Custom properties that use the next one 4 times each would take 4**16 steps."
+
+        levels = 16
+        custom_properties = "; ".join(
+            f"--a{i}: " + " ".join([f"var(--a{i + 1})"] * 4) for i in range(levels)
+        )
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g fill="blue" style="{custom_properties}; --a{levels}: lime">
+                <rect width="10" height="10" fill="{fill}"/>
+              </g>
+            </svg>
+        """
+        )
+        rect = drawing.contents[0].contents[0].contents[0]
+        assert rect.fillColor == expected
+
+    def test_var_function_with_long_result_is_limited(self):
+        "A result over the length limit is invalid, whatever the number of var()."
+
+        big = "x" * 60_000
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g fill="blue" style="--big: {big}">
+                <rect width="10" height="10" fill="var(--big) var(--big)"/>
+              </g>
+            </svg>
+        """
+        )
+        rect = drawing.contents[0].contents[0].contents[0]
+        assert rect.fillColor == colors.blue
+
     def test_var_function_with_stylesheet_custom_properties(self):
         drawing = drawing_from_svg(
             """

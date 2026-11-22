@@ -44,7 +44,9 @@
   Code write colors that a theme can change, such as
   `fill="var(--fill-0, #171D25)"`: it is the custom property of the element or
   an ancestor, set in a `style` attribute or a CSS rule, or else its fallback.
-  Such a value was not read and the shape was not drawn (#554).
+  Such a value was not read and the shape was not drawn. A value that needs
+  more than 1000 replacements, or becomes longer than 100,000 characters, is
+  invalid, so a small SVG cannot make it take exponential time (#554).
 - An `<image>` that references an SVG document now draws it in the viewport
   given by its `width` and `height`, with its own `preserveAspectRatio`, as
   browsers and Inkscape do; the document was drawn at its own size, ignoring

@@ -342,6 +342,11 @@ _CUSTOM_PROPERTY_PREFIX = "__var"
 _CUSTOM_PROPERTY_NAME_RE = re.compile(r"--[\w-]+")
 # var() inside the custom properties and fallbacks of a value, at most
 _MAX_VAR_DEPTH = 16
+# The depth does not limit the work: custom properties that each use the next one
+# several times multiply it on every level. The var() replaced by one substitution,
+# and the length of its result, are limited too; a value over either is invalid.
+_MAX_VAR_REPLACEMENTS = 1000
+_MAX_VAR_LENGTH = 100_000
 
 # An hsl() hue may have an angle unit (CSS Color 4 §7); ReportLab only reads numbers.
 _HSL_HUE_ANGLE_RE = re.compile(
@@ -532,7 +537,9 @@ class AttributeConverter:
             return self.findAttr(svgNode.parent, name)
         return ""
 
-    def _custom_property(self, svgNode: Any, name: str, depth: int) -> Optional[str]:
+    def _custom_property(
+        self, svgNode: Any, name: str, depth: int, budget: list[int]
+    ) -> Optional[str]:
         """Return a CSS custom property, such as --color, of a node or its ancestors."""
         node = svgNode
         while node is not None:
@@ -540,26 +547,36 @@ class AttributeConverter:
             value = node.attrib.get(_CUSTOM_PROPERTY_PREFIX + name)
             if value is not None:
                 # Its own var() are those of the node that declares it
-                return self._substitute_var(node, value.strip(), depth + 1)
+                return self._substitute_var(node, value.strip(), depth + 1, budget)
             node = node.parent
         return None
 
     def _substitute_var(
-        self, svgNode: Any, value: str, depth: int = 0
+        self,
+        svgNode: Any,
+        value: str,
+        depth: int = 0,
+        budget: Optional[list[int]] = None,
     ) -> Optional[str]:
         """Replace the var() of a value, as in fill="var(--fill-0, #171D25)".
 
         Each var() is replaced by the custom property it names, or else by its
         fallback; the fallback of one whose property is set is not read. Return None
-        if the value is invalid: a var() without either, or nested too deeply.
+        if the value is invalid: a var() without either, nested too deeply, or
+        needing more than _MAX_VAR_REPLACEMENTS replacements or a result longer
+        than _MAX_VAR_LENGTH. The budget, the replacements still allowed, is shared
+        by all the substitutions that one value starts.
         """
-        if depth > _MAX_VAR_DEPTH:
+        if depth > _MAX_VAR_DEPTH or len(value) > _MAX_VAR_LENGTH:
             return None
+        if budget is None:
+            budget = [_MAX_VAR_REPLACEMENTS]
         lowered = value.lower()
         parts: list[str] = []
-        position = 0
+        position = length = 0
         while (start := lowered.find("var(", position)) >= 0:
             parts.append(value[position:start])
+            length += start - position
             # the closing parenthesis of this var(), and its first comma
             index, level, comma = start + 4, 1, -1
             while index < len(value) and level:
@@ -577,17 +594,24 @@ class AttributeConverter:
             name = value[start + 4 : comma if comma >= 0 else end].strip()
             if not _CUSTOM_PROPERTY_NAME_RE.fullmatch(name):
                 return None
-            replacement = self._custom_property(svgNode, name, depth)
+            budget[0] -= 1
+            if budget[0] < 0:
+                return None
+            replacement = self._custom_property(svgNode, name, depth, budget)
             if replacement is None and comma >= 0:
                 replacement = self._substitute_var(
-                    svgNode, value[comma + 1 : end], depth + 1
+                    svgNode, value[comma + 1 : end], depth + 1, budget
                 )
             if replacement is None:
                 return None
             parts.append(replacement)
+            length += len(replacement)
+            if length > _MAX_VAR_LENGTH:
+                return None
             position = index
         parts.append(value[position:])
-        return "".join(parts).strip()
+        result = "".join(parts).strip()
+        return result if len(result) <= _MAX_VAR_LENGTH else None
 
     def getAllAttributes(self, svgNode: Any) -> dict[str, str]:
         """Return a dictionary of all attributes of a node and its ancestors.
