@@ -987,6 +987,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
                 "#" + 2 * text[1] + 2 * text[2] + 2 * text[3] + 2 * text[4],
                 hasAlpha=True,
             )
+        elif keyword.startswith(("oklab(", "oklch(")) and keyword.endswith(")"):
+            color = _oklab_color(keyword)
         else:
             # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
             color = colors.cssParse(
@@ -1892,6 +1894,13 @@ class SvgRenderer:
         found_shapes: list[Path] = []
         find_shapes_from_node(self.definitions[ref], found_shapes)
         if not found_shapes:
+            if not any(True for _ in self.definitions[ref].iter_children()):
+                # A <clipPath> without any shape clips everything away. ReportLab
+                # ignores a clipping path without points, so use one without area.
+                nothing = ClippingPath()
+                nothing.moveTo(0, 0)
+                nothing.closePath()
+                return nothing
             return None
 
         combined_shape = found_shapes[0]
@@ -3394,6 +3403,71 @@ def load_svg_file(path: SVGSource, resolve_entities: bool = False) -> Optional[A
         return None
     else:
         return svg_root
+
+
+def _oklab_color(keyword: str) -> Optional[colors.Color]:
+    """Convert oklab(L a b) and oklch(L C H), with an optional "/ A", to sRGB.
+
+    CSS Color 4: L is a number from 0 to 1 or a percentage, a, b and C are numbers
+    or percentages of 0.4, H is a hue with an optional angle unit, and "none" is 0.
+    L is clamped to [0, 1] and C to 0 or more, as CSS does when parsing. An L of 0
+    or 1 is black or white, as in CSS gamut mapping; other colors are converted to
+    sRGB with the matrices of Björn Ottosson, then clipped. Return None if the value
+    cannot be read.
+    https://www.w3.org/TR/css-color-4/#specifying-oklab-oklch
+    """
+    function, _, rest = keyword.partition("(")
+    body, _, alpha = rest[:-1].partition("/")
+    parts = body.split()
+    if len(parts) != 3:
+        return None
+
+    def number(value: str, percent_of: float) -> float:
+        if value == "none":
+            return 0.0
+        if value.endswith("%"):
+            return float(value[:-1]) / 100 * percent_of
+        return float(value)
+
+    try:
+        lightness = min(max(number(parts[0], 1), 0.0), 1.0)
+        if function == "oklab":
+            a, b = number(parts[1], 0.4), number(parts[2], 0.4)
+        else:
+            chroma = max(number(parts[1], 0.4), 0.0)
+            hue = 0.0
+            if parts[2] != "none":
+                unit = next(
+                    (u for u in _DEGREES_PER_ANGLE_UNIT if parts[2].endswith(u)), ""
+                )
+                hue = float(parts[2][: len(parts[2]) - len(unit)])
+                hue *= _DEGREES_PER_ANGLE_UNIT.get(unit, 1.0)
+            a = chroma * math.cos(math.radians(hue))
+            b = chroma * math.sin(math.radians(hue))
+        opacity = min(max(number(alpha.strip(), 1), 0.0), 1.0) if alpha else 1.0
+    except ValueError:
+        return None
+    if not all(map(math.isfinite, (lightness, a, b, opacity))):
+        return None
+
+    l_ = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3
+    m_ = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3
+    s_ = (lightness - 0.0894841775 * a - 1.2914855480 * b) ** 3
+    linear = (
+        4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
+        -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
+        -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_,
+    )
+
+    def srgb(channel: float) -> float:
+        channel = min(max(channel, 0.0), 1.0)
+        if channel <= 0.0031308:
+            return 12.92 * channel
+        return 1.055 * math.pow(channel, 1 / 2.4) - 0.055
+
+    if lightness in (0.0, 1.0):
+        return colors.Color(lightness, lightness, lightness, opacity)
+    return colors.Color(*(srgb(channel) for channel in linear), opacity)
 
 
 def _first_css_argument(arguments: str) -> str:

@@ -223,6 +223,43 @@ class TestColorAttrConverter:
         failed = check_mapping(ac.convertColor, mapping)
         assert len(failed) == 0
 
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            # as in the social preview images of react-window
+            pytest.param("oklch(70% 0.2 50)", (0.985, 0.433, 0.0, 1), id="oklch"),
+            pytest.param("oklab(0.5 0.1 -0.1)", (0.505, 0.272, 0.602, 1), id="oklab"),
+            pytest.param("OKLCH(60% 0.2 30DEG)", (0.872, 0.242, 0.175, 1), id="case"),
+            pytest.param("oklch(60% 0.2 0.25turn)", (0.683, 0.458, 0.0, 1), id="turn"),
+            pytest.param("oklch(60% 0.2 1.2rad)", (0.788, 0.374, 0.0, 1), id="rad"),
+            pytest.param(
+                "oklch(60% 0.2 90 / 50%)", (0.683, 0.458, 0.0, 0.5), id="alpha"
+            ),
+            # L of 0 and 1 are black and white, and "none" is 0
+            pytest.param("oklch(0 0.2 50)", (0, 0, 0, 1), id="black"),
+            pytest.param("oklch(100% 0.2 50)", (1, 1, 1, 1), id="white"),
+            pytest.param("oklch(none none none)", (0, 0, 0, 1), id="none"),
+            # a lightness is clamped to 0-1, a chroma to 0 or more
+            pytest.param("oklch(150% 0.2 50)", (1, 1, 1, 1), id="clamped-lightness"),
+            pytest.param(
+                "oklch(70% -1 50)", (0.62, 0.62, 0.62, 1), id="negative-chroma"
+            ),
+        ],
+    )
+    def test_oklab_and_oklch_colors(self, value, expected):
+        color = svglib.Svg2RlgAttributeConverter().convertColor(value)
+        assert (color.red, color.green, color.blue, color.alpha) == pytest.approx(
+            expected, abs=0.01
+        )
+
+    @pytest.mark.parametrize(
+        "value",
+        ["oklch(60% 0.2)", "oklab(abc 0 0)", "oklch(60% nan 30)", "oklch(60% 0.2 x)"],
+    )
+    def test_invalid_oklab_and_oklch_colors(self, value, caplog):
+        assert svglib.Svg2RlgAttributeConverter().convertColor(value) is None
+        assert "Can't handle color" in caplog.text
+
     def test_light_dark_color(self):
         "light-dark() is its light color, as in draw.io exports."
 

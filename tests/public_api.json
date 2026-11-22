@@ -498,6 +498,9 @@
   "_is_inside_text_path": {
    "what": "callable(POSITIONAL_OR_KEYWORD:node, POSITIONAL_OR_KEYWORD:text_node)"
   },
+  "_oklab_color": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:keyword)"
+  },
   "_parse_declarations": {
    "what": "callable(POSITIONAL_OR_KEYWORD:content)"
   },

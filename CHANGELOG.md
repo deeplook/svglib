@@ -59,10 +59,16 @@
 - `em` and `ex` lengths in the geometry of shapes, such as `width="2em"` or
   `r="1em"`, and in the `width` and `height` of the root `<svg>`, now use the
   font size of the element, as in CSS; they always used 16px before (#549).
+- `oklch()` and `oklab()` colors of CSS Color 4, as in the social preview
+  images of react-window, are now converted to sRGB: they were not read and
+  the shape was not drawn (#555).
 - The `x` and `y` of a `<use>`, and of an `<image>` that references SVG
   content, are now read as lengths: with a unit, such as `x="20px"` or
   `y="1in"`, or as a percentage, the content was drawn at the origin before
   (#551).
+- A `<clipPath>` without any shape now clips its elements away, as in browsers,
+  instead of leaving them without a clip: `clip-path="url(#clip)"` of an empty
+  `<clipPath>` drew the whole element (#553).
 
 ## 2.4.0 (2026-11-04)
 
