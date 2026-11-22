@@ -312,6 +312,33 @@ class TestPaths:
         assert isinstance(self.find_clipping(drawing), ClippingPath)
 
     @pytest.mark.parametrize(
+        "clip",
+        [
+            pytest.param('<clipPath id="clip"/>', id="empty"),
+            pytest.param(
+                '<clipPath id="clip">  <!-- no shape --></clipPath>', id="comment"
+            ),
+        ],
+    )
+    def test_clipping_path_without_shapes_clips_everything(self, clip):
+        """The shape is clipped away, as in browsers, not drawn without a clip."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                {clip}
+                <path clip-path="url(#clip)" d="M0,0 L 50 0 50 50Z"/>
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert isinstance(clipping, ClippingPath)
+        # a path without area, as ReportLab ignores one without points
+        assert clipping.points == [0, 0]
+        assert clipping.operators == [_MOVETO, _CLOSEPATH]
+
+    @pytest.mark.parametrize(
         "clip_path", ['clip-path="none"', 'style="clip-path: none"']
     )
     def test_clipping_path_none(self, clip_path):

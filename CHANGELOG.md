@@ -58,6 +58,9 @@
   content, are now read as lengths: with a unit, such as `x="20px"` or
   `y="1in"`, or as a percentage, the content was drawn at the origin before
   (#551).
+- A `<clipPath>` without any shape now clips its elements away, as in browsers,
+  instead of leaving them without a clip: `clip-path="url(#clip)"` of an empty
+  `<clipPath>` drew the whole element (#553).
 
 ## 2.4.0 (2026-11-04)
 
