@@ -480,6 +480,16 @@
    ],
    "what": "class()"
   },
+  "_VAR_DELIMITER_RE": {
+   "what": "external"
+  },
+  "_VarExpansion": {
+   "bases": [
+    "object"
+   ],
+   "members": [],
+   "what": "class()"
+  },
   "_convert_palette_to_rgba": {
    "what": "callable(POSITIONAL_OR_KEYWORD:image)"
   },

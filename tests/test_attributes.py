@@ -200,6 +200,27 @@ class TestColorAttrConverter:
         rect = drawing.contents[0].contents[0].contents[0]
         assert rect.fillColor == colors.blue
 
+    def test_var_function_with_a_long_custom_property_referenced_often(self):
+        "A custom property is resolved once, however many times it is referenced."
+
+        import time
+
+        fallback = " " * 90_000
+        references = " ".join(["var(--p)"] * 1000)
+        svg = f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g fill="blue" style="--p: var(--zz, {fallback})">
+                <rect width="10" height="10" fill="{references}"/>
+              </g>
+            </svg>
+        """
+        started = time.perf_counter()
+        drawing = drawing_from_svg(svg)
+        assert time.perf_counter() - started < 1
+        # every reference is empty, so the value is invalid and the fill is inherited
+        rect = drawing.contents[0].contents[0].contents[0]
+        assert rect.fillColor == colors.blue
+
     def test_var_function_with_stylesheet_custom_properties(self):
         drawing = drawing_from_svg(
             """

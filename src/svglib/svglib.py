@@ -347,6 +347,23 @@ _MAX_VAR_DEPTH = 16
 # and the length of its result, are limited too; a value over either is invalid.
 _MAX_VAR_REPLACEMENTS = 1000
 _MAX_VAR_LENGTH = 100_000
+# The characters that matter to find the end of a var(): a scan that jumps from one to
+# the next does not step through a long fallback character by character.
+_VAR_DELIMITER_RE = re.compile(r"[(),]")
+
+
+class _VarExpansion:
+    """The work of one substitution of var(), shared by all the var() it reaches.
+
+    A custom property is resolved once, however many times it is referenced, so
+    that the size of its value is paid once and not at each reference.
+    """
+
+    def __init__(self) -> None:
+        self.replacements_left = _MAX_VAR_REPLACEMENTS
+        # (id of the node that declares it, name) -> its value, or None if invalid
+        self.resolved: dict[tuple[int, str], Optional[str]] = {}
+
 
 # An hsl() hue may have an angle unit (CSS Color 4 §7); ReportLab only reads numbers.
 _HSL_HUE_ANGLE_RE = re.compile(
@@ -538,7 +555,7 @@ class AttributeConverter:
         return ""
 
     def _custom_property(
-        self, svgNode: Any, name: str, depth: int, budget: list[int]
+        self, svgNode: Any, name: str, depth: int, expansion: _VarExpansion
     ) -> Optional[str]:
         """Return a CSS custom property, such as --color, of a node or its ancestors."""
         node = svgNode
@@ -546,8 +563,13 @@ class AttributeConverter:
             self._applyStyleRules(node)
             value = node.attrib.get(_CUSTOM_PROPERTY_PREFIX + name)
             if value is not None:
-                # Its own var() are those of the node that declares it
-                return self._substitute_var(node, value.strip(), depth + 1, budget)
+                key = (id(node), name)
+                if key not in expansion.resolved:
+                    # Its own var() are those of the node that declares it
+                    expansion.resolved[key] = self._substitute_var(
+                        node, value.strip(), depth + 1, expansion
+                    )
+                return expansion.resolved[key]
             node = node.parent
         return None
 
@@ -556,7 +578,7 @@ class AttributeConverter:
         svgNode: Any,
         value: str,
         depth: int = 0,
-        budget: Optional[list[int]] = None,
+        expansion: Optional[_VarExpansion] = None,
     ) -> Optional[str]:
         """Replace the var() of a value, as in fill="var(--fill-0, #171D25)".
 
@@ -564,13 +586,14 @@ class AttributeConverter:
         fallback; the fallback of one whose property is set is not read. Return None
         if the value is invalid: a var() without either, nested too deeply, or
         needing more than _MAX_VAR_REPLACEMENTS replacements or a result longer
-        than _MAX_VAR_LENGTH. The budget, the replacements still allowed, is shared
-        by all the substitutions that one value starts.
+        than _MAX_VAR_LENGTH. The expansion, with the replacements still allowed and
+        the custom properties already resolved, is shared by all the substitutions
+        that one value starts.
         """
         if depth > _MAX_VAR_DEPTH or len(value) > _MAX_VAR_LENGTH:
             return None
-        if budget is None:
-            budget = [_MAX_VAR_REPLACEMENTS]
+        if expansion is None:
+            expansion = _VarExpansion()
         lowered = value.lower()
         parts: list[str] = []
         position = length = 0
@@ -578,29 +601,31 @@ class AttributeConverter:
             parts.append(value[position:start])
             length += start - position
             # the closing parenthesis of this var(), and its first comma
-            index, level, comma = start + 4, 1, -1
-            while index < len(value) and level:
-                character = value[index]
+            level, comma = 1, -1
+            for delimiter in _VAR_DELIMITER_RE.finditer(value, start + 4):
+                character = delimiter.group()
                 if character == "(":
                     level += 1
                 elif character == ")":
                     level -= 1
+                    if not level:
+                        break
                 elif character == "," and level == 1 and comma < 0:
-                    comma = index
-                index += 1
-            if level:
+                    comma = delimiter.start()
+            else:
                 return None
-            end = index - 1
+            end = delimiter.start()
+            index = end + 1
             name = value[start + 4 : comma if comma >= 0 else end].strip()
             if not _CUSTOM_PROPERTY_NAME_RE.fullmatch(name):
                 return None
-            budget[0] -= 1
-            if budget[0] < 0:
+            expansion.replacements_left -= 1
+            if expansion.replacements_left < 0:
                 return None
-            replacement = self._custom_property(svgNode, name, depth, budget)
+            replacement = self._custom_property(svgNode, name, depth, expansion)
             if replacement is None and comma >= 0:
                 replacement = self._substitute_var(
-                    svgNode, value[comma + 1 : end], depth + 1, budget
+                    svgNode, value[comma + 1 : end], depth + 1, expansion
                 )
             if replacement is None:
                 return None
