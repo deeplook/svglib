@@ -267,3 +267,46 @@ class TestGradients:
     def test_fill_url_enclosed_double_quotes_strip_parenthesis(self):
         """Fill url enclosed double quotes."""
         self._process_test_fill_url("""'url( "#grad)1" )'""", "grad)1")
+
+    @pytest.mark.parametrize(
+        "root, gradient, stop, expected",
+        [
+            pytest.param('color="green"', "", "", (0, 0.502, 0), id="root"),
+            pytest.param("", 'color="red"', "", (1, 0, 0), id="gradient"),
+            pytest.param('color="green"', "", 'color="lime"', (0, 1, 0), id="stop"),
+            pytest.param("", "", "", (0, 0, 0), id="initial-color-is-black"),
+            pytest.param('color="currentColor"', "", "", (0, 0, 0), id="color-itself"),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "stop_color",
+        [
+            'stop-color="currentColor"',
+            'style="stop-color: CurrentColor !important"',
+        ],
+    )
+    def test_gradient_stop_current_color(
+        self, root, gradient, stop, expected, stop_color
+    ):
+        """stop-color: currentColor is the color of the stop, not an error.
+
+        It made svg2rlg() fail with AttributeError: 'str' object has no 'clone'.
+        """
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" {root}>
+                <defs>
+                    <linearGradient id="g1" {gradient}>
+                        <stop offset="0" {stop} {stop_color}/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                </defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        (_, first), (_, second) = renderer.gradient_defs["g1"]["stops"]
+        assert (first.red, first.green, first.blue) == pytest.approx(expected, abs=1e-3)
+        assert (second.red, second.green, second.blue) == (0, 0, 1)

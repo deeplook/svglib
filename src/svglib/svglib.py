@@ -1613,7 +1613,12 @@ class SvgRenderer:
                 opacity = 1.0
 
             rl_color = self.attrConverter.convertColor(stop_color_str)
-            if rl_color is None:
+            if rl_color == "currentColor":
+                # the color property of the stop, inherited from its ancestors
+                rl_color = self.attrConverter.convertColor(
+                    _without_important(self.attrConverter.findAttr(child, "color"))
+                )
+            if not isinstance(rl_color, colors.Color):
                 rl_color = colors.black
             rl_color = rl_color.clone()
             rl_color.alpha = opacity
