@@ -15,7 +15,7 @@
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
   anywhere in the document now applies to the gradients in its `<defs>`, as
-  they are read before the rest of the document.
+  they are read before the rest of the document (#558).
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
