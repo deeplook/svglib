@@ -13,7 +13,7 @@
 
 - `stop-color` set to `currentColor` in a gradient stop no longer makes
   `svg2rlg()` fail with `AttributeError`; it is the `color` of the stop, as in
-  browsers, or black when none is set.
+  browsers, or black when none is set (#559).
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
