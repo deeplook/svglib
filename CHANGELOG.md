@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- `hwb()` colors of CSS Color 4 are now converted to sRGB, as `oklch()` and
+  `oklab()` are: they were not read and the shape was not drawn.
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute

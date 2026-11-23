@@ -317,6 +317,44 @@ class TestColorAttrConverter:
         )
 
     @pytest.mark.parametrize(
+        "value, expected",
+        [
+            # the values of Chrome's computed colors
+            pytest.param("hwb(120 20% 30%)", (0.2, 0.7, 0.2, 1), id="hwb"),
+            pytest.param("hwb(120 0% 0%)", (0, 1, 0, 1), id="pure-hue"),
+            pytest.param("HWB(120DEG 20 30)", (0.2, 0.7, 0.2, 1), id="case-numbers"),
+            pytest.param("hwb(0.5turn 10% 10%)", (0.1, 0.9, 0.9, 1), id="turn"),
+            pytest.param("hwb(200grad 25% 25%)", (0.25, 0.75, 0.75, 1), id="grad"),
+            pytest.param("hwb(-120 10% 10%)", (0.1, 0.1, 0.9, 1), id="negative-hue"),
+            pytest.param("hwb(210 15% 40% / 0.8)", (0.15, 0.38, 0.6, 0.8), id="alpha"),
+            pytest.param("hwb(120 20% 30% / 50%)", (0.2, 0.7, 0.2, 0.5), id="percent"),
+            pytest.param("hwb(none 20% 30%)", (0.7, 0.2, 0.2, 1), id="none"),
+            # W + B of 100% or more is the gray W / (W + B)
+            pytest.param("hwb(120 30% 80%)", (0.273, 0.273, 0.273, 1), id="gray"),
+            pytest.param("hwb(120 60% 60%)", (0.5, 0.5, 0.5, 1), id="gray-half"),
+            # the values are clamped
+            pytest.param("hwb(120 150% 0%)", (1, 1, 1, 1), id="clamped-whiteness"),
+            pytest.param("hwb(120 -10% 10%)", (0, 0.9, 0, 1), id="clamped-negative"),
+            pytest.param(
+                "hwb(120 20% 30% / 2)", (0.2, 0.7, 0.2, 1), id="clamped-alpha"
+            ),
+        ],
+    )
+    def test_hwb_colors(self, value, expected):
+        color = svglib.Svg2RlgAttributeConverter().convertColor(value)
+        assert (color.red, color.green, color.blue, color.alpha) == pytest.approx(
+            expected, abs=0.01
+        )
+
+    @pytest.mark.parametrize(
+        "value",
+        ["hwb(120 20%)", "hwb(abc 20% 30%)", "hwb(120,20%,30%)", "hwb(120 nan 30%)"],
+    )
+    def test_invalid_hwb_colors(self, value, caplog):
+        assert svglib.Svg2RlgAttributeConverter().convertColor(value) is None
+        assert "Can't handle color" in caplog.text
+
+    @pytest.mark.parametrize(
         "value",
         ["oklch(60% 0.2)", "oklab(abc 0 0)", "oklch(60% nan 30)", "oklch(60% 0.2 x)"],
     )
