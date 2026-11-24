@@ -1714,6 +1714,8 @@ class SvgRenderer:
                     offset = float(raw_offset)
                 except ValueError:
                     offset = 0.0
+            # The offset is from 0 to 1, and never less than the one before it
+            offset = min(max(offset, stops[-1][0] if stops else 0.0), 1.0)
 
             # stop-color and stop-opacity can be in style, in a CSS rule (the classes
             # of Illustrator's exports) or as direct attrs; they are not inherited

@@ -544,3 +544,40 @@ class TestGradients:
         assert (resolved["cx"], resolved["cy"], resolved["r"]) == pytest.approx(
             (0.7, 0.4, 0.2)
         )
+
+    @pytest.mark.parametrize(
+        "offsets, expected",
+        [
+            pytest.param(["0", "1"], [0, 1], id="in-range"),
+            pytest.param(["-0.5", "1"], [0, 1], id="below-0"),
+            pytest.param(["0", "150%"], [0, 1], id="above-100%"),
+            pytest.param(["0", "0.5", "2"], [0, 0.5, 1], id="above-1"),
+            pytest.param(["0.8", "0.2"], [0.8, 0.8], id="after-a-larger-one"),
+            pytest.param(
+                ["0", "0.8", "0.3", "1"], [0, 0.8, 0.8, 1], id="between-larger-ones"
+            ),
+            pytest.param(["abc", "1"], [0, 1], id="invalid"),
+            pytest.param(["0.5", "0.5"], [0.5, 0.5], id="same"),
+        ],
+    )
+    def test_gradient_stop_offsets(self, offsets, expected):
+        """The offset of a stop is from 0 to 1 and not less than the previous one.
+
+        An offset beyond the ends, or before the one of the stop before it, was
+        used as it was.
+        """
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        stops = "".join(
+            f'<stop offset="{offset}" stop-color="red"/>' for offset in offsets
+        )
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs><linearGradient id="g1">{stops}</linearGradient></defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        positions = [offset for offset, _ in renderer.gradient_defs["g1"]["stops"]]
+        assert positions == pytest.approx(expected)

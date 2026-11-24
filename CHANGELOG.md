@@ -30,6 +30,9 @@
   `gradientUnits` and `spreadMethod` of that gradient when it does not set them
   itself, as in browsers: it used its own defaults (`x2="1"`, `pad`,
   `objectBoundingBox`) and so a gradient set on the first one was lost (#563).
+- The `offset` of a gradient stop is now limited to 0 to 1 and to at least the
+  offset of the stop before it, as in browsers: a stop beyond the ends, such as
+  `offset="150%"`, or before the previous one drew a different gradient (#564).
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
