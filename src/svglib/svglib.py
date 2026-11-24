@@ -1732,6 +1732,18 @@ class SvgRenderer:
             stop_opacity_str = style_attrs.get(
                 "stop-opacity", child.attrib.get("stop-opacity", "1")
             )
+            # A var() that has no value makes the value invalid: it is as if the
+            # property was not set
+            if "var(" in stop_color_str.lower():
+                stop_color_str = (
+                    self.attrConverter._substitute_var(child, stop_color_str.strip())
+                    or "black"
+                )
+            if "var(" in stop_opacity_str.lower():
+                stop_opacity_str = (
+                    self.attrConverter._substitute_var(child, stop_opacity_str.strip())
+                    or "1"
+                )
             try:
                 opacity = float(stop_opacity_str)
             except (ValueError, TypeError):
