@@ -581,3 +581,63 @@ class TestGradients:
         renderer.render(load_svg_file(BytesIO(svg_content)))
         positions = [offset for offset, _ in renderer.gradient_defs["g1"]["stops"]]
         assert positions == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
+        "gradient",
+        [
+            pytest.param('<linearGradient id="g" x1="0.5" x2="0.5">', id="linear"),
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="30" '
+                'y1="40" x2="30" y2="40">',
+                id="linear-user-space",
+            ),
+            pytest.param('<radialGradient id="g" r="0">', id="radial"),
+            pytest.param(
+                '<radialGradient id="g" gradientUnits="userSpaceOnUse" r="0">',
+                id="radial-user-space",
+            ),
+            pytest.param('<radialGradient id="g" r="-1">', id="radial-negative"),
+        ],
+    )
+    def test_gradient_without_extent(self, gradient):
+        """A gradient with no extent paints the shape in the color of its last stop.
+
+        It was painted in the first color or in black when the two ends of a linear
+        gradient were in the same place, or when a radial gradient had no radius.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    {gradient}
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="0.5" stop-color="lime"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </{tag}>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+
+        def find_rect(shape):
+            if isinstance(shape, Rect):
+                return shape
+            for item in getattr(shape, "contents", []):
+                if found := find_rect(item):
+                    return found
+
+        assert find_rect(drawing).fillColor == colors.Color(0, 0, 1, 1)
+        assert not self._find_gradient_shapes(drawing)
+
+    @staticmethod
+    def _find_gradient_shapes(shape):
+        """Return the gradient shapes in a drawing."""
+        from svglib.svglib import RadialGradientShape
+
+        found = []
+        if isinstance(shape, (LinearGradientShape, RadialGradientShape)):
+            found.append(shape)
+        for item in getattr(shape, "contents", []):
+            found.extend(TestGradients._find_gradient_shapes(item))
+        return found

@@ -11,6 +11,9 @@
 
 ### Fixed
 
+- A gradient with no extent, that is a linear gradient with both ends in the same
+  place or a radial gradient with a radius of 0, now paints the shape in the
+  color of its last stop, as in browsers; it was black or the first color.
 - The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
