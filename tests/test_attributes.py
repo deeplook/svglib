@@ -87,6 +87,159 @@ class TestColorAttrConverter:
         assert rects[1].strokeColor == colors.red
 
     @pytest.mark.parametrize(
+        "body, expected",
+        [
+            # as Figma and VS Code write colors that a theme can change
+            pytest.param(
+                '<rect width="10" height="10" fill="var(--fill-0, #ff0000)"/>',
+                colors.red,
+                id="fallback",
+            ),
+            pytest.param(
+                '<rect width="10" height="10" fill="var(--c, rgb(255, 0, 0))"/>',
+                colors.red,
+                id="fallback-function",
+            ),
+            pytest.param(
+                '<g style="--c: lime">'
+                '<rect width="10" height="10" fill="var(--c, red)"/></g>',
+                colors.lime,
+                id="custom-property-of-a-group",
+            ),
+            pytest.param(
+                '<g style="--a: var(--b, lime)">'
+                '<rect width="10" height="10" fill="var(--a)"/></g>',
+                colors.lime,
+                id="nested-custom-property",
+            ),
+            # the fallback of a var() whose property is set is not read
+            pytest.param(
+                '<g style="--t: lime"><rect width="10" height="10" '
+                'fill="var(--t, rgb(var(--missing), 0, 0))"/></g>',
+                colors.lime,
+                id="fallback-not-read",
+            ),
+            pytest.param(
+                '<g style="--a: var(--b); --b: var(--a)">'
+                '<rect width="10" height="10" fill="var(--a, red)"/></g>',
+                colors.red,
+                id="cycle",
+            ),
+            # a var() that is invalid is as if the property was not set
+            pytest.param(
+                '<g fill="blue">'
+                '<rect width="10" height="10" fill="var(--undefined)"/></g>',
+                colors.blue,
+                id="invalid-inherits",
+            ),
+            pytest.param(
+                '<g fill="blue"><rect width="10" height="10" fill="var(--c, red"/></g>',
+                colors.blue,
+                id="unclosed",
+            ),
+            pytest.param(
+                '<g fill="blue"><rect width="10" height="10" fill="var(c, red)"/></g>',
+                colors.blue,
+                id="not-a-custom-property",
+            ),
+        ],
+    )
+    def test_var_function(self, body, expected):
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              {body}
+            </svg>
+        """
+        )
+        rect = drawing.contents[0]
+        while hasattr(rect, "contents"):
+            rect = rect.contents[0]
+        assert rect.fillColor == expected
+
+    @pytest.mark.parametrize(
+        "fill, expected",
+        [
+            # the value is invalid: the fallback, or else the inherited fill
+            ("var(--a0, red)", colors.red),
+            ("var(--a0)", colors.blue),
+        ],
+    )
+    def test_var_function_with_fan_out_is_limited(self, fill, expected):
+        "Custom properties that use the next one 4 times each would take 4**16 steps."
+
+        levels = 16
+        custom_properties = "; ".join(
+            f"--a{i}: " + " ".join([f"var(--a{i + 1})"] * 4) for i in range(levels)
+        )
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g fill="blue" style="{custom_properties}; --a{levels}: lime">
+                <rect width="10" height="10" fill="{fill}"/>
+              </g>
+            </svg>
+        """
+        )
+        rect = drawing.contents[0].contents[0].contents[0]
+        assert rect.fillColor == expected
+
+    def test_var_function_with_long_result_is_limited(self):
+        "A result over the length limit is invalid, whatever the number of var()."
+
+        big = "x" * 60_000
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g fill="blue" style="--big: {big}">
+                <rect width="10" height="10" fill="var(--big) var(--big)"/>
+              </g>
+            </svg>
+        """
+        )
+        rect = drawing.contents[0].contents[0].contents[0]
+        assert rect.fillColor == colors.blue
+
+    def test_var_function_with_a_long_custom_property_referenced_often(self):
+        "A custom property is resolved once, however many times it is referenced."
+
+        import time
+
+        fallback = " " * 90_000
+        references = " ".join(["var(--p)"] * 1000)
+        svg = f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g fill="blue" style="--p: var(--zz, {fallback})">
+                <rect width="10" height="10" fill="{references}"/>
+              </g>
+            </svg>
+        """
+        started = time.perf_counter()
+        drawing = drawing_from_svg(svg)
+        assert time.perf_counter() - started < 1
+        # every reference is empty, so the value is invalid and the fill is inherited
+        rect = drawing.contents[0].contents[0].contents[0]
+        assert rect.fillColor == colors.blue
+
+    def test_var_function_with_stylesheet_custom_properties(self):
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <style>
+                .theme { --c: lime; }
+                .a { fill: var(--c, red); stroke: var(--s, blue); }
+              </style>
+              <g class="theme"><rect class="a" width="10" height="10"/></g>
+              <rect class="a" width="10" height="10"/>
+            </svg>
+        """
+        )
+        group, rect = drawing.contents[0].contents
+        assert group.contents[0].fillColor == colors.lime
+        assert rect.fillColor == colors.red
+        assert rect.strokeColor == colors.blue
+
+    @pytest.mark.parametrize(
         "color", ['style="color: red !important"', 'color="red !important"']
     )
     def test_current_color_with_important_color(self, color, caplog):

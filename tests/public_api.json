@@ -103,6 +103,8 @@
    ],
    "members": [
     "_applyStyleRules",
+    "_custom_property",
+    "_substitute_var",
     "convertTransform",
     "findAttr",
     "getAllAttributes",
@@ -422,6 +424,12 @@
   "_CSS_NAMED_COLORS": {
    "what": "external"
   },
+  "_CUSTOM_PROPERTY_NAME_RE": {
+   "what": "external"
+  },
+  "_CUSTOM_PROPERTY_PREFIX": {
+   "what": "constant '__var'"
+  },
   "_DEGREES_PER_ANGLE_UNIT": {
    "what": "external"
   },
@@ -454,6 +462,15 @@
   "_HSL_HUE_ANGLE_RE": {
    "what": "external"
   },
+  "_MAX_VAR_DEPTH": {
+   "what": "constant 16"
+  },
+  "_MAX_VAR_LENGTH": {
+   "what": "constant 100000"
+  },
+  "_MAX_VAR_REPLACEMENTS": {
+   "what": "constant 1000"
+  },
   "_UseExpansionCounter": {
    "bases": [
     "object"
@@ -461,6 +478,16 @@
    "members": [
     "allow_clone"
    ],
+   "what": "class()"
+  },
+  "_VAR_DELIMITER_RE": {
+   "what": "external"
+  },
+  "_VarExpansion": {
+   "bases": [
+    "object"
+   ],
+   "members": [],
    "what": "class()"
   },
   "_convert_palette_to_rgba": {
