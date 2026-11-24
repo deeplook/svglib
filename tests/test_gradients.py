@@ -391,6 +391,161 @@ class TestGradients:
         assert (second.red, second.green, second.blue) == (0, 0, 1)
 
     @pytest.mark.parametrize(
+        "style, stop, expected",
+        [
+            pytest.param(
+                "", 'stop-color="var(--a, #ff0000)"', (1, 0, 0), id="fallback"
+            ),
+            pytest.param(
+                "", 'style="stop-color: var(--a, lime)"', (0, 1, 0), id="fallback-style"
+            ),
+            pytest.param(
+                "", 'style="--a: lime; stop-color: var(--a)"', (0, 1, 0), id="property"
+            ),
+            pytest.param(
+                "<style>#g1 { --a: lime }</style>",
+                'stop-color="var(--a)"',
+                (0, 1, 0),
+                id="property-of-gradient",
+            ),
+            pytest.param("", 'stop-color="var(--a)"', (0, 0, 0), id="no-value"),
+        ],
+    )
+    def test_gradient_stop_color_var(self, style, stop, expected):
+        """The stop-color of a stop can be a var(), as Figma writes it.
+
+        The stop was black, and a var() without a value is black as well.
+        """
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                {style}
+                <defs>
+                    <linearGradient id="g1">
+                        <stop offset="0" {stop}/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                </defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        (_, first), (_, second) = renderer.gradient_defs["g1"]["stops"]
+        assert (first.red, first.green, first.blue) == pytest.approx(expected, abs=1e-3)
+        assert (second.red, second.green, second.blue) == (0, 0, 1)
+
+    @pytest.mark.parametrize(
+        "stop, expected",
+        [
+            pytest.param('stop-opacity="var(--o, 0.5)"', 0.5, id="fallback"),
+            pytest.param('style="stop-opacity: var(--o, 0.25)"', 0.25, id="style"),
+            pytest.param(
+                'style="--o: 0.75; stop-opacity: var(--o)"', 0.75, id="property"
+            ),
+            pytest.param('stop-opacity="var(--o)"', 1, id="no-value"),
+        ],
+    )
+    def test_gradient_stop_opacity_var(self, stop, expected):
+        """The stop-opacity of a stop can be a var(); without a value it is 1."""
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="g1">
+                        <stop offset="0" stop-color="red" {stop}/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                </defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        (_, first), _ = renderer.gradient_defs["g1"]["stops"]
+        assert first.alpha == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
+        "base, derived, expected",
+        [
+            pytest.param(
+                'x1="0.1" y1="0.2" x2="0.5" y2="0.6"',
+                "",
+                {"x1": 0.1, "y1": 0.2, "x2": 0.5, "y2": 0.6},
+                id="linear-geometry",
+            ),
+            pytest.param(
+                'x1="0.1" x2="0.5"',
+                'x2="25%"',
+                {"x1": 0.1, "x2": 0.25},
+                id="linear-own-attribute",
+            ),
+            pytest.param(
+                'spreadMethod="reflect" gradientUnits="userSpaceOnUse"',
+                "",
+                {"spreadMethod": "reflect", "gradientUnits": "userSpaceOnUse"},
+                id="units-and-spread",
+            ),
+            pytest.param(
+                'spreadMethod="reflect"',
+                'spreadMethod="repeat"',
+                {"spreadMethod": "repeat"},
+                id="own-spread",
+            ),
+        ],
+    )
+    def test_gradient_attributes_inherited_through_href(self, base, derived, expected):
+        """A gradient takes the attributes of its href that it does not set itself.
+
+        It used its own defaults instead, so x2 was 1 and the spread was pad.
+        """
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="base" {base}>
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                    <linearGradient id="g1" href="#base" {derived}/>
+                </defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        resolved = renderer._resolve_gradient("g1")
+        assert resolved is not None
+        assert {key: resolved.get(key) for key in expected} == pytest.approx(expected)
+        assert len(resolved["stops"]) == 2
+
+    def test_radial_gradient_attributes_inherited_through_href(self):
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = b"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <radialGradient id="base" cx="0.3" cy="0.4" r="0.2">
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </radialGradient>
+                    <radialGradient id="g1" href="#base" cx="0.7"/>
+                </defs>
+            </svg>"""
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        resolved = renderer._resolve_gradient("g1")
+        assert resolved is not None
+        assert (resolved["cx"], resolved["cy"], resolved["r"]) == pytest.approx(
+            (0.7, 0.4, 0.2)
+        )
+
+    @pytest.mark.parametrize(
         "offsets, expected",
         [
             pytest.param(["0", "1"], [0, 1], id="in-range"),
