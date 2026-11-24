@@ -11,6 +11,12 @@
 
 ### Fixed
 
+- The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
+  CSS rule, such as the classes of the SVG that Illustrator exports
+  (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
+  now applies to the whole document, including the elements before it, as in
+  browsers, and not only to the gradients in its `<defs>`: a shape that comes
+  before a `<style>` that styles it is no longer black (#558).
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute

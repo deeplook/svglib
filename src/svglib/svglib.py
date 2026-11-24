@@ -1715,7 +1715,9 @@ class SvgRenderer:
                 except ValueError:
                     offset = 0.0
 
-            # stop-color and stop-opacity can be in style or as direct attrs
+            # stop-color and stop-opacity can be in style, in a CSS rule (the classes
+            # of Illustrator's exports) or as direct attrs; they are not inherited
+            self.attrConverter._applyStyleRules(child)
             style_str = child.attrib.get("style", "")
             style_attrs: dict[str, Any] = {}
             if style_str:
@@ -2204,8 +2206,13 @@ class SvgRenderer:
         if view_box:
             self.attrConverter.set_box(view_box)
 
-        # Rendering all definition nodes first.
+        # Rendering all definition nodes first. The gradients in them can be styled
+        # by a <style> that comes after them, so all of its rules are added before.
         svg_ns = node.nsmap.get(None)
+        style_tag = f"{{{svg_ns}}}style" if svg_ns else "style"
+        for style_node in node.iter_subtree():
+            if style_node.tag == style_tag:
+                self.renderStyle(style_node)
         for def_node in node.iter_subtree():
             if def_node.tag == (f"{{{svg_ns}}}defs" if svg_ns else "defs"):
                 self.renderG(def_node)
@@ -2357,6 +2364,10 @@ class SvgRenderer:
 
     def renderStyle(self, node: NodeTracker) -> None:
         """Render a <style> element by adding its content to the CSS matcher."""
+        # An element is added once, however many times it is rendered
+        if node.etree_element.get("__style_added"):
+            return
+        node.etree_element.set("__style_added", "1")
         if self.attrConverter.css_rules is not None:
             self.attrConverter.css_rules.add_styles(node.text or "")
 
