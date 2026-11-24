@@ -142,6 +142,24 @@ class TestGradients:
         assert (first.red, first.green, first.blue, first.alpha) == (1, 0, 0, 1)
         assert (second.red, second.green, second.blue, second.alpha) == (0, 0, 1, 0.5)
 
+    def test_style_applies_to_shapes_before_it(self):
+        """A <style> applies to the whole document, as in browsers.
+
+        A shape that comes before the <style> is styled by it too.
+        """
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <rect class="a" width="10" height="10"/>
+                <style>.a { fill: red }</style>
+                <rect class="a" width="10" height="10"/>
+            </svg>
+            """
+        )
+        before, after = drawing.contents[0].contents
+        assert before.fillColor == colors.red
+        assert after.fillColor == colors.red
+
     def test_gradient_stop_style_attribute_beats_css_rule(self):
         """A style attribute wins over a CSS rule, which wins over an attribute."""
         from io import BytesIO
