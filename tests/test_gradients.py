@@ -7,7 +7,7 @@ from reportlab.graphics.shapes import (
 )
 from reportlab.lib import colors
 
-from svglib.svglib import LinearGradientShape
+from svglib.svglib import LinearGradientShape, RadialGradientShape
 from tests.utils import (
     drawing_from_svg,
 )
@@ -581,3 +581,93 @@ class TestGradients:
         renderer.render(load_svg_file(BytesIO(svg_content)))
         positions = [offset for offset, _ in renderer.gradient_defs["g1"]["stops"]]
         assert positions == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
+        "defs, matrix, geometry",
+        [
+            pytest.param(
+                '<linearGradient id="g" gradientTransform="rotate(90 .5 .5)">{}'
+                "</linearGradient>",
+                (0, 80, -80, 0, 90, 10),
+                (0, 0, 1, 0),
+                id="rotate-in-the-bounding-box",
+            ),
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="5" x2="9"'
+                ' gradientTransform="translate(10 20) scale(2)">{}</linearGradient>',
+                (2, 0, 0, 2, 10, 20),
+                (5, 0, 9, 0),
+                id="user-space",
+            ),
+            pytest.param(
+                '<linearGradient id="g" href="#b"/><linearGradient id="b"'
+                ' gradientTransform="rotate(90 .5 .5)">{}</linearGradient>',
+                (0, 80, -80, 0, 90, 10),
+                (0, 0, 1, 0),
+                id="from-href",
+            ),
+            pytest.param(
+                '<linearGradient id="g" href="#b" gradientTransform="scale(2)"/>'
+                '<linearGradient id="b" gradientTransform="rotate(90)">{}'
+                "</linearGradient>",
+                (160, 0, 0, 160, 10, 10),
+                (0, 0, 1, 0),
+                id="own-over-href",
+            ),
+            pytest.param(
+                '<radialGradient id="g" gradientTransform="scale(0.5 1)">{}'
+                "</radialGradient>",
+                (40, 0, 0, 80, 10, 10),
+                (0.5, 0.5, 0.5),
+                id="radial",
+            ),
+            pytest.param(
+                '<linearGradient id="g" gradientTransform="scale(0)">{}'
+                "</linearGradient>",
+                None,
+                (10, 10, 90, 10),
+                id="not-invertible",
+            ),
+            pytest.param(
+                '<linearGradient id="g">{}</linearGradient>',
+                None,
+                (10, 10, 90, 10),
+                id="none",
+            ),
+        ],
+    )
+    def test_gradient_transform(self, defs, matrix, geometry):
+        """The gradientTransform of a gradient is applied; it was ignored.
+
+        The gradient is then painted in its own space, and the matrix of the
+        transform, after the one of the bounding box, maps it to the user space.
+        """
+        stops = (
+            '<stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/>'
+        )
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>{defs.format(stops)}</defs>
+                <rect x="10" y="10" width="80" height="80" fill="url(#g)"/>
+            </svg>"""
+        )
+
+        def find(shape):
+            if isinstance(shape, (LinearGradientShape, RadialGradientShape)):
+                return shape
+            for item in getattr(shape, "contents", []):
+                if found := find(item):
+                    return found
+
+        shape = find(drawing)
+        if matrix is None:
+            assert shape._transform is None
+        else:
+            assert shape._transform == pytest.approx(matrix)
+        if isinstance(shape, LinearGradientShape):
+            assert (shape._x0, shape._y0, shape._x1, shape._y1) == pytest.approx(
+                geometry
+            )
+        else:
+            assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)

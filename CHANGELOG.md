@@ -11,6 +11,11 @@
 
 ### Fixed
 
+- The `gradientTransform` of a linear or radial gradient is now applied, with
+  `translate`, `scale`, `rotate`, `skewX`, `skewY` and `matrix`, in the units of
+  the bounding box and in the user space, and it is taken from the gradient it
+  refers to by `href`; it was ignored, so a gradient rotated by Figma or Illustrator
+  ran in the wrong direction. A radial gradient scaled by it is an ellipse.
 - The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
