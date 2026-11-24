@@ -22,6 +22,10 @@
   browsers, or black when none is set (#559).
 - `hwb()` colors of CSS Color 4 are now converted to sRGB, as `oklch()` and
   `oklab()` are: they were not read and the shape was not drawn (#560).
+- A gradient that refers to another one with `href` now takes the geometry,
+  `gradientUnits` and `spreadMethod` of that gradient when it does not set them
+  itself, as in browsers: it used its own defaults (`x2="1"`, `pad`,
+  `objectBoundingBox`) and so a gradient set on the first one was lost.
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute

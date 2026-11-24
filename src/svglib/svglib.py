@@ -119,15 +119,16 @@ class _GradientDefBase(TypedDict):
     """Keys always present on a parsed gradient definition."""
 
     type: str  # "linear" or "radial"
-    gradientUnits: str
-    spreadMethod: str
     stops: list[GradientStop]
     href: Optional[str]
 
 
 class _GradientDef(_GradientDefBase, total=False):
-    """Geometry keys present depending on ``type`` (linear vs radial)."""
+    """Keys present when the element sets them (the others come from its href)."""
 
+    gradientUnits: str
+    spreadMethod: str
+    # Geometry keys present depending on ``type`` (linear vs radial)
     # linearGradient
     x1: float
     y1: float
@@ -1679,26 +1680,22 @@ class SvgRenderer:
             return
         grad_type = node_name(node)  # "linearGradient" or "radialGradient"
 
-        def _float_attr(attr: str, default: float) -> float:
-            """Return a gradient geometry attribute as a float, resolving percent."""
+        def _float_attr(attr: str) -> Optional[float]:
+            """Return a gradient geometry attribute as a float, resolving percent.
+
+            None if the element does not set it: the gradient it refers to by href
+            can, and else the default is used when the gradient is painted.
+            """
             raw = node.attrib.get(attr, "").strip()
-            if raw.endswith("%"):
-                try:
-                    return float(raw[:-1]) / 100.0
-                except ValueError:
-                    return default
             try:
-                return float(raw) if raw else default
+                return float(raw[:-1]) / 100.0 if raw.endswith("%") else float(raw)
             except ValueError:
-                return default
+                return None
 
         href = node.attrib.get("{http://www.w3.org/1999/xlink}href") or node.attrib.get(
             "href", ""
         )
         href_id = href.lstrip("#") if href.startswith("#") else None
-
-        grad_units = node.attrib.get("gradientUnits", "objectBoundingBox")
-        spread = node.attrib.get("spreadMethod", "pad")
 
         # Collect stop elements (direct children with tag "stop")
         stops: list[GradientStop] = []
@@ -1751,23 +1748,23 @@ class SvgRenderer:
 
         grad_def: _GradientDef = {
             "type": "linear" if grad_type == "linearGradient" else "radial",
-            "gradientUnits": grad_units,
-            "spreadMethod": spread,
             "stops": stops,
             "href": href_id,
         }
 
-        if grad_type == "linearGradient":
-            grad_def["x1"] = _float_attr("x1", 0.0)
-            grad_def["y1"] = _float_attr("y1", 0.0)
-            grad_def["x2"] = _float_attr("x2", 1.0)
-            grad_def["y2"] = _float_attr("y2", 0.0)
-        else:
-            grad_def["cx"] = _float_attr("cx", 0.5)
-            grad_def["cy"] = _float_attr("cy", 0.5)
-            grad_def["r"] = _float_attr("r", 0.5)
-            grad_def["fx"] = _float_attr("fx", grad_def["cx"])
-            grad_def["fy"] = _float_attr("fy", grad_def["cy"])
+        if "gradientUnits" in node.attrib:
+            grad_def["gradientUnits"] = node.attrib["gradientUnits"]
+        if "spreadMethod" in node.attrib:
+            grad_def["spreadMethod"] = node.attrib["spreadMethod"]
+        names = (
+            ("x1", "y1", "x2", "y2")
+            if grad_type == "linearGradient"
+            else ("cx", "cy", "r", "fx", "fy")
+        )
+        for name in names:
+            value = _float_attr(name)
+            if value is not None:
+                grad_def[name] = value  # type: ignore[literal-required]
 
         self.gradient_defs[grad_id] = grad_def
 
