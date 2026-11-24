@@ -7,7 +7,7 @@ from reportlab.graphics.shapes import (
 )
 from reportlab.lib import colors
 
-from svglib.svglib import LinearGradientShape
+from svglib.svglib import LinearGradientShape, RadialGradientShape
 from tests.utils import (
     drawing_from_svg,
 )
@@ -581,3 +581,113 @@ class TestGradients:
         renderer.render(load_svg_file(BytesIO(svg_content)))
         positions = [offset for offset, _ in renderer.gradient_defs["g1"]["stops"]]
         assert positions == pytest.approx(expected)
+
+    @staticmethod
+    def _gradient_shape(shape):
+        """Return the gradient shape in a drawing."""
+        if isinstance(shape, (LinearGradientShape, RadialGradientShape)):
+            return shape
+        for item in getattr(shape, "contents", []):
+            if found := TestGradients._gradient_shape(item):
+                return found
+        return None
+
+    @pytest.mark.parametrize(
+        "gradient, spread, axis, positions, order",
+        [
+            pytest.param(
+                '<linearGradient id="g" x2="0.4" spreadMethod="{}">',
+                "repeat",
+                (0, 0, 120, 0),
+                [0, 1 / 3, 1 / 3, 2 / 3, 2 / 3, 1],
+                "rbrbrb",
+                id="linear-repeat",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x2="0.4" spreadMethod="{}">',
+                "reflect",
+                (0, 0, 120, 0),
+                [0, 1 / 3, 1 / 3, 2 / 3, 2 / 3, 1],
+                "rbbrrb",
+                id="linear-reflect",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x1="0.7" x2="0.9" spreadMethod="{}">',
+                "reflect",
+                (-10, 0, 110, 0),
+                [0, 1 / 6, 1 / 6, 2 / 6, 2 / 6, 3 / 6, 3 / 6, 4 / 6, 4 / 6, 5 / 6]
+                + [5 / 6, 1],
+                "rbbrrbbrrbbr",
+                id="linear-before-start",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x1="0.5" x2="0.3" spreadMethod="{}">',
+                "repeat",
+                (110, 0, -10, 0),
+                [0, 1 / 6, 1 / 6, 2 / 6, 2 / 6, 3 / 6, 3 / 6, 4 / 6, 4 / 6, 5 / 6]
+                + [5 / 6, 1],
+                "rbrbrbrbrbrb",
+                id="linear-backwards",
+            ),
+            pytest.param(
+                '<radialGradient id="g" r="0.2" spreadMethod="{}">',
+                "reflect",
+                (50, 50, 80),
+                [0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1],
+                "rbbrrbbr",
+                id="radial-reflect",
+            ),
+            pytest.param(
+                '<radialGradient id="g" r="0.2" spreadMethod="{}">',
+                "repeat",
+                (50, 50, 80),
+                [0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1],
+                "rbrbrbrb",
+                id="radial-repeat",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x2="0.4" spreadMethod="{}">',
+                "pad",
+                (0, 0, 40, 0),
+                [0, 1],
+                "rb",
+                id="pad",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x2="0.4" spreadMethod="{}">',
+                "unknown",
+                (0, 0, 40, 0),
+                [0, 1],
+                "rb",
+                id="unknown-is-pad",
+            ),
+        ],
+    )
+    def test_gradient_spread_method(self, gradient, spread, axis, positions, order):
+        """A gradient with spreadMethod reflect or repeat goes on past its ends.
+
+        It was painted black there, as it was not extended. Its stops are now laid
+        one period after the other over the shape: in the order of the period for
+        repeat, and every other period back to front for reflect.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    {gradient.format(spread)}
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </{tag}>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        shape = self._gradient_shape(drawing)
+        if isinstance(shape, LinearGradientShape):
+            assert (shape._x0, shape._y0, shape._x1, shape._y1) == pytest.approx(axis)
+        else:
+            assert (shape._cx, shape._cy, shape._r) == pytest.approx(axis)
+        assert shape._positions == pytest.approx(positions)
+        names = {(1, 0, 0): "r", (0, 0, 1): "b"}
+        assert "".join(names[c.red, c.green, c.blue] for c in shape._rl_colors) == order

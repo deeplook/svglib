@@ -11,6 +11,9 @@
 
 ### Fixed
 
+- A gradient with `spreadMethod="reflect"` or `"repeat"` is now repeated past
+  its ends, as in browsers; it was painted black there. Every other period is
+  back to front for `reflect`. An unknown `spreadMethod` is `pad`.
 - The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
