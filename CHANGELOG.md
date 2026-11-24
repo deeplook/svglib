@@ -11,6 +11,12 @@
 
 ### Fixed
 
+- The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
+  CSS rule, such as the classes of the SVG that Illustrator exports
+  (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
+  now applies to the whole document, including the elements before it, as in
+  browsers, and not only to the gradients in its `<defs>`: a shape that comes
+  before a `<style>` that styles it is no longer black (#558).
 - `stop-color` set to `currentColor` in a gradient stop no longer makes
   `svg2rlg()` fail with `AttributeError`; it is the `color` of the stop, as in
   browsers, or black when none is set (#559).
@@ -43,6 +49,13 @@
 - A `light-dark()` color, which draw.io writes in its SVG exports, is now read
   as its first, light color, the one CSS uses when no `color-scheme` is set;
   the shape lost its fill or stroke before (#546).
+- `var()` is now read, in `fill`, `stroke` and other values, as Figma and VS
+  Code write colors that a theme can change, such as
+  `fill="var(--fill-0, #171D25)"`: it is the custom property of the element or
+  an ancestor, set in a `style` attribute or a CSS rule, or else its fallback.
+  Such a value was not read and the shape was not drawn. A value that needs
+  more than 1000 replacements, or becomes longer than 100,000 characters, is
+  invalid, so a small SVG cannot make it take exponential time (#554).
 - An `<image>` that references an SVG document now draws it in the viewport
   given by its `width` and `height`, with its own `preserveAspectRatio`, as
   browsers and Inkscape do; the document was drawn at its own size, ignoring
