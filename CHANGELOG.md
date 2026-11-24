@@ -22,6 +22,9 @@
   browsers, or black when none is set (#559).
 - `hwb()` colors of CSS Color 4 are now converted to sRGB, as `oklch()` and
   `oklab()` are: they were not read and the shape was not drawn (#560).
+- The `offset` of a gradient stop is now limited to 0 to 1 and to at least the
+  offset of the stop before it, as in browsers: a stop beyond the ends, such as
+  `offset="150%"`, or before the previous one drew a different gradient.
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
