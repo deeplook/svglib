@@ -511,6 +511,9 @@
   "_fonts_register_font": {
    "what": "callable(POSITIONAL_OR_KEYWORD:font_name, POSITIONAL_OR_KEYWORD:font_path, POSITIONAL_OR_KEYWORD:weight, POSITIONAL_OR_KEYWORD:style, POSITIONAL_OR_KEYWORD:rlgFontName)"
   },
+  "_hwb_color": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:keyword)"
+  },
   "_is_inside_text_path": {
    "what": "callable(POSITIONAL_OR_KEYWORD:node, POSITIONAL_OR_KEYWORD:text_node)"
   },

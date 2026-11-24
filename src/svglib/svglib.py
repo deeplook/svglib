@@ -19,6 +19,7 @@ Example:
 """
 
 import base64
+import colorsys
 import copy
 import gzip
 import itertools
@@ -1038,6 +1039,8 @@ class Svg2RlgAttributeConverter(AttributeConverter):
             )
         elif keyword.startswith(("oklab(", "oklch(")) and keyword.endswith(")"):
             color = _oklab_color(keyword)
+        elif keyword.startswith("hwb(") and keyword.endswith(")"):
+            color = _hwb_color(keyword)
         else:
             # Should handle pcmyk|cmyk|rgb|hsl values (including 'a' for alpha)
             color = colors.cssParse(
@@ -3533,6 +3536,57 @@ def _oklab_color(keyword: str) -> Optional[colors.Color]:
     if lightness in (0.0, 1.0):
         return colors.Color(lightness, lightness, lightness, opacity)
     return colors.Color(*(srgb(channel) for channel in linear), opacity)
+
+
+def _hwb_color(keyword: str) -> Optional[colors.Color]:
+    """Convert hwb(H W B), with an optional "/ A", to sRGB.
+
+    CSS Color 4: H is a hue with an optional angle unit, W and B are the whiteness
+    and blackness, percentages or numbers from 0 to 100, and A is a number from 0 to
+    1 or a percentage; all are clamped, and "none" is 0. When W and B add up to 100%
+    or more the color is the gray W / (W + B), else it is the fully saturated color
+    of the hue, mixed with W of white and B of black. Return None if the value
+    cannot be read.
+    https://www.w3.org/TR/css-color-4/#the-hwb-notation
+    """
+    body, _, alpha = keyword[len("hwb(") : -1].partition("/")
+    parts = body.split()
+    if len(parts) != 3:
+        return None
+
+    def fraction(value: str, whole: float) -> float:
+        if value == "none":
+            return 0.0
+        if value.endswith("%"):
+            return min(max(float(value[:-1]) / 100, 0.0), 1.0)
+        return min(max(float(value) / whole, 0.0), 1.0)
+
+    try:
+        hue = 0.0
+        if parts[0] != "none":
+            unit = next(
+                (u for u in _DEGREES_PER_ANGLE_UNIT if parts[0].endswith(u)), ""
+            )
+            hue = float(parts[0][: len(parts[0]) - len(unit)])
+            hue *= _DEGREES_PER_ANGLE_UNIT.get(unit, 1.0)
+        whiteness, blackness = fraction(parts[1], 100), fraction(parts[2], 100)
+        opacity = fraction(alpha.strip(), 1) if alpha else 1.0
+    except ValueError:
+        return None
+    if not all(map(math.isfinite, (hue, whiteness, blackness, opacity))):
+        return None
+
+    if whiteness + blackness >= 1:
+        gray = whiteness / (whiteness + blackness)
+        return colors.Color(gray, gray, gray, opacity)
+    red, green, blue = colorsys.hls_to_rgb(hue % 360 / 360, 0.5, 1.0)
+    scale = 1 - whiteness - blackness
+    return colors.Color(
+        red * scale + whiteness,
+        green * scale + whiteness,
+        blue * scale + whiteness,
+        opacity,
+    )
 
 
 def _first_css_argument(arguments: str) -> str:
