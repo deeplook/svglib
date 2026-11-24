@@ -22,6 +22,10 @@
   browsers, or black when none is set (#559).
 - `hwb()` colors of CSS Color 4 are now converted to sRGB, as `oklch()` and
   `oklab()` are: they were not read and the shape was not drawn (#560).
+- `stop-color` and `stop-opacity` of a gradient stop can now use `var()`, such as
+  the `stop-color="var(--fill-0, #171D25)"` that Figma writes: the stop was
+  black, and the gradient with it. A `var()` without a value is as if the
+  property was not set.
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute
