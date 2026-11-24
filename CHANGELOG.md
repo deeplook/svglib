@@ -26,6 +26,10 @@
   the `stop-color="var(--fill-0, #171D25)"` that Figma writes: the stop was
   black, and the gradient with it. A `var()` without a value is as if the
   property was not set.
+- A gradient that refers to another one with `href` now takes the geometry,
+  `gradientUnits` and `spreadMethod` of that gradient when it does not set them
+  itself, as in browsers: it used its own defaults (`x2="1"`, `pad`,
+  `objectBoundingBox`) and so a gradient set on the first one was lost (#563).
 - CSS font-size keywords such as `large`, `x-small`, `larger` and `smaller`,
   in the `font-size` attribute, in `style` attributes and in the `font`
   shorthand, no longer make `svg2rlg()` fail with `ValueError`. Absolute

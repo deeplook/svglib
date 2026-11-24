@@ -466,3 +466,81 @@ class TestGradients:
         renderer.render(load_svg_file(BytesIO(svg_content)))
         (_, first), _ = renderer.gradient_defs["g1"]["stops"]
         assert first.alpha == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
+        "base, derived, expected",
+        [
+            pytest.param(
+                'x1="0.1" y1="0.2" x2="0.5" y2="0.6"',
+                "",
+                {"x1": 0.1, "y1": 0.2, "x2": 0.5, "y2": 0.6},
+                id="linear-geometry",
+            ),
+            pytest.param(
+                'x1="0.1" x2="0.5"',
+                'x2="25%"',
+                {"x1": 0.1, "x2": 0.25},
+                id="linear-own-attribute",
+            ),
+            pytest.param(
+                'spreadMethod="reflect" gradientUnits="userSpaceOnUse"',
+                "",
+                {"spreadMethod": "reflect", "gradientUnits": "userSpaceOnUse"},
+                id="units-and-spread",
+            ),
+            pytest.param(
+                'spreadMethod="reflect"',
+                'spreadMethod="repeat"',
+                {"spreadMethod": "repeat"},
+                id="own-spread",
+            ),
+        ],
+    )
+    def test_gradient_attributes_inherited_through_href(self, base, derived, expected):
+        """A gradient takes the attributes of its href that it does not set itself.
+
+        It used its own defaults instead, so x2 was 1 and the spread was pad.
+        """
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="base" {base}>
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                    <linearGradient id="g1" href="#base" {derived}/>
+                </defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        resolved = renderer._resolve_gradient("g1")
+        assert resolved is not None
+        assert {key: resolved.get(key) for key in expected} == pytest.approx(expected)
+        assert len(resolved["stops"]) == 2
+
+    def test_radial_gradient_attributes_inherited_through_href(self):
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = b"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <radialGradient id="base" cx="0.3" cy="0.4" r="0.2">
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </radialGradient>
+                    <radialGradient id="g1" href="#base" cx="0.7"/>
+                </defs>
+            </svg>"""
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        resolved = renderer._resolve_gradient("g1")
+        assert resolved is not None
+        assert (resolved["cx"], resolved["cy"], resolved["r"]) == pytest.approx(
+            (0.7, 0.4, 0.2)
+        )
