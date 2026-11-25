@@ -1,6 +1,7 @@
 """Linear and radial gradients."""
 
 import itertools
+import math
 
 import pytest
 from reportlab.graphics.shapes import (
@@ -745,3 +746,60 @@ class TestGradients:
         assert (len(shape._positions) > stops) == repeated
         assert len(shape._positions) <= 10_000
         assert len(shape._positions) == len(shape._rl_colors)
+
+    @pytest.mark.parametrize(
+        "gradient, geometry",
+        [
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="10%" '
+                'y1="25%" x2="90%" y2="75%">',
+                (20, 25, 180, 75),
+                id="linear",
+            ),
+            pytest.param(
+                '<radialGradient id="g" gradientUnits="userSpaceOnUse" cx="50%" '
+                'cy="50%" r="25%">',
+                (100, 50, 0.25 * math.hypot(200, 100) / math.sqrt(2)),
+                id="radial",
+            ),
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x2="50%">',
+                (0, 0, 100, 0),
+                id="linear-default-y",
+            ),
+            # unchanged in the units of the bounding box, where it is a fraction of it
+            pytest.param(
+                '<linearGradient id="g" x1="10%" x2="90%">',
+                (20, 0, 180, 0),
+                id="bounding-box",
+            ),
+        ],
+    )
+    def test_gradient_user_space_percentages(self, gradient, geometry):
+        """A percentage in gradientUnits="userSpaceOnUse" is of the viewport.
+
+        It was read as a fraction of one: x2="50%" was 0.5 user units, not half
+        of the width. It is of the width for x, of the height for y, and of the
+        normalized diagonal for a radius.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"
+                 viewBox="0 0 200 100">
+                <defs>
+                    {gradient}
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </{tag}>
+                </defs>
+                <rect width="200" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        shape = self._gradient_shape(drawing)
+        if isinstance(shape, LinearGradientShape):
+            assert (shape._x0, shape._y0, shape._x1, shape._y1) == pytest.approx(
+                geometry
+            )
+        else:
+            assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)

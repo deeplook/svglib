@@ -1687,6 +1687,26 @@ class SvgRenderer:
             can, and else the default is used when the gradient is painted.
             """
             raw = node.attrib.get(attr, "").strip()
+            if (
+                raw.endswith("%")
+                and node.attrib.get("gradientUnits") == "userSpaceOnUse"
+                and (main_box := self.attrConverter.main_box) is not None
+            ):
+                # a percentage of the viewport, in user units: of its width for x,
+                # of its height for y and of the normalized diagonal for a radius
+                try:
+                    fraction = float(raw[:-1]) / 100.0
+                except ValueError:
+                    return None
+                if attr in ("x1", "x2", "cx", "fx"):
+                    return fraction * main_box.width
+                if attr in ("y1", "y2", "cy", "fy"):
+                    return fraction * main_box.height
+                return (
+                    fraction
+                    * math.hypot(main_box.width, main_box.height)
+                    / math.sqrt(2)
+                )
             try:
                 return float(raw[:-1]) / 100.0 if raw.endswith("%") else float(raw)
             except ValueError:
