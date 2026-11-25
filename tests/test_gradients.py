@@ -1,5 +1,7 @@
 """Linear and radial gradients."""
 
+import itertools
+
 import pytest
 from reportlab.graphics.shapes import (
     Group,
@@ -691,3 +693,55 @@ class TestGradients:
         assert shape._positions == pytest.approx(positions)
         names = {(1, 0, 0): "r", (0, 0, 1): "b"}
         assert "".join(names[c.red, c.green, c.blue] for c in shape._rl_colors) == order
+
+    @pytest.mark.parametrize("spread", ["reflect", "repeat"])
+    @pytest.mark.parametrize(
+        "gradient",
+        [
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x2="1" '
+                'spreadMethod="{}">',
+                id="linear",
+            ),
+            pytest.param(
+                '<radialGradient id="g" gradientUnits="userSpaceOnUse" cx="50" '
+                'cy="50" r="1" spreadMethod="{}">',
+                id="radial",
+            ),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "stops, repeated",
+        [
+            # the periods of a short axis, up to 10,000 stops in all of them
+            (50, True),
+            # more stops than that are painted with pad, as for too many periods
+            (200, False),
+        ],
+    )
+    def test_gradient_spread_method_limits_the_stops(
+        self, gradient, spread, stops, repeated
+    ):
+        """The stops of all the periods are limited, as every shape has its own copy.
+
+        A gradient with many stops and a short axis has the periods it needs, but
+        too many stops in all of them: it is painted with pad.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        stop_elements = "".join(
+            f'<stop offset="{i / (stops - 1)}" stop-color="{color}"/>'
+            for i, color in zip(range(stops), itertools.cycle(["blue", "red"]))
+        )
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    {gradient.format(spread)}{stop_elements}</{tag}>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        shape = self._gradient_shape(drawing)
+        assert (len(shape._positions) > stops) == repeated
+        assert len(shape._positions) <= 10_000
+        assert len(shape._positions) == len(shape._rl_colors)
