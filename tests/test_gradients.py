@@ -659,6 +659,7 @@ class TestGradients:
             for item in getattr(shape, "contents", []):
                 if found := find(item):
                     return found
+            return None
 
         shape = find(drawing)
         if matrix is None:
