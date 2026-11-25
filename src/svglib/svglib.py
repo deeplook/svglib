@@ -1816,7 +1816,30 @@ class SvgRenderer:
 
         positions = [s[0] for s in stops]
         rl_colors = [s[1] for s in stops]
-        extend = grad_def.get("spreadMethod", "pad") == "pad"
+        spread = grad_def.get("spreadMethod", "pad").strip()
+        # The most periods, and the most stops in all of them, laid out for
+        # spreadMethod reflect or repeat; every shape gets its own copy of the stops
+        max_periods = 200
+        max_stops = 10_000
+
+        def repeat_stops(first: int, last: int) -> None:
+            """Lay the stops over the periods first to last, one after the other.
+
+            The positions are from 0 to 1 over all the periods; every other period
+            is the stops in reverse order, with reflect.
+            """
+            nonlocal positions, rl_colors
+            new_positions: list[float] = []
+            new_colors: list[colors.Color] = []
+            for period in range(first, last):
+                pairs = list(zip(positions, rl_colors))
+                if spread == "reflect" and period % 2:
+                    pairs = [(1.0 - p, c) for p, c in reversed(pairs)]
+                for position, color in pairs:
+                    new_positions.append((period - first + position) / (last - first))
+                    new_colors.append(color)
+            positions, rl_colors = new_positions, new_colors
+
         grad_units = grad_def.get("gradientUnits", "objectBoundingBox")
 
         if grad_units == "objectBoundingBox":
@@ -1842,8 +1865,34 @@ class SvgRenderer:
                 y1 = by0 + y1 * bbox_h
                 x2 = bx0 + x2 * bbox_w
                 y2 = by0 + y2 * bbox_h
+            if spread in ("reflect", "repeat"):
+                # The gradient goes on past its ends: lay the periods it needs to
+                # cover the shape one after the other, then pad what is left
+                dx, dy = x2 - x1, y2 - y1
+                length2 = dx * dx + dy * dy
+                if length2 > 0:
+                    sx0, sy0, sx1, sy1 = clip_shape.getBounds()
+                    ts = [
+                        ((x - x1) * dx + (y - y1) * dy) / length2
+                        for x in (sx0, sx1)
+                        for y in (sy0, sy1)
+                    ]
+                    first, last = math.floor(min(ts)), math.ceil(max(ts))
+                    periods = last - first
+                    if (
+                        (first, last) != (0, 1)
+                        and periods <= max_periods
+                        and len(positions) * periods <= max_stops
+                    ):
+                        repeat_stops(first, last)
+                        x1, y1, x2, y2 = (
+                            x1 + first * dx,
+                            y1 + first * dy,
+                            x1 + last * dx,
+                            y1 + last * dy,
+                        )
             grad_shape: DirectDraw = LinearGradientShape(
-                clip_shape, x1, y1, x2, y2, rl_colors, positions, extend
+                clip_shape, x1, y1, x2, y2, rl_colors, positions
             )
         else:
             cx = grad_def.get("cx", 0.5)
@@ -1857,8 +1906,17 @@ class SvgRenderer:
                 cx = bx0 + cx * bbox_w
                 cy = by0 + cy * bbox_h
                 r = r * (bbox_w + bbox_h) / 2.0
+            if spread in ("reflect", "repeat") and r > 0:
+                sx0, sy0, sx1, sy1 = clip_shape.getBounds()
+                far = max(
+                    math.hypot(x - cx, y - cy) for x in (sx0, sx1) for y in (sy0, sy1)
+                )
+                last = math.ceil(far / r)
+                if 1 < last <= max_periods and len(positions) * last <= max_stops:
+                    repeat_stops(0, last)
+                    r *= last
             grad_shape = RadialGradientShape(
-                clip_shape, cx, cy, r, rl_colors, positions, extend
+                clip_shape, cx, cy, r, rl_colors, positions
             )
 
         group = Group()
