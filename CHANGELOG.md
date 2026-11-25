@@ -109,6 +109,10 @@
   `spreadMethod` `reflect` or `repeat`, the periods that cover the shape are counted
   in the space of the gradient, and a transform that cannot be inverted, such as
   `scale(0)`, paints nothing, as in browsers (#568).
+- A radial gradient in the units of the bounding box on a shape that is not square
+  is now an ellipse, and a slanted linear one is skewed, as in browsers, because the
+  gradient is stretched with the bounding box; they were drawn as a circle, and with
+  the lines of equal color perpendicular to the axis.
 
 ## 2.4.0 (2026-11-04)
 
