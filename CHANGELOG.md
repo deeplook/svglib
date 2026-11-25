@@ -107,7 +107,8 @@
   refers to by `href`; it was ignored, so a gradient rotated by Figma or Illustrator
   ran in the wrong direction. A radial gradient scaled by it is an ellipse. With
   `spreadMethod` `reflect` or `repeat`, the periods that cover the shape are counted
-  in the space of the gradient (#568).
+  in the space of the gradient, and a transform that cannot be inverted, such as
+  `scale(0)`, paints nothing, as in browsers (#568).
 
 ## 2.4.0 (2026-11-04)
 

@@ -1881,7 +1881,8 @@ class SvgRenderer:
             if grad_units == "objectBoundingBox":
                 matrix = mmult((bbox_w, 0, 0, bbox_h, bx0, by0), matrix)
             if matrix[0] * matrix[3] - matrix[1] * matrix[2] == 0:
-                matrix = None
+                # A matrix that cannot be inverted paints nothing, as in browsers
+                return item
 
         def shape_corners() -> list[tuple[float, float]]:
             """The corners of the bounds of the shape, in the space of the gradient."""

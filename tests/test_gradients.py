@@ -836,13 +836,6 @@ class TestGradients:
                 id="radial",
             ),
             pytest.param(
-                '<linearGradient id="g" gradientTransform="scale(0)">{}'
-                "</linearGradient>",
-                None,
-                (10, 10, 90, 10),
-                id="not-invertible",
-            ),
-            pytest.param(
                 '<linearGradient id="g">{}</linearGradient>',
                 None,
                 (10, 10, 90, 10),
@@ -878,6 +871,31 @@ class TestGradients:
             )
         else:
             assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)
+
+    @pytest.mark.parametrize(
+        "transform",
+        ["scale(0)", "scale(0 1)", "matrix(0 0 0 0 0 0)", "matrix(1 2 2 4 0 0)"],
+    )
+    @pytest.mark.parametrize("units", ["objectBoundingBox", "userSpaceOnUse"])
+    def test_gradient_transform_not_invertible_paints_nothing(self, transform, units):
+        """A gradientTransform that cannot be inverted paints nothing, as in Chrome.
+
+        The gradient was painted as if it had no transform.
+        """
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="g" gradientUnits="{units}" x2="100"
+                                    gradientTransform="{transform}">
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        assert self._gradient_shape(drawing) is None
 
     @pytest.mark.parametrize("spread", ["reflect", "repeat"])
     @pytest.mark.parametrize(
