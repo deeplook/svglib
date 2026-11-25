@@ -626,6 +626,7 @@ class TestGradients:
             for item in getattr(shape, "contents", []):
                 if found := find_rect(item):
                     return found
+            return None
 
         assert find_rect(drawing).fillColor == colors.Color(0, 0, 1, 1)
         assert not self._find_gradient_shapes(drawing)
