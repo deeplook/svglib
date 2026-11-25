@@ -101,6 +101,9 @@
 - A gradient with no extent, that is a linear gradient with both ends in the same
   place or a radial gradient with a radius of 0, now paints the shape in the
   color of its last stop, as in browsers; it was black or the first color (#569).
+- The `preserveAspectRatio` of a nested `<svg>` now aligns the viewBox to the top
+  for `yMin` and to the bottom for `yMax`, as in browsers; they were the other way
+  round.
 
 ## 2.4.0 (2026-11-04)
 

@@ -2372,11 +2372,13 @@ class SvgRenderer:
                     tx = width_pt - scaled_vb_w
                 else:  # xMid (default)
                     tx = (width_pt - scaled_vb_w) / 2
-                # Vertical alignment (SVG y increases downward, PDF upward)
+                # Vertical alignment. The outermost viewport is in PDF space, where y
+                # increases upward; a nested one is in the space of its parent, where
+                # y increases downward.
                 if "YMin" in align:
-                    ty = height_pt - scaled_vb_h
+                    ty = 0 if not outermost else height_pt - scaled_vb_h
                 elif "YMax" in align:
-                    ty = 0
+                    ty = height_pt - scaled_vb_h if not outermost else 0
                 else:  # YMid (default)
                     ty = (height_pt - scaled_vb_h) / 2
                 if tx or ty:
