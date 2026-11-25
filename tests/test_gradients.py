@@ -797,6 +797,163 @@ class TestGradients:
         assert self._gradient_shape(drawing) is None
 
     @pytest.mark.parametrize(
+        "defs, matrix, geometry",
+        [
+            pytest.param(
+                '<linearGradient id="g" gradientTransform="rotate(90 .5 .5)">{}'
+                "</linearGradient>",
+                (0, 80, -80, 0, 90, 10),
+                (0, 0, 1, 0),
+                id="rotate-in-the-bounding-box",
+            ),
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="5" x2="9"'
+                ' gradientTransform="translate(10 20) scale(2)">{}</linearGradient>',
+                (2, 0, 0, 2, 10, 20),
+                (5, 0, 9, 0),
+                id="user-space",
+            ),
+            pytest.param(
+                '<linearGradient id="g" href="#b"/><linearGradient id="b"'
+                ' gradientTransform="rotate(90 .5 .5)">{}</linearGradient>',
+                (0, 80, -80, 0, 90, 10),
+                (0, 0, 1, 0),
+                id="from-href",
+            ),
+            pytest.param(
+                '<linearGradient id="g" href="#b" gradientTransform="scale(2)"/>'
+                '<linearGradient id="b" gradientTransform="rotate(90)">{}'
+                "</linearGradient>",
+                (160, 0, 0, 160, 10, 10),
+                (0, 0, 1, 0),
+                id="own-over-href",
+            ),
+            pytest.param(
+                '<radialGradient id="g" gradientTransform="scale(0.5 1)">{}'
+                "</radialGradient>",
+                (40, 0, 0, 80, 10, 10),
+                (0.5, 0.5, 0.5),
+                id="radial",
+            ),
+            pytest.param(
+                '<linearGradient id="g">{}</linearGradient>',
+                None,
+                (10, 10, 90, 10),
+                id="none",
+            ),
+        ],
+    )
+    def test_gradient_transform(self, defs, matrix, geometry):
+        """The gradientTransform of a gradient is applied; it was ignored.
+
+        The gradient is then painted in its own space, and the matrix of the
+        transform, after the one of the bounding box, maps it to the user space.
+        """
+        stops = (
+            '<stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/>'
+        )
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>{defs.format(stops)}</defs>
+                <rect x="10" y="10" width="80" height="80" fill="url(#g)"/>
+            </svg>"""
+        )
+
+        shape = self._gradient_shape(drawing)
+        if matrix is None:
+            assert shape._transform is None
+        else:
+            assert shape._transform == pytest.approx(matrix)
+        if isinstance(shape, LinearGradientShape):
+            assert (shape._x0, shape._y0, shape._x1, shape._y1) == pytest.approx(
+                geometry
+            )
+        else:
+            assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)
+
+    @pytest.mark.parametrize(
+        "transform",
+        ["scale(0)", "scale(0 1)", "matrix(0 0 0 0 0 0)", "matrix(1 2 2 4 0 0)"],
+    )
+    @pytest.mark.parametrize("units", ["objectBoundingBox", "userSpaceOnUse"])
+    def test_gradient_transform_not_invertible_paints_nothing(self, transform, units):
+        """A gradientTransform that cannot be inverted paints nothing, as in Chrome.
+
+        The gradient was painted as if it had no transform.
+        """
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="g" gradientUnits="{units}" x2="100"
+                                    gradientTransform="{transform}">
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </linearGradient>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        assert self._gradient_shape(drawing) is None
+
+    @pytest.mark.parametrize("spread", ["reflect", "repeat"])
+    @pytest.mark.parametrize(
+        "gradient",
+        [
+            pytest.param(
+                '<linearGradient id="g" x2="0.25" spreadMethod="{}" '
+                'gradientTransform="rotate(45 .5 .5)">',
+                id="linear-rotated",
+            ),
+            pytest.param(
+                '<radialGradient id="g" r="0.1" spreadMethod="{}" '
+                'gradientTransform="scale(2 1)">',
+                id="radial-scaled",
+            ),
+        ],
+    )
+    def test_gradient_transform_with_spread_method(self, gradient, spread):
+        """The periods are counted in the space of the gradient, not of the shape.
+
+        The matrix of the gradient maps the periods to the user space, so the
+        corners of the shape have to be mapped back with its inverse to count how
+        many periods cover it; the count was made in the user space.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    {gradient.format(spread)}
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </{tag}>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        shape = self._gradient_shape(drawing)
+        a, b, c, d, e, f = shape._transform
+        det = a * d - b * c
+        corners = [
+            ((d * (x - e) - c * (y - f)) / det, (a * (y - f) - b * (x - e)) / det)
+            for x in (0, 100)
+            for y in (0, 100)
+        ]
+        # the stops of every period were laid out
+        assert len(shape._positions) > 2
+        if isinstance(shape, LinearGradientShape):
+            # the periods cover the corners of the shape along the axis, which is
+            # along x in its space
+            xs = [x for x, _ in corners]
+            assert min(shape._x0, shape._x1) <= min(xs)
+            assert max(shape._x0, shape._x1) >= max(xs)
+        else:
+            far = max(math.hypot(x - shape._cx, y - shape._cy) for x, y in corners)
+            assert shape._r >= far
+
+    @pytest.mark.parametrize(
         "gradient, geometry",
         [
             pytest.param(

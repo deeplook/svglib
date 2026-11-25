@@ -127,6 +127,7 @@ class _GradientDef(_GradientDefBase, total=False):
     """Keys present when the element sets them (the others come from its href)."""
 
     gradientUnits: str
+    gradientTransform: str
     spreadMethod: str
     # Geometry keys present depending on ``type`` (linear vs radial)
     # linearGradient
@@ -1396,14 +1397,19 @@ class LinearGradientShape(DirectDraw):
         rl_colors: list[colors.Color],
         positions: list[float],
         extend: bool = True,
+        transform: Optional[tuple[float, ...]] = None,
     ) -> None:
-        """Store the clip shape, gradient axis, colours and stop positions."""
+        """Store the clip shape, gradient axis, colours and stop positions.
+
+        The axis is in the space that ``transform``, if any, maps to the user space.
+        """
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
         self._x1, self._y1 = x1, y1
         self._rl_colors = rl_colors
         self._positions = positions
         self._extend = extend
+        self._transform = transform
 
     def drawDirectly(self, renderer: Any) -> None:
         """Paint the linear gradient into the clipped region on the PDF canvas."""
@@ -1411,6 +1417,8 @@ class LinearGradientShape(DirectDraw):
         canvas.saveState()
         if pdfPath := _shape_to_pdf_path(canvas, self._clip_shape):
             canvas.clipPath(pdfPath, fill=1, stroke=0)
+            if self._transform:
+                canvas.transform(*self._transform)
             canvas.linearGradient(
                 self._x0,
                 self._y0,
@@ -1439,13 +1447,19 @@ class RadialGradientShape(DirectDraw):
         rl_colors: list[colors.Color],
         positions: list[float],
         extend: bool = True,
+        transform: Optional[tuple[float, ...]] = None,
     ) -> None:
-        """Store the clip shape, centre, radius, colours and stop positions."""
+        """Store the clip shape, centre, radius, colours and stop positions.
+
+        The centre is in the space that ``transform``, if any, maps to the user
+        space.
+        """
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
         self._rl_colors = rl_colors
         self._positions = positions
         self._extend = extend
+        self._transform = transform
 
     def drawDirectly(self, renderer: Any) -> None:
         """Paint the radial gradient into the clipped region on the PDF canvas."""
@@ -1453,6 +1467,8 @@ class RadialGradientShape(DirectDraw):
         canvas.saveState()
         if pdfPath := _shape_to_pdf_path(canvas, self._clip_shape):
             canvas.clipPath(pdfPath, fill=1, stroke=0)
+            if self._transform:
+                canvas.transform(*self._transform)
             canvas.radialGradient(
                 self._cx,
                 self._cy,
@@ -1788,6 +1804,8 @@ class SvgRenderer:
 
         if "gradientUnits" in node.attrib:
             grad_def["gradientUnits"] = node.attrib["gradientUnits"]
+        if "gradientTransform" in node.attrib:
+            grad_def["gradientTransform"] = node.attrib["gradientTransform"]
         if "spreadMethod" in node.attrib:
             grad_def["spreadMethod"] = node.attrib["spreadMethod"]
         names = (
@@ -1873,6 +1891,32 @@ class SvgRenderer:
         else:
             bx0 = by0 = bbox_w = bbox_h = 0.0  # unused for userSpaceOnUse
 
+        # With gradientTransform, the gradient is painted in its own space and the
+        # matrix (with the one of the bounding box) maps it to the user space
+        matrix: Optional[tuple[float, ...]] = None
+        if transform := grad_def.get("gradientTransform"):
+            holder = Group()
+            self.shape_converter.applyTransformOnGroup(transform, holder)
+            matrix = holder.transform
+            if grad_units == "objectBoundingBox":
+                matrix = mmult((bbox_w, 0, 0, bbox_h, bx0, by0), matrix)
+            if matrix[0] * matrix[3] - matrix[1] * matrix[2] == 0:
+                # A matrix that cannot be inverted paints nothing, as in browsers
+                return item
+
+        def shape_corners() -> list[tuple[float, float]]:
+            """The corners of the bounds of the shape, in the space of the gradient."""
+            sx0, sy0, sx1, sy1 = clip_shape.getBounds()
+            corners = [(x, y) for x in (sx0, sx1) for y in (sy0, sy1)]
+            if matrix is None:
+                return corners
+            a, b, c, d, e, f = matrix
+            det = a * d - b * c
+            return [
+                ((d * (x - e) - c * (y - f)) / det, (a * (y - f) - b * (x - e)) / det)
+                for x, y in corners
+            ]
+
         if grad_def["type"] == "linear":
             x1, y1 = grad_def.get("x1", 0.0), grad_def.get("y1", 0.0)
             x2, y2 = grad_def.get("x2", 1.0), grad_def.get("y2", 0.0)
@@ -1880,7 +1924,7 @@ class SvgRenderer:
                 # The axis has no length: the shape is the color of the last stop
                 clip_shape.fillColor = rl_colors[-1]
                 return item
-            if grad_units == "objectBoundingBox":
+            if grad_units == "objectBoundingBox" and matrix is None:
                 x1 = bx0 + x1 * bbox_w
                 y1 = by0 + y1 * bbox_h
                 x2 = bx0 + x2 * bbox_w
@@ -1891,11 +1935,9 @@ class SvgRenderer:
                 dx, dy = x2 - x1, y2 - y1
                 length2 = dx * dx + dy * dy
                 if length2 > 0:
-                    sx0, sy0, sx1, sy1 = clip_shape.getBounds()
                     ts = [
                         ((x - x1) * dx + (y - y1) * dy) / length2
-                        for x in (sx0, sx1)
-                        for y in (sy0, sy1)
+                        for x, y in shape_corners()
                     ]
                     first, last = math.floor(min(ts)), math.ceil(max(ts))
                     periods = last - first
@@ -1912,7 +1954,7 @@ class SvgRenderer:
                             y1 + last * dy,
                         )
             grad_shape: DirectDraw = LinearGradientShape(
-                clip_shape, x1, y1, x2, y2, rl_colors, positions
+                clip_shape, x1, y1, x2, y2, rl_colors, positions, transform=matrix
             )
         else:
             cx = grad_def.get("cx", 0.5)
@@ -1922,21 +1964,18 @@ class SvgRenderer:
                 # The radius is nothing: the shape is the color of the last stop
                 clip_shape.fillColor = rl_colors[-1]
                 return item
-            if grad_units == "objectBoundingBox":
+            if grad_units == "objectBoundingBox" and matrix is None:
                 cx = bx0 + cx * bbox_w
                 cy = by0 + cy * bbox_h
                 r = r * (bbox_w + bbox_h) / 2.0
             if spread in ("reflect", "repeat") and r > 0:
-                sx0, sy0, sx1, sy1 = clip_shape.getBounds()
-                far = max(
-                    math.hypot(x - cx, y - cy) for x in (sx0, sx1) for y in (sy0, sy1)
-                )
+                far = max(math.hypot(x - cx, y - cy) for x, y in shape_corners())
                 last = math.ceil(far / r)
                 if 1 < last <= max_periods and len(positions) * last <= max_stops:
                     repeat_stops(0, last)
                     r *= last
             grad_shape = RadialGradientShape(
-                clip_shape, cx, cy, r, rl_colors, positions
+                clip_shape, cx, cy, r, rl_colors, positions, transform=matrix
             )
 
         group = Group()
