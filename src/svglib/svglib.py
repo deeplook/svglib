@@ -1876,6 +1876,10 @@ class SvgRenderer:
         if grad_def["type"] == "linear":
             x1, y1 = grad_def.get("x1", 0.0), grad_def.get("y1", 0.0)
             x2, y2 = grad_def.get("x2", 1.0), grad_def.get("y2", 0.0)
+            if (x1, y1) == (x2, y2):
+                # The axis has no length: the shape is the color of the last stop
+                clip_shape.fillColor = rl_colors[-1]
+                return item
             if grad_units == "objectBoundingBox":
                 x1 = bx0 + x1 * bbox_w
                 y1 = by0 + y1 * bbox_h
@@ -1914,6 +1918,10 @@ class SvgRenderer:
             cx = grad_def.get("cx", 0.5)
             cy = grad_def.get("cy", 0.5)
             r = grad_def.get("r", 0.5)
+            if r <= 0:
+                # The radius is nothing: the shape is the color of the last stop
+                clip_shape.fillColor = rl_colors[-1]
+                return item
             if grad_units == "objectBoundingBox":
                 cx = bx0 + cx * bbox_w
                 cy = by0 + cy * bbox_h
