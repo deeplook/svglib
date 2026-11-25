@@ -98,6 +98,9 @@
 - A `<clipPath>` without any shape now clips its elements away, as in browsers,
   instead of leaving them without a clip: `clip-path="url(#clip)"` of an empty
   `<clipPath>` drew the whole element (#553).
+- A gradient with no extent, that is a linear gradient with both ends in the same
+  place or a radial gradient with a radius of 0, now paints the shape in the
+  color of its last stop, as in browsers; it was black or the first color (#569).
 
 ## 2.4.0 (2026-11-04)
 

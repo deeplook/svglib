@@ -745,3 +745,52 @@ class TestGradients:
         assert (len(shape._positions) > stops) == repeated
         assert len(shape._positions) <= 10_000
         assert len(shape._positions) == len(shape._rl_colors)
+
+    @pytest.mark.parametrize(
+        "gradient",
+        [
+            pytest.param('<linearGradient id="g" x1="0.5" x2="0.5">', id="linear"),
+            pytest.param(
+                '<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="30" '
+                'y1="40" x2="30" y2="40">',
+                id="linear-user-space",
+            ),
+            pytest.param('<radialGradient id="g" r="0">', id="radial"),
+            pytest.param(
+                '<radialGradient id="g" gradientUnits="userSpaceOnUse" r="0">',
+                id="radial-user-space",
+            ),
+            pytest.param('<radialGradient id="g" r="-1">', id="radial-negative"),
+        ],
+    )
+    def test_gradient_without_extent(self, gradient):
+        """A gradient with no extent paints the shape in the color of its last stop.
+
+        It was painted in the first color or in black when the two ends of a linear
+        gradient were in the same place, or when a radial gradient had no radius.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    {gradient}
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="0.5" stop-color="lime"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </{tag}>
+                </defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+
+        def find_rect(shape):
+            if isinstance(shape, Rect):
+                return shape
+            for item in getattr(shape, "contents", []):
+                if found := find_rect(item):
+                    return found
+            return None
+
+        assert find_rect(drawing).fillColor == colors.Color(0, 0, 1, 1)
+        assert self._gradient_shape(drawing) is None
