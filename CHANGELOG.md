@@ -11,11 +11,11 @@
 
 ### Fixed
 
-- The `gradientTransform` of a linear or radial gradient is now applied, with
-  `translate`, `scale`, `rotate`, `skewX`, `skewY` and `matrix`, in the units of
-  the bounding box and in the user space, and it is taken from the gradient it
-  refers to by `href`; it was ignored, so a gradient rotated by Figma or Illustrator
-  ran in the wrong direction. A radial gradient scaled by it is an ellipse.
+- A gradient with `spreadMethod="reflect"` or `"repeat"` is now repeated past
+  its ends, as in browsers; it was painted black there. Every other period is
+  back to front for `reflect`. An unknown `spreadMethod` is `pad`, and so is a
+  gradient that would need more than 200 periods, or more than 10,000 stops in
+  all of them (#567).
 - The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
@@ -98,6 +98,13 @@
 - A `<clipPath>` without any shape now clips its elements away, as in browsers,
   instead of leaving them without a clip: `clip-path="url(#clip)"` of an empty
   `<clipPath>` drew the whole element (#553).
+- The `gradientTransform` of a linear or radial gradient is now applied, with
+  `translate`, `scale`, `rotate`, `skewX`, `skewY` and `matrix`, in the units of
+  the bounding box and in the user space, and it is taken from the gradient it
+  refers to by `href`; it was ignored, so a gradient rotated by Figma or Illustrator
+  ran in the wrong direction. A radial gradient scaled by it is an ellipse. With
+  `spreadMethod` `reflect` or `repeat`, the periods that cover the shape are counted
+  in the space of the gradient (#568).
 
 ## 2.4.0 (2026-11-04)
 
