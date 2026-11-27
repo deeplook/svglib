@@ -2728,11 +2728,63 @@ class SvgRenderer:
                 # Append a copy of the referenced node as the <use> child (if not
                 # already done)
                 node.append(copy.deepcopy(item))
-            self.renderNode(list(node.iter_children())[-1], parent=group)
+            symbol = list(node.iter_children())[-1]
+            self.renderNode(symbol, parent=group)
+            if (
+                node_name(symbol) == "symbol"
+                and group.contents
+                and isinstance(group.contents[-1], Group)
+            ):
+                self._fit_symbol_to_viewport(node, symbol, group)
             self.apply_node_attr_to_group(node, group)
         finally:
             self._use_stack.pop()
         return group
+
+    def _fit_symbol_to_viewport(
+        self, use: NodeTracker, symbol: NodeTracker, group: Group
+    ) -> None:
+        """Map the viewBox of a <symbol> to the viewport that its <use> makes.
+
+        The viewport is the width and height of the <use>, which are 100% of the
+        parent viewport by default, with its corner at the x and y of the <use>.
+        The viewBox is scaled to it as preserveAspectRatio says, as for an <svg>.
+        """
+        view_box = self.get_box(symbol)
+        if not (view_box.width > 0 and view_box.height > 0):
+            return
+        width, height = self.shape_converter.convert_length_attrs(
+            use, "width", "height", defaults=(None,) * 2
+        )
+        main_box = self.attrConverter.main_box
+        if width is None:
+            width = main_box.width if main_box else view_box.width
+        if height is None:
+            height = main_box.height if main_box else view_box.height
+        x_scale = width / view_box.width
+        y_scale = height / view_box.height
+        tx = ty = 0.0
+        par = (symbol.getAttribute("preserveAspectRatio") or "xMidYMid meet").split()
+        align = par[0] if par else "xMidYMid"
+        if align != "none":
+            slice_ = len(par) > 1 and par[1] == "slice"
+            x_scale = y_scale = (max if slice_ else min)(x_scale, y_scale)
+            free_x = width - view_box.width * x_scale
+            free_y = height - view_box.height * y_scale
+            tx = (
+                0
+                if align.startswith("xMin")
+                else free_x
+                if "xMax" in align
+                else free_x / 2
+            )
+            ty = 0 if "YMin" in align else free_y if "YMax" in align else free_y / 2
+        fitted = Group()
+        fitted.add(group.contents.pop())
+        fitted.translate(tx, ty)
+        fitted.scale(x_scale, y_scale)
+        fitted.translate(-view_box.x, -view_box.y)
+        group.add(fitted)
         return None
 
 

@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- A `<use>` of a `<symbol>` with a `viewBox` now scales the symbol to its `width` and
+  `height`, which are 100% of the viewport by default, with the `x` and `y` of the
+  `viewBox` and its `preserveAspectRatio`, as in browsers. The `viewBox` was ignored,
+  so the symbol was drawn at its own size and an icon sprite was not scaled.
 - A gradient that refers with `href` to one that refers to another now takes the
   stops and the attributes of the whole chain, as in browsers. The chain was followed
   one step only, so such a gradient had no stops and was not painted (#578).
