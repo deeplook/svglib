@@ -2574,6 +2574,10 @@ class SvgRenderer:
 
                 x_scale = y_scale = uniform_scale
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
+            if not outermost and (view_box.x or view_box.y):
+                # The corner of the viewBox is the corner of the viewport (the
+                # outermost <svg> is moved by render())
+                group.translate(-view_box.x, -view_box.y)
 
         return group
 

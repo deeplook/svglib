@@ -418,6 +418,32 @@ class TestViewBox:
         )
         assert drawing.getBounds() == pytest.approx(bounds)
 
+    @pytest.mark.parametrize(
+        "view_box, center, bounds",
+        [
+            # the corner of the viewBox is the corner of the viewport: the circle
+            # of 5 at the center of the viewBox 30 x 30 is at the center of the
+            # viewport 100 x 50 (bounds in pt)
+            ("10 10 30 30", (25, 25), (38.75, 117.5, 51.25, 130)),
+            ("0 0 30 30", (15, 15), (38.75, 117.5, 51.25, 130)),
+            ("-10 5 30 30", (5, 20), (38.75, 117.5, 51.25, 130)),
+        ],
+    )
+    def test_nested_svg_view_box_origin(self, view_box, center, bounds):
+        """The x and y of the viewBox of a nested <svg> were ignored."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+                 viewBox="0 0 200 200">
+                <svg x="10" y="10" width="100" height="50" viewBox="{view_box}">
+                    <circle cx="{center[0]}" cy="{center[1]}" r="5"/>
+                </svg>
+            </svg>
+        """
+        )
+        assert drawing.getBounds() == pytest.approx(bounds)
+
     def test_preserve_aspect_ratio_matched_aspect_ratio(self):
         """When aspect ratios match exactly, scale is unchanged."""
         drawing = drawing_from_svg(
