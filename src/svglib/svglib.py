@@ -1882,6 +1882,8 @@ class SvgRenderer:
                 }.items()
                 if name not in result or name in result.get("percents", {})
             }
+            # The gradient that refers to the next one is the parent now
+            merged["href"] = parent.get("href")
             result = cast(_GradientDef, merged)
         if result is not None and result.get("gradientUnits") == "userSpaceOnUse":
             result = self._percents_of_viewport(result)

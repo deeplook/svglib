@@ -525,6 +525,80 @@ class TestGradients:
         assert {key: resolved.get(key) for key in expected} == pytest.approx(expected)
         assert len(resolved["stops"]) == 2
 
+    @pytest.mark.parametrize(
+        "gradients, expected",
+        [
+            pytest.param(
+                '<linearGradient id="c" x2="0.4">{}</linearGradient>'
+                '<linearGradient id="b" href="#c"/>'
+                '<linearGradient id="g" href="#b"/>',
+                {"x2": 0.4},
+                id="geometry-of-the-last",
+            ),
+            pytest.param(
+                '<linearGradient id="c" x1="0.1" spreadMethod="reflect">{}'
+                '</linearGradient><linearGradient id="b" href="#c" x2="0.4"/>'
+                '<linearGradient id="g" href="#b" x1="0.2"/>',
+                {"x1": 0.2, "x2": 0.4, "spreadMethod": "reflect"},
+                id="each-sets-one",
+            ),
+            pytest.param(
+                '<linearGradient id="d" gradientUnits="userSpaceOnUse">{}'
+                '</linearGradient><linearGradient id="c" href="#d"/>'
+                '<linearGradient id="b" href="#c"/>'
+                '<linearGradient id="g" href="#b"/>',
+                {"gradientUnits": "userSpaceOnUse"},
+                id="four-gradients",
+            ),
+        ],
+    )
+    def test_gradient_chain_of_hrefs(self, gradients, expected):
+        """A gradient takes the stops and the attributes of every gradient in a chain.
+
+        The chain was followed one step only, so a gradient that refers to one that
+        refers to another had no stops, and was not painted.
+        """
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        stops = (
+            '<stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/>'
+        )
+        svg_content = f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>{gradients.format(stops)}</defs>
+            </svg>""".encode()
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        resolved = renderer._resolve_gradient("g")
+        assert resolved is not None
+        assert {key: resolved.get(key) for key in expected} == pytest.approx(expected)
+        assert len(resolved["stops"]) == 2
+
+    def test_gradient_cycle_of_hrefs(self):
+        """Gradients that refer to each other do not make the lookup loop."""
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        svg_content = b"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <defs>
+                    <linearGradient id="a" href="#b" x2="0.3"/>
+                    <linearGradient id="b" href="#c">
+                        <stop offset="0" stop-color="red"/>
+                    </linearGradient>
+                    <linearGradient id="c" href="#a" x1="0.1"/>
+                </defs>
+            </svg>"""
+        renderer = SvgRenderer("")
+        renderer.render(load_svg_file(BytesIO(svg_content)))
+        resolved = renderer._resolve_gradient("a")
+        assert resolved is not None
+        assert (resolved["x1"], resolved["x2"]) == pytest.approx((0.1, 0.3))
+        assert len(resolved["stops"]) == 1
+
     def test_radial_gradient_attributes_inherited_through_href(self):
         from io import BytesIO
 
