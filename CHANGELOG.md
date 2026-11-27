@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- A gradient that refers with `href` to one that refers to another now takes the
+  stops and the attributes of the whole chain, as in browsers. The chain was followed
+  one step only, so such a gradient had no stops and was not painted.
+
 ## 2.5.0 (2026-11-27)
 
 ### Security
