@@ -222,6 +222,45 @@ class TestColorAttrConverter:
         rect = drawing.contents[0].contents[0].contents[0]
         assert rect.fillColor == colors.blue
 
+    def test_var_function_custom_property_cached_across_elements(self):
+        """A custom property is resolved once per document across all references."""
+        from io import BytesIO
+
+        from svglib.svglib import SvgRenderer, load_svg_file
+
+        padding = " " * 1000
+        rects = "".join(
+            '<rect width="10" height="10" fill="var(--p)"/>' for _ in range(50)
+        )
+        svg = f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <g style="--p: var(--zz,{padding}lime)">
+                {rects}
+              </g>
+            </svg>
+        """.encode()
+
+        renderer = SvgRenderer("")
+        orig_substitute = renderer.attrConverter._substitute_var
+        resolved_prop_calls = 0
+
+        def counting_substitute(svgNode, value, depth=0, expansion=None):
+            nonlocal resolved_prop_calls
+            if depth > 0 and value.startswith("var(--zz,"):
+                resolved_prop_calls += 1
+            return orig_substitute(svgNode, value, depth, expansion)
+
+        renderer.attrConverter._substitute_var = (  # type: ignore[method-assign]
+            counting_substitute
+        )
+        drawing = renderer.render(load_svg_file(BytesIO(svg)))
+
+        assert resolved_prop_calls == 1
+        rendered_rects = drawing.contents[0].contents[0].contents
+        assert len(rendered_rects) == 50
+        assert all(r.fillColor == colors.lime for r in rendered_rects)
+        assert renderer.attrConverter._resolved_vars == {}
+
     def test_var_function_with_stylesheet_custom_properties(self):
         drawing = drawing_from_svg(
             """
