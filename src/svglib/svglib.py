@@ -2077,16 +2077,22 @@ class SvgRenderer:
             A ClippingPath object, or None if no valid clipping path is found.
         """
 
+        has_zero_area = False
+
         def find_shapes_from_group(
             group: Any,
             shapes: list[Path],
             clip_rule: int,
         ) -> None:
             """Recursively find drawable shapes found within a group."""
+            nonlocal has_zero_area
+            has_polygon = any(isinstance(s, Polygon) for s in group.contents)
             for elem in group.contents:
                 if isinstance(elem, Group):
                     find_shapes_from_group(elem, shapes, clip_rule)
-                elif isinstance(elem, SolidShape):
+                elif isinstance(elem, SolidShape) or (
+                    isinstance(elem, PolyLine) and not has_polygon
+                ):
                     result = self.shape_converter.shapeToPath(elem, group.transform)
                     if result:
                         result.fillMode = clip_rule
@@ -2096,9 +2102,12 @@ class SvgRenderer:
                             "Unsupported shape type %s for clipping",
                             elem.__class__.__name__,
                         )
+                elif isinstance(elem, Line):
+                    has_zero_area = True
 
         def find_shapes_from_node(node: Any, shapes: list[Path]) -> None:
             """Find the shapes from the node."""
+            nonlocal has_zero_area
             for child in node.iter_children():
                 # Normally the fill-rule is used for the reportlab fillMode,
                 # but clip-rule is used instead when clipping.
@@ -2110,7 +2119,14 @@ class SvgRenderer:
                         clip_rule = FILL_EVEN_ODD
 
                 child_name = node_name(child)
-                valid_nodes = ["path", "rect", "circle", "ellipse", "polygon"]
+                valid_nodes = [
+                    "path",
+                    "rect",
+                    "circle",
+                    "ellipse",
+                    "polygon",
+                    "polyline",
+                ]
                 if child_name in valid_nodes:
                     item = self.shape_converter.convertShape(child_name, child)
 
@@ -2128,6 +2144,8 @@ class SvgRenderer:
                                 item.__class__.__name__,
                             )
 
+                elif child_name == "line":
+                    has_zero_area = True
                 elif child_name == "use":
                     # The clip-rule on the referenced element isn't handled yet.
                     grp = self.renderUse(child)
@@ -2152,9 +2170,13 @@ class SvgRenderer:
         found_shapes: list[Path] = []
         find_shapes_from_node(self.definitions[ref], found_shapes)
         if not found_shapes:
-            if not any(True for _ in self.definitions[ref].iter_children()):
-                # A <clipPath> without any shape clips everything away. ReportLab
-                # ignores a clipping path without points, so use one without area.
+            if (
+                not any(True for _ in self.definitions[ref].iter_children())
+                or has_zero_area
+            ):
+                # A <clipPath> with no area (empty or lines only) clips everything.
+                # ReportLab ignores a clipping path without points, so use one without
+                # area.
                 nothing = ClippingPath()
                 nothing.moveTo(0, 0)
                 nothing.closePath()
@@ -3569,7 +3591,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
             path.closePath()
 
-        elif isinstance(shape, Polygon):
+        elif isinstance(shape, (Polygon, PolyLine)):
             if len(shape.points) >= 2:
                 path.moveTo(shape.points[0], shape.points[1])
 

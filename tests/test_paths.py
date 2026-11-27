@@ -339,6 +339,83 @@ class TestPaths:
         assert clipping.operators == [_MOVETO, _CLOSEPATH]
 
     @pytest.mark.parametrize(
+        "polyline",
+        [
+            pytest.param('<polyline points="0,0 20,0 20,20"/>', id="default-fill"),
+            pytest.param(
+                '<polyline fill="none" points="0,0 20,0 20,20"/>', id="fill-none"
+            ),
+        ],
+    )
+    def test_clipping_path_polyline_clips_to_area(self, polyline):
+        """A <polyline> inside <clipPath> clips to its implicitly closed fill area."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                <clipPath id="clip">{polyline}</clipPath>
+                <rect width="50" height="50" clip-path="url(#clip)"/>
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert isinstance(clipping, ClippingPath)
+        assert clipping.operators[-1] == _CLOSEPATH
+        assert len(clipping.points) == 6
+
+    @pytest.mark.parametrize(
+        "clip",
+        [
+            pytest.param(
+                '<clipPath id="clip"><line x1="0" y1="0" x2="20" y2="20"/></clipPath>',
+                id="line",
+            ),
+            pytest.param(
+                '<clipPath id="clip"><g>'
+                '<line x1="0" y1="0" x2="20" y2="20"/>'
+                "</g></clipPath>",
+                id="line-in-group",
+            ),
+        ],
+    )
+    def test_clipping_path_line_clips_everything(self, clip):
+        """A <line> inside <clipPath> has no area and clips everything away."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                {clip}
+                <rect width="50" height="50" clip-path="url(#clip)"/>
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert isinstance(clipping, ClippingPath)
+        assert clipping.points == [0, 0]
+        assert clipping.operators == [_MOVETO, _CLOSEPATH]
+
+    def test_clipping_path_line_and_rect_clips_to_rect(self):
+        """A <line> alongside another shape does not drop the valid shape clip."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                <clipPath id="clip">
+                    <line x1="0" y1="0" x2="20" y2="20"/>
+                    <rect x="0" y="0" width="25" height="25"/>
+                </clipPath>
+                <rect width="50" height="50" clip-path="url(#clip)"/>
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert isinstance(clipping, ClippingPath)
+        assert max(clipping.points) == 25
+
+    @pytest.mark.parametrize(
         "clip_path", ['clip-path="none"', 'style="clip-path: none"']
     )
     def test_clipping_path_none(self, clip_path):
