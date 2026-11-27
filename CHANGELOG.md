@@ -16,6 +16,10 @@
   bounding box of the element it clips, for a shape and for a group, as in browsers.
   Its coordinates, which are fractions of the box, were read as user units, so the
   clip was a tiny shape at the origin and the element disappeared (#576).
+- The content of a nested `<svg>` that is outside of its viewport is no longer drawn,
+  as in browsers, unless its `overflow` is `visible` or `auto`. It was drawn over the
+  rest of the drawing, so an `<svg viewBox="0 0 50 50" preserveAspectRatio="xMidYMid slice">`
+  was not cut to its viewport.
 
 ## 2.5.0 (2026-11-27)
 

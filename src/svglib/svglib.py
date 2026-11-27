@@ -2575,7 +2575,51 @@ class SvgRenderer:
                 x_scale = y_scale = uniform_scale
             group.scale(x_scale, y_scale * (-1 if outermost else 1))
 
+            if (
+                not outermost
+                and group.contents
+                and self._clips_overflow(node)
+                and self._overflows(group.getBounds(), (x or 0, y or 0, width, height))
+            ):
+                # What is outside of the viewport is not drawn, as in browsers; a
+                # drawing that fits in it is left as it is
+                viewport = ClippingPath()
+                viewport.moveTo(x or 0, y or 0)
+                viewport.lineTo((x or 0) + width, y or 0)
+                viewport.lineTo((x or 0) + width, (y or 0) + height)
+                viewport.lineTo(x or 0, (y or 0) + height)
+                viewport.closePath()
+                clipped = Group()
+                clipped.add(viewport)
+                clipped.add(group)
+                return clipped
+
         return group
+
+    @staticmethod
+    def _overflows(
+        bounds: tuple[float, float, float, float],
+        viewport: tuple[float, float, float, float],
+    ) -> bool:
+        """Tell whether bounds (x0, y0, x1, y1) go out of a viewport (x, y, w, h)."""
+        x0, y0, x1, y1 = bounds
+        x, y, width, height = viewport
+        tolerance = 1e-6
+        return (
+            x0 < x - tolerance
+            or y0 < y - tolerance
+            or x1 > x + width + tolerance
+            or y1 > y + height + tolerance
+        )
+
+    def _clips_overflow(self, node: NodeTracker) -> bool:
+        """Tell whether the content of a nested <svg> is clipped to its viewport.
+
+        It is, unless the overflow property is visible or auto. It is not inherited.
+        """
+        self.attrConverter._applyStyleRules(node)
+        overflow = node.getAttribute("overflow").replace("!important", "").strip()
+        return overflow.lower() not in ("visible", "auto")
 
     def renderG(self, node: NodeTracker, clipping: Optional[Any] = None) -> Any:
         """Render a <g> element into a ReportLab Group.
