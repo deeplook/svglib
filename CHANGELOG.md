@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- A `<clipPath>` with `clipPathUnits="objectBoundingBox"` is now stretched to the
+  bounding box of the element it clips, for a shape and for a group, as in browsers.
+  Its coordinates, which are fractions of the box, were read as user units, so the
+  clip was a tiny shape at the origin and the element disappeared.
+
 ## 2.5.0 (2026-11-27)
 
 ### Security

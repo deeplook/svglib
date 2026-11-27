@@ -357,6 +357,74 @@ class TestPaths:
         assert isinstance(group.contents[0], ClippingPath)
         assert self.find_clipping(group.contents[1]) is None
 
+    @pytest.mark.parametrize(
+        ("element", "bounds"),
+        [
+            pytest.param(
+                '<rect x="20" y="10" width="100" height="60" clip-path="url(#clip)"/>',
+                (45, 25, 95, 55),
+                id="rect",
+            ),
+            pytest.param(
+                '<circle cx="50" cy="40" r="20" clip-path="url(#clip)"/>',
+                (40, 30, 60, 50),
+                id="circle",
+            ),
+            pytest.param(
+                """<g clip-path="url(#clip)">
+                    <rect x="20" y="10" width="40" height="20"/>
+                    <rect x="60" y="30" width="60" height="40"/>
+                </g>""",
+                (45, 25, 95, 55),
+                id="group",
+            ),
+            pytest.param(
+                '<rect x="20" y="10" width="100" height="60" clip-path="url(#user)"/>',
+                (0.25, 0.25, 0.75, 0.75),
+                id="user-space-units",
+            ),
+        ],
+    )
+    def test_clipping_path_in_bounding_box_units(self, element, bounds):
+        """The coordinates of the clipPath are fractions of the bounding box."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="200" height="100">
+                <clipPath id="clip" clipPathUnits="objectBoundingBox">
+                    <rect x="0.25" y="0.25" width="0.5" height="0.5"/>
+                </clipPath>
+                <clipPath id="user">
+                    <rect x="0.25" y="0.25" width="0.5" height="0.5"/>
+                </clipPath>
+                {element}
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert isinstance(clipping, ClippingPath)
+        assert clipping.getBounds() == pytest.approx(bounds)
+
+    def test_clipping_path_in_bounding_box_units_without_area(self):
+        """An element without width or height has no bounding box: it is not drawn."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"
+                 width="100" height="100">
+                <clipPath id="clip" clipPathUnits="objectBoundingBox">
+                    <rect width="1" height="1"/>
+                </clipPath>
+                <line x1="10" y1="20" x2="90" y2="20" stroke="red"
+                      clip-path="url(#clip)"/>
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert clipping.points == [0, 0]
+        assert clipping.operators == [_MOVETO, _CLOSEPATH]
+
     def find_clipping(self, item):
         if isinstance(item, ClippingPath):
             return item
