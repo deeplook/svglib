@@ -7,6 +7,9 @@
 - A gradient that refers with `href` to one that refers to another now takes the
   stops and the attributes of the whole chain, as in browsers. The chain was followed
   one step only, so such a gradient had no stops and was not painted (#578).
+- A `stroke` of `currentColor` is now black when no `color` is set, as in browsers.
+  It was not drawn, so an icon with `stroke="currentColor"` on its root, as in the
+  Feather or Lucide icons, had no lines. A `fill` of `currentColor` was black already.
 - The percentages of a gradient are now read when its units are known, which can
   be the units of the gradient it refers to with `href`: a gradient that only adds
   `x2="50%"` to one in `gradientUnits="userSpaceOnUse"` read it as a fraction of 1

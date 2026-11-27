@@ -3461,9 +3461,10 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                         isinstance(svgAttrValue, str)
                         and svgAttrValue.lower() == "currentcolor"
                     ):
-                        # the color property may be !important too
+                        # the color property may be !important too; without one it is
+                        # black, the default of browsers, for stroke as for fill
                         svgAttrValue = _without_important(
-                            ac.findAttr(node.parent, "color") or defaults[index]
+                            ac.findAttr(node.parent, "color") or "black"
                         )
                     svgAttrValues.append(svgAttrValue)
                 try:
