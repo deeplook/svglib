@@ -434,6 +434,62 @@ class TestViewBox:
         y_scale = abs(t[3])
         assert pytest.approx(x_scale) == y_scale
 
+    @staticmethod
+    def find_clipping(item):
+        if isinstance(item, svglib.ClippingPath):
+            return item
+        for child in getattr(item, "contents", []):
+            if (found := TestViewBox.find_clipping(child)) is not None:
+                return found
+        return None
+
+    @pytest.mark.parametrize(
+        "attributes, content, clipped",
+        [
+            # content larger than the viewport is clipped to it
+            ('width="100" height="50"', '<rect width="150" height="80"/>', True),
+            (
+                'width="100" height="50" viewBox="0 0 50 50" '
+                'preserveAspectRatio="xMidYMid slice"',
+                '<rect width="50" height="50"/>',
+                True,
+            ),
+            (
+                'width="100" height="50" style="overflow: hidden"',
+                '<rect width="150" height="80"/>',
+                True,
+            ),
+            # content in the viewport, or overflow that is visible or auto, is not
+            ('width="100" height="50"', '<rect width="90" height="40"/>', False),
+            (
+                'width="100" height="50" overflow="visible"',
+                '<rect width="150" height="80"/>',
+                False,
+            ),
+            (
+                'width="100" height="50" style="overflow: auto"',
+                '<rect width="150" height="80"/>',
+                False,
+            ),
+        ],
+    )
+    def test_nested_svg_clips_overflow_to_viewport(self, attributes, content, clipped):
+        """The content of a nested <svg> outside of its viewport was drawn."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+                 viewBox="0 0 200 200">
+                <svg x="20" y="10" {attributes}>{content}</svg>
+            </svg>
+        """
+        )
+        clipping = self.find_clipping(drawing)
+        assert (clipping is not None) is clipped
+        if clipped:
+            # the viewport, in the units of the parent
+            assert clipping.getBounds() == pytest.approx((20, 10, 120, 60))
+
 
 def test_malformed_viewbox_is_ignored():
     # A viewBox that is not four numbers used to raise TypeError from
