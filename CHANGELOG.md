@@ -6,7 +6,12 @@
 
 - A gradient that refers with `href` to one that refers to another now takes the
   stops and the attributes of the whole chain, as in browsers. The chain was followed
-  one step only, so such a gradient had no stops and was not painted.
+  one step only, so such a gradient had no stops and was not painted (#578).
+- The percentages of a gradient are now read when its units are known, which can
+  be the units of the gradient it refers to with `href`: a gradient that only adds
+  `x2="50%"` to one in `gradientUnits="userSpaceOnUse"` read it as a fraction of 1
+  user unit, so it was a flat color over the whole shape, and now it is half of the
+  viewport, as in browsers (#577).
 
 ## 2.5.0 (2026-11-27)
 
