@@ -389,6 +389,35 @@ class TestViewBox:
         # The uniform scale should be the larger one (max of the two raw scales, ~0.372)
         assert x_scale > 0.284
 
+    @pytest.mark.parametrize(
+        "align, size, bounds",
+        [
+            # The circle of a viewBox 10 x 10 in a viewport narrower than high, as
+            # in browsers: yMin is at the top, yMax at the bottom (bounds in pt)
+            ("xMidYMin meet", (80, 180), (7.5, 82.5, 67.5, 142.5)),
+            ("xMidYMid meet", (80, 180), (7.5, 45, 67.5, 105)),
+            ("xMidYMax meet", (80, 180), (7.5, 7.5, 67.5, 67.5)),
+            # and xMin at the left, xMax at the right, as before
+            ("xMinYMid meet", (180, 80), (7.5, 82.5, 67.5, 142.5)),
+            ("xMaxYMid meet", (180, 80), (82.5, 82.5, 142.5, 142.5)),
+        ],
+    )
+    def test_nested_svg_preserve_aspect_ratio_alignment(self, align, size, bounds):
+        """The yMin and yMax of a nested <svg> were the other way round."""
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+                 viewBox="0 0 200 200">
+                <svg x="10" y="10" width="{size[0]}" height="{size[1]}"
+                     viewBox="0 0 10 10" preserveAspectRatio="{align}">
+                    <circle cx="5" cy="5" r="5"/>
+                </svg>
+            </svg>
+        """
+        )
+        assert drawing.getBounds() == pytest.approx(bounds)
+
     def test_preserve_aspect_ratio_matched_aspect_ratio(self):
         """When aspect ratios match exactly, scale is unchanged."""
         drawing = drawing_from_svg(

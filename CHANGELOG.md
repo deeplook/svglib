@@ -114,6 +114,9 @@
   percentage of the viewport, as in browsers: of the width for `x1`, `x2`, `cx` and
   `fx`, of the height for `y1`, `y2`, `cy` and `fy`, and of the normalized diagonal
   for `r`. It was read as a fraction, so `x2="50%"` was half a user unit long (#570).
+- The `preserveAspectRatio` of a nested `<svg>` now aligns the viewBox to the top
+  for `yMin` and to the bottom for `yMax`, as in browsers; they were the other way
+  round (#571).
 
 ## 2.4.0 (2026-11-04)
 
