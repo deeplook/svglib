@@ -32,6 +32,12 @@
 - `stop-color` set to `currentColor` in a gradient stop no longer makes
   `svg2rlg()` fail with `AttributeError`; it is the `color` of the stop, as in
   browsers, or black when none is set (#559).
+- An image embedded as a `data:image/png` or `data:image/jpeg` URI is decoded as
+  a PNG or a JPEG only. Pillow was left to choose the decoder from the bytes, so
+  a PostScript file with that label made it run Ghostscript, where it is installed,
+  when the PDF was drawn; the file is refused now, with the error that any other
+  data that is not an image gets (`UnidentifiedImageError`). The formats are in
+  `DATA_URI_IMAGE_FORMATS`.
 - `hwb()` colors of CSS Color 4 are now converted to sRGB, as `oklch()` and
   `oklab()` are: they were not read and the shape was not drawn (#560).
 - `stop-color` and `stop-opacity` of a gradient stop can now use `var()`, such as

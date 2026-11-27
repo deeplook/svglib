@@ -215,6 +215,11 @@ INKSCAPE_NS = "http://www.inkscape.org/namespaces/inkscape"
 # A sentinel to identify a situation where a node reference a fragment not yet defined.
 DELAYED = object()
 
+# The formats Pillow may decode for an image embedded as a data: URI, which the
+# reader limits to PNG and JPEG. Left to choose the decoder from the bytes, it
+# opens an EPS file labeled image/png, and runs Ghostscript on it at rendering.
+DATA_URI_IMAGE_FORMATS = ("PNG", "JPEG")
+
 # Max number of <use> expansions per document, external SVGs included.
 MAX_USE_EXPANSIONS = 10_000
 # Max number of elements cloned by all <use> expansions of a document, external
@@ -2253,7 +2258,9 @@ class SvgRenderer:
             )
             bytes_stream = BytesIO(image_data)
 
-            return _convert_palette_to_rgba(PILImage.open(bytes_stream))
+            return _convert_palette_to_rgba(
+                PILImage.open(bytes_stream, formats=DATA_URI_IMAGE_FORMATS)
+            )
 
         # From here, we can assume this is a path.
         if "#" in xlink_href:

@@ -165,6 +165,9 @@
    ],
    "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
   },
+  "DATA_URI_IMAGE_FORMATS": {
+   "what": "constant ('PNG', 'JPEG')"
+  },
   "DEFAULT_FONT_NAME": {
    "what": "constant 'Helvetica'"
   },

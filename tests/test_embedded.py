@@ -1,6 +1,11 @@
 """Embedded and referenced images and SVGs."""
 
+import base64
+from io import BytesIO
+
 import pytest
+from PIL import EpsImagePlugin, UnidentifiedImageError
+from PIL import Image as PILImage
 from reportlab.graphics.shapes import Group
 
 from svglib.svglib import svg2rlg
@@ -351,3 +356,48 @@ class TestEmbedded:
         assert image.height == 50.7
         # y is stored flipped as y + height; the enclosing group re-flips it.
         assert image.y == pytest.approx(20.7 + 50.7)
+
+
+class TestDataUriImageFormats:
+    """The decoder of an embedded data: image is not chosen from its bytes."""
+
+    EPS = (
+        b"%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 20 20\n%%EndComments\n"
+        b"1 0 0 setrgbcolor 0 0 20 20 rectfill\nshowpage\n%%EOF\n"
+    )
+
+    @staticmethod
+    def _svg(mime: str, data: bytes) -> str:
+        return (
+            '<svg xmlns="http://www.w3.org/2000/svg" '
+            'xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10">'
+            f'<image xlink:href="data:image/{mime};base64,'
+            f'{base64.b64encode(data).decode()}" width="10" height="10"/></svg>'
+        )
+
+    @pytest.mark.parametrize("mime", ["png", "jpeg", "jpg"])
+    def test_eps_is_not_decoded(self, mime, monkeypatch):
+        """An EPS labeled as PNG or JPEG would run Ghostscript when rendered."""
+
+        def fail(*args, **kwargs):
+            raise AssertionError("Ghostscript must not be run")
+
+        monkeypatch.setattr(EpsImagePlugin, "Ghostscript", fail)
+        with pytest.raises(UnidentifiedImageError):
+            drawing_from_svg(self._svg(mime, self.EPS))
+
+    @pytest.mark.parametrize(
+        "mime, fmt, label",
+        [
+            ("png", "PNG", "png"),
+            ("jpeg", "JPEG", "jpeg"),
+            # The label is not checked against the bytes, as before.
+            ("png", "JPEG", "jpeg-labeled-png"),
+            ("jpeg", "PNG", "png-labeled-jpeg"),
+        ],
+    )
+    def test_png_and_jpeg_are_decoded(self, mime, fmt, label):
+        buffer = BytesIO()
+        PILImage.new("RGB", (4, 4), (255, 0, 0)).save(buffer, fmt)
+        drawing = drawing_from_svg(self._svg(mime, buffer.getvalue()))
+        assert find_image_in_drawing(drawing) is not None, label
