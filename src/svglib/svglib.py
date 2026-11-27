@@ -1215,12 +1215,32 @@ class _UseExpansionCounter:
         if self.cloned_elements > MAX_USE_CLONED_ELEMENTS:
             self.exhausted = True
             logger.error(
-                "Too many <use> expansions (more than %d cloned elements), "
-                "skipping the rest",
+                "Too many <use> and <image> expansions (more than %d cloned "
+                "elements), skipping the rest",
                 MAX_USE_CLONED_ELEMENTS,
             )
             return False
         return True
+
+    def allow_image(self, element: Any) -> bool:
+        """Charge the rendering of the target of an <image> to the budgets.
+
+        The target, an element of the document or an external SVG, is rendered
+        once for each <image> that refers to it, as a <use> is. Both budgets are
+        shared with the <use> elements.
+        """
+        if self.exhausted:
+            return False
+        self.count += 1
+        if self.count > MAX_USE_EXPANSIONS:
+            if self.count == MAX_USE_EXPANSIONS + 1:
+                logger.error(
+                    "Too many <use> and <image> expansions (limit is %d), "
+                    "skipping the rest",
+                    MAX_USE_EXPANSIONS,
+                )
+            return False
+        return self.allow_clone(element)
 
 
 class ExternalSVG:
@@ -1637,16 +1657,31 @@ class SvgRenderer:
                 # We resolve the image target at renderer level because it can point
                 # to another SVG file or node which has to be rendered too.
                 target = self.xlink_href_target(node)
-                if target is None:
+                if target is None or target is DELAYED:
+                    # Not resolved, or a fragment that is not defined yet
                     return
                 elif isinstance(target, tuple):
                     # This is SVG content needed to be rendered
                     gr = Group()
                     renderer, img_node = target
-                    if node_name(img_node) == "svg":
-                        self._render_svg_in_image(node, renderer, img_node, gr)
-                    else:
-                        renderer.renderNode(img_node, parent=gr)
+                    # The target is rendered each time it is referred to, as the
+                    # target of a <use>: skip a cycle, and stop at the budgets
+                    origin = self._use_origin(img_node.etree_element)
+                    if img_node.etree_element is node.etree_element or (
+                        origin in self._use_stack
+                    ):
+                        logger.error("Circular <image> reference detected, skipping.")
+                        return
+                    if not self._use_expansions.allow_image(img_node.etree_element):
+                        return
+                    self._use_stack.append(origin)
+                    try:
+                        if node_name(img_node) == "svg":
+                            self._render_svg_in_image(node, renderer, img_node, gr)
+                        else:
+                            renderer.renderNode(img_node, parent=gr)
+                    finally:
+                        self._use_stack.pop()
                     self.apply_node_attr_to_group(node, gr)
                     parent.add(gr)
                     return
@@ -2542,6 +2577,14 @@ class SvgRenderer:
         """Render an <a> element as a ReportLab Group (no linking support)."""
         return self.renderG(node)
 
+    def _use_origin(self, element: Any) -> str:
+        """Return the key of the element a target was cloned from (or its own)."""
+        origin = element.get("__use_origin")
+        if origin is None:
+            origin = str(next(self._use_expansions.origin_ids))
+            element.set("__use_origin", origin)
+        return cast(str, origin)
+
     def renderUse(
         self,
         node: NodeTracker,
@@ -2589,10 +2632,7 @@ class SvgRenderer:
 
         # Rendering a clone can rebind an id to the cloned element, so key on
         # the element the target was originally cloned from.
-        target = item.etree_element.get("__use_origin")
-        if target is None:
-            target = str(next(self._use_expansions.origin_ids))
-            item.etree_element.set("__use_origin", target)
+        target = self._use_origin(item.etree_element)
         if item.etree_element is node.etree_element or target in self._use_stack:
             logger.error("Circular <use> reference detected, skipping.")
             return group

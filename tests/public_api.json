@@ -372,6 +372,7 @@
     "_render_svg_in_image",
     "_resolve_gradient",
     "_set_root_font_size",
+    "_use_origin",
     "_warn_old_inkscape",
     "apply_node_attr_to_group",
     "get_box",
@@ -476,7 +477,8 @@
     "object"
    ],
    "members": [
-    "allow_clone"
+    "allow_clone",
+    "allow_image"
    ],
    "what": "class()"
   },

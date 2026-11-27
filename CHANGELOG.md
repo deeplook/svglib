@@ -16,6 +16,13 @@
   back to front for `reflect`. An unknown `spreadMethod` is `pad`, and so is a
   gradient that would need more than 200 periods, or more than 10,000 stops in
   all of them (#567).
+- An `<image>` that refers to a fragment of the document is limited as a `<use>`
+  is: a cycle (an `<image>` that refers to an `<svg>` or a group that contains it)
+  is skipped, and the work of all of them is bounded by the budgets of the `<use>`
+  elements, which they share. It was `RecursionError` for a cycle, and time that
+  doubled with every level for a few `<image>` elements that refer to each other,
+  so that 2 KB took hours. An `<image>` that refers to an element that is not
+  defined yet is skipped, and not an `AttributeError`.
 - The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
