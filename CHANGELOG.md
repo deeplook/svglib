@@ -109,6 +109,11 @@
   `spreadMethod` `reflect` or `repeat`, the periods that cover the shape are counted
   in the space of the gradient, and a transform that cannot be inverted, such as
   `scale(0)`, paints nothing, as in browsers (#568).
+- A percentage in the coordinates or radius of a gradient with
+  `gradientUnits="userSpaceOnUse"`, such as `x2="50%"` or `r="25%"`, is now a
+  percentage of the viewport, as in browsers: of the width for `x1`, `x2`, `cx` and
+  `fx`, of the height for `y1`, `y2`, `cy` and `fy`, and of the normalized diagonal
+  for `r`. It was read as a fraction, so `x2="50%"` was half a user unit long (#570).
 - The `preserveAspectRatio` of a nested `<svg>` now aligns the viewBox to the top
   for `yMin` and to the bottom for `yMax`, as in browsers; they were the other way
   round (#571).
