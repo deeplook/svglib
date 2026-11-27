@@ -1703,6 +1703,26 @@ class SvgRenderer:
             can, and else the default is used when the gradient is painted.
             """
             raw = node.attrib.get(attr, "").strip()
+            if (
+                raw.endswith("%")
+                and node.attrib.get("gradientUnits") == "userSpaceOnUse"
+                and (main_box := self.attrConverter.main_box) is not None
+            ):
+                # a percentage of the viewport, in user units: of its width for x,
+                # of its height for y and of the normalized diagonal for a radius
+                try:
+                    fraction = float(raw[:-1]) / 100.0
+                except ValueError:
+                    return None
+                if attr in ("x1", "x2", "cx", "fx"):
+                    return fraction * main_box.width
+                if attr in ("y1", "y2", "cy", "fy"):
+                    return fraction * main_box.height
+                return (
+                    fraction
+                    * math.hypot(main_box.width, main_box.height)
+                    / math.sqrt(2)
+                )
             try:
                 return float(raw[:-1]) / 100.0 if raw.endswith("%") else float(raw)
             except ValueError:
@@ -2428,11 +2448,13 @@ class SvgRenderer:
                     tx = width_pt - scaled_vb_w
                 else:  # xMid (default)
                     tx = (width_pt - scaled_vb_w) / 2
-                # Vertical alignment (SVG y increases downward, PDF upward)
+                # Vertical alignment. The outermost viewport is in PDF space, where y
+                # increases upward; a nested one is in the space of its parent, where
+                # y increases downward.
                 if "YMin" in align:
-                    ty = height_pt - scaled_vb_h
+                    ty = 0 if not outermost else height_pt - scaled_vb_h
                 elif "YMax" in align:
-                    ty = 0
+                    ty = height_pt - scaled_vb_h if not outermost else 0
                 else:  # YMid (default)
                     ty = (height_pt - scaled_vb_h) / 2
                 if tx or ty:
