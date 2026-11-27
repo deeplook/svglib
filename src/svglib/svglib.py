@@ -695,7 +695,11 @@ class AttributeConverter:
         """
         line = svgAttr.strip()
 
-        ops: str = line[:]
+        # The text outside the arguments that were read: the operation names. They are
+        # collected in one pass, as rebuilding the whole string for each pair of
+        # brackets takes time quadratic in the length of the attribute.
+        ops_parts: list[str] = []
+        ops_end = 0
         brackets: list[int] = []
         indices: list[Union[float, tuple[float, ...]]] = []
         for i, lin in enumerate(line):
@@ -716,8 +720,10 @@ class AttributeConverter:
                     indices.append(float(subline))
             except ValueError:
                 continue
-            ops = ops[:bi] + " " * (bj - bi + 1) + ops[bj + 1 :]
-        ops_list: list[str] = ops.replace(",", " ").split()
+            ops_parts.append(line[ops_end:bi])
+            ops_end = bj + 1
+        ops_parts.append(line[ops_end:])
+        ops_list: list[str] = " ".join(ops_parts).replace(",", " ").split()
 
         if len(ops_list) != len(indices):
             logger.warning("Unable to parse transform expression %r", svgAttr)

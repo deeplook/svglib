@@ -134,6 +134,10 @@
   is now an ellipse, and a slanted linear one is skewed, as in browsers, because the
   gradient is stretched with the bounding box; they were drawn as a circle, and with
   the lines of equal color perpendicular to the axis (#572).
+- A long `transform` attribute no longer takes time quadratic in its length to
+  read: each pair of brackets rebuilt the whole string, so 2 MB of them, which a
+  3 KB `.svgz` file holds, kept `svg2rlg()` busy for minutes. It is read in one
+  pass now, with the same result.
 
 ## 2.4.0 (2026-11-04)
 

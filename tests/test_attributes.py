@@ -1,5 +1,6 @@
 """Attribute converters (colors, lengths, transforms), style sheets."""
 
+import time
 from typing import Any
 
 import pytest
@@ -491,6 +492,42 @@ class TestTransformAttrConverter:
         assert ac.convertTransform(f"translate(10{separator}20)") == (
             ac.convertTransform("translate(10 20)")
         )
+
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (
+                "scale(2) translate(10,20)",
+                [("scale", 2.0), ("translate", (10.0, 20.0))],
+            ),
+            (
+                "rotate(45 10 10)skewX(3)",
+                [("rotate", (45.0, 10.0, 10.0)), ("skewX", 3.0)],
+            ),
+            ("scale(2", []),
+            ("scale(2))", []),
+            ("", []),
+        ],
+    )
+    def test_transform_operations(self, value, expected):
+        ac = svglib.Svg2RlgAttributeConverter()
+        assert ac.convertTransform(value) == expected
+
+    def test_long_transform_takes_linear_time(self):
+        """A long transform attribute must not take time quadratic in its length.
+
+        Each pair of brackets used to rebuild the whole string: this took over a
+        minute, and 2 MB of it, which a small .svgz holds, took minutes. The limit
+        is far above the time it takes now (under a second), so a slow runner
+        does not fail it.
+        """
+        ac = svglib.Svg2RlgAttributeConverter()
+        count = 400_000
+        start = time.perf_counter()
+        result = ac.convertTransform("scale(1)" * count)
+        elapsed = time.perf_counter() - start
+        assert result == [("scale", 1.0)] * count
+        assert elapsed < 30
 
     @pytest.mark.parametrize("separator", ["&#9;", "&#13;", "&#10;"])
     def test_whitespace_character_reference(self, separator):
