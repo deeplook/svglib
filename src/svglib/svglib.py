@@ -1885,6 +1885,8 @@ class SvgRenderer:
                 if k == "stops" and not v:
                     continue  # inherit parent's stops
                 merged[k] = v
+            # The gradient that refers to the next one is the parent now
+            merged["href"] = parent.get("href")
             result = cast(_GradientDef, merged)
         return result
 
