@@ -372,6 +372,7 @@
    ],
    "members": [
     "_apply_gradient_fill",
+    "_fit_symbol_to_viewport",
     "_percents_of_viewport",
     "_render_svg_in_image",
     "_resolve_gradient",

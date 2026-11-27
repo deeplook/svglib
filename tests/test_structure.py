@@ -144,6 +144,81 @@ class TestGroupNode:
         assert gr.label == "x_axis"
 
 
+class TestUseOfSymbolViewBox:
+    VIEWPORT = 'x="10" y="10" width="100" height="50"'
+
+    @pytest.mark.parametrize(
+        "symbol, use, bounds",
+        [
+            # meet, centered: the circle is 50 x 50 in the viewport 100 x 50 (pt)
+            ('viewBox="0 0 10 10"', VIEWPORT, (26.25, 105, 63.75, 142.5)),
+            (
+                'viewBox="0 0 10 10" preserveAspectRatio="xMinYMin meet"',
+                VIEWPORT,
+                (7.5, 105, 45, 142.5),
+            ),
+            (
+                'viewBox="0 0 10 10" preserveAspectRatio="xMaxYMax meet"',
+                VIEWPORT,
+                (45, 105, 82.5, 142.5),
+            ),
+            # the whole viewport
+            (
+                'viewBox="0 0 10 10" preserveAspectRatio="none"',
+                VIEWPORT,
+                (7.5, 105, 82.5, 142.5),
+            ),
+            # slice: the circle is 100 x 100, centered in the viewport
+            (
+                'viewBox="0 0 10 10" preserveAspectRatio="xMidYMid slice"',
+                VIEWPORT,
+                (7.5, 86.25, 82.5, 161.25),
+            ),
+            # the corner of the viewBox is the corner of the viewport
+            (
+                'viewBox="10 10 10 10"',
+                'x="10" y="10" width="100" height="100"',
+                (7.5, 67.5, 82.5, 142.5),
+            ),
+            # width and height are 100% of the viewport by default
+            ('viewBox="0 0 10 10"', 'x="0" y="0"', (0, 0, 150, 150)),
+        ],
+    )
+    def test_use_of_symbol_with_view_box(self, symbol, use, bounds):
+        """The viewBox of a <symbol> was ignored: it was drawn at its own size."""
+        # the circle fills the viewBox, whatever its corner
+        center = 15 if 'viewBox="10 10' in symbol else 5
+        drawing = drawing_from_svg(
+            f"""
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+                 viewBox="0 0 200 200">
+                <defs>
+                    <symbol id="s" {symbol}>
+                        <circle cx="{center}" cy="{center}" r="5"/>
+                    </symbol>
+                </defs>
+                <use href="#s" {use}/>
+            </svg>
+        """
+        )
+        assert drawing.getBounds() == pytest.approx(bounds)
+
+    def test_use_of_symbol_without_view_box(self):
+        """A <symbol> without a viewBox is drawn at its own size."""
+        drawing = drawing_from_svg(
+            """
+            <?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"
+                 viewBox="0 0 200 200">
+                <defs><symbol id="s"><circle cx="5" cy="5" r="5"/></symbol></defs>
+                <use href="#s" x="10" y="10" width="100" height="50"/>
+            </svg>
+        """
+        )
+        assert drawing.getBounds() == pytest.approx((7.5, 135, 15, 142.5))
+
+
 class TestSwitchNode:
     @staticmethod
     def _find_rects(shape):
