@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- The `x` and `y` of the `viewBox` of a nested `<svg>` are now the corner of its
+  viewport, as in browsers. They were ignored, so a nested `<svg viewBox="10 10 30 30">`
+  drew its content shifted by that amount.
 - A gradient that refers with `href` to one that refers to another now takes the
   stops and the attributes of the whole chain, as in browsers. The chain was followed
   one step only, so such a gradient had no stops and was not painted (#578).
