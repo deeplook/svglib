@@ -1011,6 +1011,67 @@ class TestGradients:
             assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)
 
     @pytest.mark.parametrize(
+        "gradients, geometry",
+        [
+            # the units are the ones of the gradient that it refers to
+            pytest.param(
+                '<linearGradient id="b" gradientUnits="userSpaceOnUse">{}'
+                '</linearGradient><linearGradient id="g" href="#b" x2="50%"/>',
+                (0, 0, 100, 0),
+                id="units-from-href",
+            ),
+            # the percentage is of the viewport, wherever it is written
+            pytest.param(
+                '<linearGradient id="b" gradientUnits="userSpaceOnUse" x2="50%">{}'
+                '</linearGradient><linearGradient id="g" href="#b"/>',
+                (0, 0, 100, 0),
+                id="percentage-from-href",
+            ),
+            pytest.param(
+                '<linearGradient id="b" x2="50%">{}</linearGradient>'
+                '<linearGradient id="g" href="#b" gradientUnits="userSpaceOnUse"/>',
+                (0, 0, 100, 0),
+                id="percentage-and-units-from-different-gradients",
+            ),
+            # a value that the gradient sets replaces the percentage it refers to
+            pytest.param(
+                '<linearGradient id="b" gradientUnits="userSpaceOnUse" x2="50%">{}'
+                '</linearGradient><linearGradient id="g" href="#b" x2="120"/>',
+                (0, 0, 120, 0),
+                id="number-replaces-percentage",
+            ),
+            # in the units of the bounding box it is a fraction of it
+            pytest.param(
+                '<linearGradient id="b" gradientUnits="userSpaceOnUse" x2="50%">{}'
+                '</linearGradient><linearGradient id="g" href="#b" '
+                'gradientUnits="objectBoundingBox"/>',
+                (0, 0, 50, 0),
+                id="bounding-box-from-the-gradient",
+            ),
+        ],
+    )
+    def test_gradient_percentages_with_href(self, gradients, geometry):
+        """A percentage of a gradient in user space units is of the viewport.
+
+        The units come from the gradient that the element refers to by href when
+        it does not set them, and so can the percentage, so it is read when the
+        units are known: x2="50%" was 0.5 user units, not half of the width.
+        """
+        stops = (
+            '<stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/>'
+        )
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"
+                 viewBox="0 0 200 100">
+                <defs>{gradients.format(stops)}</defs>
+                <rect width="100" height="100" fill="url(#g)"/>
+            </svg>"""
+        )
+        shape = self._gradient_shape(drawing)
+        assert (shape._x0, shape._y0, shape._x1, shape._y1) == pytest.approx(geometry)
+
+    @pytest.mark.parametrize(
         "gradient, size, matrix, geometry",
         [
             # stretched with the bounding box: an ellipse, and a skewed linear one

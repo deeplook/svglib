@@ -141,6 +141,10 @@ class _GradientDef(_GradientDefBase, total=False):
     r: float
     fx: float
     fy: float
+    # The geometry keys that the element wrote as a percentage, as a fraction. A
+    # gradient in user space units takes them of the viewport, once the units are
+    # known, as the gradient it refers to by href can set them
+    percents: dict[str, float]
 
 
 def _convert_palette_to_rgba(image: PILImage.Image) -> PILImage.Image:
@@ -1743,32 +1747,12 @@ class SvgRenderer:
         grad_type = node_name(node)  # "linearGradient" or "radialGradient"
 
         def _float_attr(attr: str) -> Optional[float]:
-            """Return a gradient geometry attribute as a float, resolving percent.
+            """Return a gradient geometry attribute as a float; percent as a fraction.
 
             None if the element does not set it: the gradient it refers to by href
             can, and else the default is used when the gradient is painted.
             """
             raw = node.attrib.get(attr, "").strip()
-            if (
-                raw.endswith("%")
-                and node.attrib.get("gradientUnits") == "userSpaceOnUse"
-                and (main_box := self.attrConverter.main_box) is not None
-            ):
-                # a percentage of the viewport, in user units: of its width for x,
-                # of its height for y and of the normalized diagonal for a radius
-                try:
-                    fraction = float(raw[:-1]) / 100.0
-                except ValueError:
-                    return None
-                if attr in ("x1", "x2", "cx", "fx"):
-                    return fraction * main_box.width
-                if attr in ("y1", "y2", "cy", "fy"):
-                    return fraction * main_box.height
-                return (
-                    fraction
-                    * math.hypot(main_box.width, main_box.height)
-                    / math.sqrt(2)
-                )
             try:
                 return float(raw[:-1]) / 100.0 if raw.endswith("%") else float(raw)
             except ValueError:
@@ -1859,10 +1843,14 @@ class SvgRenderer:
             if grad_type == "linearGradient"
             else ("cx", "cy", "r", "fx", "fy")
         )
+        percents: dict[str, float] = {}
         for name in names:
             value = _float_attr(name)
             if value is not None:
                 grad_def[name] = value  # type: ignore[literal-required]
+                if node.attrib[name].strip().endswith("%"):
+                    percents[name] = value
+        grad_def["percents"] = percents
 
         self.gradient_defs[grad_id] = grad_def
 
@@ -1885,8 +1873,43 @@ class SvgRenderer:
                 if k == "stops" and not v:
                     continue  # inherit parent's stops
                 merged[k] = v
+            # A value that the element sets is a percentage only if it wrote one
+            merged["percents"] = {
+                name: fraction
+                for name, fraction in {
+                    **parent.get("percents", {}),
+                    **result.get("percents", {}),
+                }.items()
+                if name not in result or name in result.get("percents", {})
+            }
             result = cast(_GradientDef, merged)
+        if result is not None and result.get("gradientUnits") == "userSpaceOnUse":
+            result = self._percents_of_viewport(result)
         return result
+
+    def _percents_of_viewport(self, grad_def: _GradientDef) -> _GradientDef:
+        """Return the gradient with the percentages of its geometry in user units.
+
+        In user space a percentage is of the viewport: of its width for x, of its
+        height for y and of the normalized diagonal for a radius.
+        """
+        main_box = self.attrConverter.main_box
+        percents = grad_def.get("percents")
+        if main_box is None or not percents:
+            return grad_def
+        resolved: dict[str, Any] = dict(grad_def)
+        for name, fraction in percents.items():
+            if name in ("x1", "x2", "cx", "fx"):
+                resolved[name] = fraction * main_box.width
+            elif name in ("y1", "y2", "cy", "fy"):
+                resolved[name] = fraction * main_box.height
+            else:
+                resolved[name] = (
+                    fraction
+                    * math.hypot(main_box.width, main_box.height)
+                    / math.sqrt(2)
+                )
+        return cast(_GradientDef, resolved)
 
     def _apply_gradient_fill(self, item: Any, grad_def: _GradientDef) -> Any:
         """Wrap a shape in a Group that paints the gradient fill then the stroke."""
