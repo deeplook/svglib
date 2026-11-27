@@ -1,6 +1,33 @@
 # Changelog
 
-## Unreleased
+## 2.5.0 (2026-11-27)
+
+### Security
+
+- A long `transform` attribute could make `convertTransform()` take time
+  quadratic in its length: each pair of brackets rebuilt the whole string, and the
+  result was checked only afterwards, so 2 MB of brackets, which a 3 KB `.svgz`
+  file holds, kept `svg2rlg()` busy for minutes (CWE-407, GHSA-43qg-v5jj-vw5c). It
+  is read in one pass now, with the same result. Thanks to @lanjianchun for the
+  report.
+- An `<image>` that refers to a fragment of the document, with `href="#id"`, was
+  rendered again without the checks that `<use>` has had since 2.3.1: a cycle, such
+  as an `<svg>` that contains an `<image>` that refers to it, ended in
+  `RecursionError`, and a few `<image>` elements that refer to each other, each
+  level to the one before it twice, took time that doubled with every level, so
+  that 2 KB took hours (CWE-400, CWE-674, GHSA-cmj4-5g24-pp37, reported again as
+  GHSA-4fr5-v6hm-mwjg). A cycle is now skipped and an error is logged, and all
+  `<image>` targets count against the same budgets as `<use>`
+  (`MAX_USE_EXPANSIONS`, `MAX_USE_CLONED_ELEMENTS`). An `<image>` that refers to an
+  element that is not defined yet is skipped too, and not an `AttributeError`.
+  Thanks to @GeniusKangaroo and @john-lawniczak for the reports.
+- An image embedded as a `data:image/png` or `data:image/jpeg` URI was opened by
+  Pillow with the decoder chosen from its bytes, not from its label, so a
+  PostScript file made it run Ghostscript, where that is installed, when the PDF
+  was drawn (CWE-20, CWE-94, GHSA-h5r7-mh88-vjm4). Such an image is now decoded as
+  a PNG or a JPEG only (`DATA_URI_IMAGE_FORMATS`), and anything else is refused
+  with the `UnidentifiedImageError` that data that is not an image already got.
+  Thanks to @superbot-helper for the report.
 
 ### Tooling and housekeeping
 
@@ -16,13 +43,6 @@
   back to front for `reflect`. An unknown `spreadMethod` is `pad`, and so is a
   gradient that would need more than 200 periods, or more than 10,000 stops in
   all of them (#567).
-- An `<image>` that refers to a fragment of the document is limited as a `<use>`
-  is: a cycle (an `<image>` that refers to an `<svg>` or a group that contains it)
-  is skipped, and the work of all of them is bounded by the budgets of the `<use>`
-  elements, which they share. It was `RecursionError` for a cycle, and time that
-  doubled with every level for a few `<image>` elements that refer to each other,
-  so that 2 KB took hours. An `<image>` that refers to an element that is not
-  defined yet is skipped, and not an `AttributeError`.
 - The `stop-color` and `stop-opacity` of a gradient stop can now be set by a
   CSS rule, such as the classes of the SVG that Illustrator exports
   (`.cls-1 { stop-color: #fff }`); the stop was black. A `<style>` element
@@ -32,12 +52,6 @@
 - `stop-color` set to `currentColor` in a gradient stop no longer makes
   `svg2rlg()` fail with `AttributeError`; it is the `color` of the stop, as in
   browsers, or black when none is set (#559).
-- An image embedded as a `data:image/png` or `data:image/jpeg` URI is decoded as
-  a PNG or a JPEG only. Pillow was left to choose the decoder from the bytes, so
-  a PostScript file with that label made it run Ghostscript, where it is installed,
-  when the PDF was drawn; the file is refused now, with the error that any other
-  data that is not an image gets (`UnidentifiedImageError`). The formats are in
-  `DATA_URI_IMAGE_FORMATS`.
 - `hwb()` colors of CSS Color 4 are now converted to sRGB, as `oklch()` and
   `oklab()` are: they were not read and the shape was not drawn (#560).
 - `stop-color` and `stop-opacity` of a gradient stop can now use `var()`, such as
@@ -134,10 +148,7 @@
   is now an ellipse, and a slanted linear one is skewed, as in browsers, because the
   gradient is stretched with the bounding box; they were drawn as a circle, and with
   the lines of equal color perpendicular to the axis (#572).
-- A long `transform` attribute no longer takes time quadratic in its length to
-  read: each pair of brackets rebuilt the whole string, so 2 MB of them, which a
-  3 KB `.svgz` file holds, kept `svg2rlg()` busy for minutes. It is read in one
-  pass now, with the same result.
+
 
 ## 2.4.0 (2026-11-04)
 
