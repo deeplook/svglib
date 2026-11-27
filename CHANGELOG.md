@@ -12,6 +12,10 @@
   `x2="50%"` to one in `gradientUnits="userSpaceOnUse"` read it as a fraction of 1
   user unit, so it was a flat color over the whole shape, and now it is half of the
   viewport, as in browsers (#577).
+- A `<clipPath>` with `clipPathUnits="objectBoundingBox"` is now stretched to the
+  bounding box of the element it clips, for a shape and for a group, as in browsers.
+  Its coordinates, which are fractions of the box, were read as user units, so the
+  clip was a tiny shape at the origin and the element disappeared (#576).
 
 ## 2.5.0 (2026-11-27)
 

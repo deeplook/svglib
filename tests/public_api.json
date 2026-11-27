@@ -423,6 +423,13 @@
   "_BEZIER_KAPPA": {
    "what": "constant 0.5523"
   },
+  "_BoundingBoxClippingPath": {
+   "bases": [
+    "ClippingPath"
+   ],
+   "members": [],
+   "what": "class(VAR_POSITIONAL:args, VAR_KEYWORD:kwargs)"
+  },
   "_CLOSEPATH": {
    "what": "constant 3"
   },
@@ -495,6 +502,9 @@
    ],
    "members": [],
    "what": "class()"
+  },
+  "_clip_to_bounds": {
+   "what": "callable(POSITIONAL_OR_KEYWORD:clipping, POSITIONAL_OR_KEYWORD:bounds)"
   },
   "_convert_palette_to_rgba": {
    "what": "callable(POSITIONAL_OR_KEYWORD:image)"

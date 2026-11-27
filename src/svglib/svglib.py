@@ -342,6 +342,39 @@ class ClippingPath(Path):
         return props
 
 
+class _BoundingBoxClippingPath(ClippingPath):
+    """A clipping path whose coordinates are fractions of the clipped bounding box.
+
+    It stands for a <clipPath> with clipPathUnits="objectBoundingBox". It is
+    replaced by a ClippingPath in user units once the bounding box is known.
+    """
+
+
+def _clip_to_bounds(clipping: Any, bounds: tuple[float, ...]) -> Any:
+    """Return the clipping path in user units, in the bounding box of its element.
+
+    A clipping path in the units of the bounding box is stretched with the box:
+    its coordinates are fractions of the width and the height. Any other
+    clipping path is returned as it is.
+    """
+    if not isinstance(clipping, _BoundingBoxClippingPath):
+        return clipping
+    x0, y0, x1, y1 = bounds
+    width, height = x1 - x0, y1 - y0
+    if not width or not height:
+        # an element without area has no bounding box and is not drawn
+        nothing = ClippingPath()
+        nothing.moveTo(0, 0)
+        nothing.closePath()
+        return nothing
+    result = ClippingPath(copy_from=clipping)
+    result.points = [
+        x0 + value * width if i % 2 == 0 else y0 + value * height
+        for i, value in enumerate(clipping.points)
+    ]
+    return result
+
+
 # CSS named colors that ReportLab lacks or defines differently (CSS Color 4).
 _CSS_NAMED_COLORS = {
     "darkseagreen": "#8fbc8f",  # ReportLab: #8fbc8b
@@ -2196,7 +2229,13 @@ class SvgRenderer:
                     "Mixed clip-rule shapes within a single clip path is not supported."
                 )
 
-        return ClippingPath(copy_from=combined_shape)
+        clip_class = (
+            _BoundingBoxClippingPath
+            if self.definitions[ref].attrib.get("clipPathUnits", "").strip()
+            == "objectBoundingBox"
+            else ClippingPath
+        )
+        return clip_class(copy_from=combined_shape)
 
     def print_unused_attributes(self, node: NodeTracker) -> None:
         """Print any attributes that were not used during rendering.
@@ -2551,10 +2590,12 @@ class SvgRenderer:
         getAttr = node.getAttribute
         id, transform = map(getAttr, ("id", "transform"))
         gr = Group()
-        if clipping:
-            gr.add(clipping)
         for child in node.iter_children():
             self.renderNode(child, parent=gr)
+        if clipping:
+            if isinstance(clipping, _BoundingBoxClippingPath) and gr.contents:
+                clipping = _clip_to_bounds(clipping, gr.getBounds())
+            gr.contents.insert(0, clipping)
 
         if transform:
             self.shape_converter.applyTransformOnGroup(transform, gr)
@@ -2752,7 +2793,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
 
         if clipping:
             group = Group()
-            group.add(clipping)
+            group.add(_clip_to_bounds(clipping, shape.getBounds()))
             group.add(shape)
             shape = group
 
