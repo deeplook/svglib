@@ -1903,6 +1903,23 @@ class SvgRenderer:
             if matrix[0] * matrix[3] - matrix[1] * matrix[2] == 0:
                 # A matrix that cannot be inverted paints nothing, as in browsers
                 return item
+        elif (
+            grad_units == "objectBoundingBox"
+            and bbox_w > 0
+            and bbox_h > 0
+            and bbox_w != bbox_h
+            and (
+                grad_def["type"] == "radial"
+                or (
+                    grad_def.get("x1", 0.0) != grad_def.get("x2", 1.0)
+                    and grad_def.get("y1", 0.0) != grad_def.get("y2", 0.0)
+                )
+            )
+        ):
+            # The gradient is in the space of the bounding box, which stretches it
+            # with the box: a radial gradient is an ellipse, and the lines of equal
+            # color of a slanted linear one are not perpendicular to its axis
+            matrix = (bbox_w, 0, 0, bbox_h, bx0, by0)
 
         def shape_corners() -> list[tuple[float, float]]:
             """The corners of the bounds of the shape, in the space of the gradient."""

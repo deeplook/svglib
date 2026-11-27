@@ -1009,3 +1009,77 @@ class TestGradients:
             )
         else:
             assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)
+
+    @pytest.mark.parametrize(
+        "gradient, size, matrix, geometry",
+        [
+            # stretched with the bounding box: an ellipse, and a skewed linear one
+            pytest.param(
+                '<radialGradient id="g">',
+                (200, 100),
+                (200, 0, 0, 100, 0, 0),
+                (0.5, 0.5, 0.5),
+                id="radial-wide",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x2="1" y2="1">',
+                (100, 200),
+                (100, 0, 0, 200, 0, 0),
+                (0, 0, 1, 1),
+                id="linear-diagonal",
+            ),
+            # nothing to stretch: a square box, or an axis along x or y
+            pytest.param(
+                '<radialGradient id="g">',
+                (100, 100),
+                None,
+                (50, 50, 50),
+                id="radial-square",
+            ),
+            pytest.param(
+                '<linearGradient id="g" x2="1" y2="1">',
+                (100, 100),
+                None,
+                (0, 0, 100, 100),
+                id="linear-diagonal-square",
+            ),
+            pytest.param(
+                '<linearGradient id="g">',
+                (200, 100),
+                None,
+                (0, 0, 200, 0),
+                id="linear-horizontal",
+            ),
+        ],
+    )
+    def test_gradient_bounding_box_stretch(self, gradient, size, matrix, geometry):
+        """A gradient in the units of the bounding box is stretched with the box.
+
+        A radial gradient on a shape that is not square is an ellipse, and a
+        slanted linear gradient is skewed; both were drawn in the user space, as a
+        circle and with the lines of equal color perpendicular to the axis.
+        """
+        tag = "linearGradient" if "linear" in gradient else "radialGradient"
+        drawing = drawing_from_svg(
+            f"""<?xml version="1.0"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+                <defs>
+                    {gradient}
+                        <stop offset="0" stop-color="red"/>
+                        <stop offset="1" stop-color="blue"/>
+                    </{tag}>
+                </defs>
+                <rect width="{size[0]}" height="{size[1]}" fill="url(#g)"/>
+            </svg>"""
+        )
+        shape = self._gradient_shape(drawing)
+        if matrix is None:
+            assert shape._transform is None
+        else:
+            assert shape._transform == pytest.approx(matrix)
+        if isinstance(shape, LinearGradientShape):
+            assert (shape._x0, shape._y0, shape._x1, shape._y1) == pytest.approx(
+                geometry
+            )
+        else:
+            assert (shape._cx, shape._cy, shape._r) == pytest.approx(geometry)
