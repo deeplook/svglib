@@ -12,6 +12,9 @@
   `x2="50%"` to one in `gradientUnits="userSpaceOnUse"` read it as a fraction of 1
   user unit, so it was a flat color over the whole shape, and now it is half of the
   viewport, as in browsers (#577).
+- A gradient fill is now painted with the `fill-opacity` and the `opacity` of its shape,
+  as in browsers. They were ignored, so a shape with `fill="url(#g)" opacity=".5"`,
+  or in a group with an `opacity`, was painted opaque.
 - A `<clipPath>` with `clipPathUnits="objectBoundingBox"` is now stretched to the
   bounding box of the element it clips, for a shape and for a group, as in browsers.
   Its coordinates, which are fractions of the box, were read as user units, so the

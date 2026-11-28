@@ -670,6 +670,42 @@ class TestGradients:
         return None
 
     @pytest.mark.parametrize(
+        "paint, group, expected",
+        [
+            pytest.param('fill-opacity="0.5"', "", 0.5, id="fill-opacity"),
+            pytest.param('opacity="0.4"', "", 0.4, id="opacity"),
+            pytest.param('style="opacity: .3"', "", 0.3, id="style"),
+            pytest.param(
+                'fill-opacity="0.5" opacity="0.5"', "", 0.25, id="fill-opacity-opacity"
+            ),
+            pytest.param("", 'opacity="0.5"', 0.5, id="group"),
+            pytest.param("", "", 1, id="opaque"),
+        ],
+    )
+    @pytest.mark.parametrize("kind", ["linear", "radial"])
+    def test_gradient_fill_is_painted_with_the_opacity(
+        self, kind, paint, group, expected
+    ):
+        """The fill-opacity and the opacity of a shape apply to its gradient."""
+        drawing = drawing_from_svg(
+            f"""
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+              <defs>
+                <{kind}Gradient id="g">
+                  <stop offset="0" stop-color="red"/>
+                  <stop offset="1" stop-color="blue"/>
+                </{kind}Gradient>
+              </defs>
+              <g {group}>
+                <rect width="50" height="50" fill="url(#g)" {paint}/>
+              </g>
+            </svg>
+        """
+        )
+        gradient = self._gradient_shape(drawing)
+        assert gradient._alpha == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
         "gradient, spread, axis, positions, order",
         [
             pytest.param(

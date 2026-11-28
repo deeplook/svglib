@@ -1466,10 +1466,12 @@ class LinearGradientShape(DirectDraw):
         positions: list[float],
         extend: bool = True,
         transform: Optional[tuple[float, ...]] = None,
+        alpha: float = 1.0,
     ) -> None:
         """Store the clip shape, gradient axis, colours and stop positions.
 
         The axis is in the space that ``transform``, if any, maps to the user space.
+        The gradient is painted with the opacity ``alpha``.
         """
         self._clip_shape = clip_shape
         self._x0, self._y0 = x0, y0
@@ -1478,6 +1480,7 @@ class LinearGradientShape(DirectDraw):
         self._positions = positions
         self._extend = extend
         self._transform = transform
+        self._alpha = alpha
 
     def drawDirectly(self, renderer: Any) -> None:
         """Paint the linear gradient into the clipped region on the PDF canvas."""
@@ -1487,6 +1490,7 @@ class LinearGradientShape(DirectDraw):
             canvas.clipPath(pdfPath, fill=1, stroke=0)
             if self._transform:
                 canvas.transform(*self._transform)
+            canvas.setFillAlpha(self._alpha)
             canvas.linearGradient(
                 self._x0,
                 self._y0,
@@ -1516,11 +1520,12 @@ class RadialGradientShape(DirectDraw):
         positions: list[float],
         extend: bool = True,
         transform: Optional[tuple[float, ...]] = None,
+        alpha: float = 1.0,
     ) -> None:
         """Store the clip shape, centre, radius, colours and stop positions.
 
         The centre is in the space that ``transform``, if any, maps to the user
-        space.
+        space. The gradient is painted with the opacity ``alpha``.
         """
         self._clip_shape = clip_shape
         self._cx, self._cy, self._r = cx, cy, r
@@ -1528,6 +1533,7 @@ class RadialGradientShape(DirectDraw):
         self._positions = positions
         self._extend = extend
         self._transform = transform
+        self._alpha = alpha
 
     def drawDirectly(self, renderer: Any) -> None:
         """Paint the radial gradient into the clipped region on the PDF canvas."""
@@ -1537,6 +1543,7 @@ class RadialGradientShape(DirectDraw):
             canvas.clipPath(pdfPath, fill=1, stroke=0)
             if self._transform:
                 canvas.transform(*self._transform)
+            canvas.setFillAlpha(self._alpha)
             canvas.radialGradient(
                 self._cx,
                 self._cy,
@@ -1956,6 +1963,9 @@ class SvgRenderer:
         if not stops:
             return item
 
+        # The fill-opacity and the opacity of the shape
+        alpha = getattr(clip_shape, "fillOpacity", None)
+        alpha = 1.0 if alpha is None else alpha
         positions = [s[0] for s in stops]
         rl_colors = [s[1] for s in stops]
         spread = grad_def.get("spreadMethod", "pad").strip()
@@ -2075,7 +2085,15 @@ class SvgRenderer:
                             y1 + last * dy,
                         )
             grad_shape: DirectDraw = LinearGradientShape(
-                clip_shape, x1, y1, x2, y2, rl_colors, positions, transform=matrix
+                clip_shape,
+                x1,
+                y1,
+                x2,
+                y2,
+                rl_colors,
+                positions,
+                transform=matrix,
+                alpha=alpha,
             )
         else:
             cx = grad_def.get("cx", 0.5)
@@ -2096,7 +2114,14 @@ class SvgRenderer:
                     repeat_stops(0, last)
                     r *= last
             grad_shape = RadialGradientShape(
-                clip_shape, cx, cy, r, rl_colors, positions, transform=matrix
+                clip_shape,
+                cx,
+                cy,
+                r,
+                rl_colors,
+                positions,
+                transform=matrix,
+                alpha=alpha,
             )
 
         group = Group()
