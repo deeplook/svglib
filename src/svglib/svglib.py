@@ -3481,6 +3481,18 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                             exc_type,
                         )
                     )
+        dash_array = getattr(shape, "strokeDashArray", None)
+        if dash_array and shape.__class__ != String:
+            offset = ac.findAttr(node, "stroke-dashoffset")
+            if offset != "" or not only_explicit:
+                try:
+                    phase = ac.convertDashOffset(_without_important(offset or "0"))
+                except (AttributeError, KeyError, ValueError):
+                    phase = 0
+                # The pattern repeats, and a negative offset moves it backwards.
+                phase %= sum(dash_array)
+                if phase:
+                    shape.strokeDashArray = [phase, dash_array]
         if shape.__class__ == String and not (
             only_explicit and ac.findAttr(node, "font-size") == ""
         ):
