@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- The `stroke-dashoffset` is now applied, as in browsers: the dashes start that far
+  into their pattern, and a negative offset moves them backwards. It was ignored, so
+  a path with `stroke-dasharray="80" stroke-dashoffset="80"`, which animated icons
+  use to hide a line until it is drawn, was drawn in full.
 - A gradient that refers with `href` to one that refers to another now takes the
   stops and the attributes of the whole chain, as in browsers. The chain was followed
   one step only, so such a gradient had no stops and was not painted (#578).

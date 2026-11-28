@@ -754,6 +754,55 @@ class TestAttrConverter:
         converter.applyStyleOnShape(path, node)
         assert path.strokeDashArray == []
 
+    @pytest.mark.parametrize(
+        "attrs, expected",
+        [
+            ('stroke-dasharray="10 5" stroke-dashoffset="3"', [3, [10, 5]]),
+            ('stroke-dasharray="10 5" stroke-dashoffset="3px"', [3, [10, 5]]),
+            ('stroke-dasharray="10 5" style="stroke-dashoffset: 3"', [3, [10, 5]]),
+            # the pattern repeats, and a negative offset moves it backwards
+            ('stroke-dasharray="10 5" stroke-dashoffset="18"', [3, [10, 5]]),
+            ('stroke-dasharray="10 5" stroke-dashoffset="-4"', [11, [10, 5]]),
+            ('stroke-dasharray="80" stroke-dashoffset="80"', [80, [80, 80]]),
+            # no offset, a whole number of patterns, an invalid one
+            ('stroke-dasharray="10 5" stroke-dashoffset="0"', [10, 5]),
+            ('stroke-dasharray="10 5" stroke-dashoffset="15"', [10, 5]),
+            ('stroke-dasharray="10 5" stroke-dashoffset="abc"', [10, 5]),
+            ('stroke-dasharray="10 5"', [10, 5]),
+            # a solid line has nothing to offset
+            ('stroke-dashoffset="3"', []),
+            ('stroke-dasharray="none" stroke-dashoffset="3"', []),
+        ],
+    )
+    def test_dashoffset(self, attrs, expected):
+        converter = svglib.Svg2RlgShapeConverter(None)
+        node = minimal_svg_node(f'<path d="M0,0 L9,0" stroke="black" {attrs}/>')
+        path = Path()
+        converter.applyStyleOnShape(path, node)
+        assert path.strokeDashArray == expected
+
+    def test_dashoffset_inherited(self):
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <g stroke="black" stroke-dasharray="10 5" stroke-dashoffset="3">
+                    <path d="M0,10 L90,10"/>
+                    <path d="M0,20 L90,20" stroke-dashoffset="4"/>
+                </g>
+            </svg>
+        """
+        )
+        paths = []
+
+        def collect(shape):
+            if type(shape) is Path:  # not the NoStrokePath of the fill
+                paths.append(shape)
+            for child in getattr(shape, "contents", []):
+                collect(child)
+
+        collect(drawing)
+        assert [p.strokeDashArray for p in paths] == [[3, [10, 5]], [4, [10, 5]]]
+
     def test_stroke(self):
         converter = svglib.Svg2RlgShapeConverter(None)
         node = minimal_svg_node(
