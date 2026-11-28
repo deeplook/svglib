@@ -261,6 +261,28 @@ class TestColorAttrConverter:
         assert rects[1].strokeColor == colors.red
         assert "Can't handle color" not in caplog.text
 
+    def test_current_color_without_color_property_is_black(self):
+        "Without a color property, currentColor is black, as in browsers."
+
+        drawing = drawing_from_svg(
+            """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"
+                 fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="10" height="10"/>
+              <rect width="10" height="10" fill="currentColor" stroke="none"/>
+              <g color="red">
+                <rect width="10" height="10"/>
+              </g>
+            </svg>
+        """
+        )
+        rects = drawing.contents[0].contents
+        assert rects[0].strokeColor == colors.black
+        assert rects[0].fillColor is None
+        assert rects[1].fillColor == colors.black
+        assert rects[1].strokeColor is None
+        assert rects[2].contents[0].strokeColor == colors.red
+
     def test_css_named_colors_missing_in_reportlab(self):
         "CSS named colors that ReportLab lacks or defines differently."
 
