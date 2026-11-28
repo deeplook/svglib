@@ -534,6 +534,8 @@ class AttributeConverter:
         self.main_box: Optional[Box] = None
         # Resolved once at render time from the root <svg> font-size; used by rem.
         self.root_font_size: float = DEFAULT_FONT_SIZE / PX_TO_PT  # 16 px default
+        # Per-rendering cache of resolved custom properties: (id(node), name) -> value.
+        self._resolved_vars: dict[tuple[int, str], Optional[str]] = {}
 
     def set_box(self, main_box: Optional[Box]) -> None:
         """Set the main viewbox for resolving percentage-based units.
@@ -639,6 +641,7 @@ class AttributeConverter:
             return None
         if expansion is None:
             expansion = _VarExpansion()
+            expansion.resolved = self._resolved_vars
         lowered = value.lower()
         parts: list[str] = []
         position = length = 0
@@ -1630,6 +1633,7 @@ class SvgRenderer:
         Returns:
             A ReportLab Drawing object representing the SVG.
         """
+        self.attrConverter._resolved_vars.clear()
         node = NodeTracker.from_xml_root(svg_node)
         self._warn_old_inkscape(svg_node)
         self._set_root_font_size(node)
@@ -1638,6 +1642,7 @@ class SvgRenderer:
         self.attrConverter.set_box(view_box)
 
         main_group = self.renderSvg(node, outermost=True)
+        self.attrConverter._resolved_vars.clear()
         for xlink in self.waiting_use_nodes.keys():
             logger.debug("Ignoring unavailable object width ID %r.", xlink)
 
@@ -2647,6 +2652,7 @@ class SvgRenderer:
         node.etree_element.set("__style_added", "1")
         if self.attrConverter.css_rules is not None:
             self.attrConverter.css_rules.add_styles(node.text or "")
+            self.attrConverter._resolved_vars.clear()
 
     def renderSymbol(self, node: NodeTracker) -> Any:
         """Render a <symbol> element as a ReportLab Group."""
